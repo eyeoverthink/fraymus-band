@@ -4,7 +4,7 @@ package com.eyeoverthink.band;
  * The infant drummer's one sound: a hand on a pot. A short low tone that falls in pitch and dies away,
  * with a click at the front. It is worked out once and then only read.
  */
-public final class Thump {
+public final class Thump implements Sound {
     private final float[] shape;
 
     public Thump() {
@@ -23,6 +23,6 @@ public final class Thump {
         }
     }
 
-    public int length() { return shape.length; }
-    public float at(int i) { return shape[i]; }
+    @Override public int length() { return shape.length; }
+    @Override public float at(int i) { return shape[i]; }
 }

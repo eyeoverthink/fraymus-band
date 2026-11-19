@@ -6,19 +6,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A player's lineage: a plain text file that is read before every session and added to after it.
- * What is in it was lived, in order. Nothing is written here that the player did not play.
+ * The lines at the top say where the player is now. The session lines below are what it lived, in order.
+ * Nothing is written here that the player did not play.
  */
 public final class Life {
     private final Path file;
     private final List<String> lines = new ArrayList<>();
     private String name = "unnamed";
-    private int age;
-    private long pulsesPlayed;
+    private long hitsPlayed;
     private int sessions;
     private double listening = Drummer.NEWBORN_LISTENING;
+    private int ticks = 1;
+    private String pattern = Drummer.FIRST_PATTERN;
 
     private Life(Path file) { this.file = file; }
 
@@ -29,44 +32,57 @@ public final class Life {
                 life.lines.add(line);
                 String s = line.trim();
                 if (s.startsWith("name:")) life.name = s.substring(5).trim();
-                else if (s.startsWith("age:")) life.age = Integer.parseInt(s.substring(4).trim());
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
+                else if (s.startsWith("ticks to the pulse:")) life.ticks = Integer.parseInt(s.substring(19).trim());
+                else if (s.startsWith("pattern:")) life.pattern = s.substring(8).trim();
                 else if (s.startsWith("session ")) {
                     life.sessions++;
-                    int at = s.indexOf("pulses=");
-                    if (at >= 0) life.pulsesPlayed += Long.parseLong(s.substring(at + 7).split("[ ,]")[0]);
+                    int at = s.indexOf("hits=");
+                    if (at < 0) at = s.indexOf("pulses=") + 2;      // how the first sessions were written
+                    if (at >= 2) life.hitsPlayed += Long.parseLong(s.substring(at + 5).split("[ ,]")[0]);
                 }
             }
         } else {
             life.name = nameIfNew;
             life.lines.add("name: " + nameIfNew);
             life.lines.add("age: 0");
-            life.lines.add("sound: one, a hand on a pot");
-            life.lines.add(String.format(java.util.Locale.ROOT, "listens to itself: %.2f", life.listening));
             life.lines.add("");
         }
         return life;
     }
 
     public String name() { return name; }
-    public int age() { return age; }
     public int sessions() { return sessions; }
-    /** Every pulse this player has ever played, across all sessions. This is its experience. */
-    public long pulsesPlayed() { return pulsesPlayed; }
+    /** Every hit this player has ever played, across all sessions. This is its experience. */
+    public long hitsPlayed() { return hitsPlayed; }
     /** How strongly it has learned to follow what it hears, from 0 (not at all) to 1. */
     public double listening() { return listening; }
+    /** How finely it can cut its pulse: 1, 2 or 4 ticks. */
+    public int ticks() { return ticks; }
+    /** The sixteen places of its bar: p for the pot, n for the pan, a dot for nothing. */
+    public String pattern() { return pattern; }
 
-    public void remember(int pulses, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs, double listeningNow) throws IOException {
+    private void set(String key, String value) {
+        String line = key + ": " + value;
+        for (int i = 0; i < lines.size(); i++)
+            if (lines.get(i).trim().startsWith(key + ":")) { lines.set(i, line); return; }
+        int blank = lines.indexOf("");
+        lines.add(blank < 0 ? lines.size() : blank, line);
+    }
+
+    public void remember(int bars, int hits, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs,
+                         double listeningNow, int ticksNow, String patternNow) throws IOException {
         sessions++;
-        pulsesPlayed += pulses;
-        listening = listeningNow;
-        String habit = String.format(java.util.Locale.ROOT, "listens to itself: %.2f", listeningNow);
-        boolean found = false;
-        for (int i = 0; i < lines.size(); i++) if (lines.get(i).trim().startsWith("listens to itself:")) { lines.set(i, habit); found = true; }
-        if (!found) lines.add(Math.min(3, lines.size()), habit);
-        lines.add(String.format(java.util.Locale.ROOT,
-            "session %d: pulses=%d, tempo %.1f to %.1f bpm, unsteadiness %.1f ms at the start, %.1f ms by the end, listening %.2f",
-            sessions, pulses, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow));
+        hitsPlayed += hits;
+        listening = listeningNow; ticks = ticksNow; pattern = patternNow;
+        lines.removeIf(l -> l.trim().startsWith("sound:"));
+        set("sounds", "a pot (p) and a pan (n)");
+        set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
+        set("ticks to the pulse", Integer.toString(ticksNow));
+        set("pattern", patternNow);
+        lines.add(String.format(Locale.ROOT,
+            "session %d: bars=%d, hits=%d, tempo %.1f to %.1f bpm, unsteadiness %.1f ms at the start, %.1f ms by the end, listening %.2f, ticks to the pulse %d, pattern %s",
+            sessions, bars, hits, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow, ticksNow, patternNow));
         if (file.getParent() != null) Files.createDirectories(file.getParent());
         Files.write(file, lines, StandardCharsets.UTF_8);
     }

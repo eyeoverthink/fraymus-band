@@ -2,7 +2,7 @@ package com.eyeoverthink.band;
 
 /**
  * How a player hears a hit. It follows the loudness of what reaches it and marks the moment the
- * loudness jumps. It keeps the lengths of the last few gaps between hits, which is all a player
+ * loudness jumps up out of the dip since the last hit, so a quiet hit close behind a loud one still counts. It keeps the lengths of the last few gaps between hits, which is all a player
  * needs to feel a pulse. Nothing here knows who made the sound.
  */
 public final class Ear {
@@ -14,24 +14,26 @@ public final class Ear {
     private int gapHead;
 
     private double fast;          // loudness right now
-    private double slow;          // loudness lately
+    private double valley;        // the quietest it has been since the last hit
     private long lastOnset = -1;
     private long onsetsHeard;
-    private final int refractory = (int) Audio.samples(0.120);   // one hit cannot be heard twice
+    private final int refractory = (int) Audio.samples(0.070);   // one hit cannot be heard twice
     private static final double ATTACK = 1.0 - Math.exp(-1.0 / Audio.samples(0.002));
     private static final double RELEASE = 1.0 - Math.exp(-1.0 / Audio.samples(0.030));
-    private static final double LATELY = 1.0 - Math.exp(-1.0 / Audio.samples(0.400));
+    private static final double JUMP = 1.5;
     private static final double FLOOR = 0.02;
 
     public void listen(float[] heard, int n, long blockStart) {
         for (int i = 0; i < n; i++) {
             double level = Math.abs(heard[i]);
             fast += (level > fast ? ATTACK : RELEASE) * (level - fast);
-            slow += LATELY * (fast - slow);
             long now = blockStart + i;
-            if (fast > FLOOR && fast > 2.5 * slow && (lastOnset < 0 || now - lastOnset > refractory)) {
+            if (lastOnset >= 0 && now - lastOnset <= refractory) continue;
+            if (fast < valley) valley = fast;
+            if (fast > FLOOR && fast > JUMP * valley + FLOOR) {
                 if (lastOnset >= 0) remember(now - lastOnset);
                 lastOnset = now;
+                valley = Double.MAX_VALUE;
                 onsetsHeard++;
             }
         }
@@ -48,17 +50,6 @@ public final class Ear {
     public int gapsRemembered() { return gapCount; }
     /** Counts every gap ever heard, so a player can tell that something new has reached it. */
     public long gapsEver() { return gapsEver; }
-
-    /** How uneven the remembered gaps sound: the average jump from one gap to the next, in samples. */
-    public double roughness() {
-        if (gapCount < 3) return 0;
-        double sum = 0;
-        for (int j = 1; j < gapCount; j++) {
-            double newer = gaps[(gapHead - j + MEMORY) % MEMORY], older = gaps[(gapHead - j - 1 + 2 * MEMORY) % MEMORY];
-            sum += Math.abs(newer - older);
-        }
-        return sum / (gapCount - 1);
-    }
 
     /** The average of the most recent {@code k} gaps, or 0 when nothing has been heard yet. */
     public double recentGap(int k) {
