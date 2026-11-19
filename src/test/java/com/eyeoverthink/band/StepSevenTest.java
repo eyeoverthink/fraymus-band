@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step six: one drummer gives the lesson to another. */
-class StepSixTest {
+/** Step seven: a click in the players' ears. */
+class StepSevenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -100,6 +100,73 @@ class StepSixTest {
         }
         assertEquals(near, ownAt);
         assertEquals(across, othersAt);
+    }
+
+    @Test
+    void theMetronomeCountsOneBarInAndClicksEvenly() {
+        Metronome m = new Metronome(120, 0.25);
+        assertEquals(0.25 + 4 * 0.5, m.firstBarSeconds(), 1e-4);
+        float[] block = new float[Audio.BLOCK];
+        long before = -1; int clicks = 0;
+        boolean wasQuiet = true;
+        for (long now = 0; now < Audio.RATE * 3L; now += Audio.BLOCK) {
+            m.play(block, Audio.BLOCK, now);
+            for (int i = 0; i < Audio.BLOCK; i++) {
+                boolean quiet = block[i] == 0f;
+                if (wasQuiet && !quiet && (before < 0 || now + i - before > 1000)) {
+                    if (before >= 0) assertEquals(Audio.RATE / 2.0, now + i - before, 2.0, "half a second between clicks at 120");
+                    before = now + i; clicks++;
+                }
+                wasQuiet = quiet;
+            }
+        }
+        assertEquals(6, clicks);
+    }
+
+    @Test
+    void theClickIsInTheirEarsAndNotOnTheRecording(@TempDir Path dir) throws Exception {
+        Path wav = dir.resolve("t.wav");
+        Session.together(wav, practised(dir, "a.life", 4, LESSON.bar()), practised(dir, "b.life", 4, LESSON.bar()), 4, 92, 3);
+        byte[] b = Files.readAllBytes(wav);
+        ByteBuffer samples = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN);
+        int countIn = (int) (Audio.RATE * (0.25 + 4 * 60.0 / 92) * 0.95);
+        for (int i = 0; i < countIn; i++) assertEquals(0, samples.getShort(44 + 2 * i), "the bar of count-in is silent on the recording");
+    }
+
+    @Test
+    void withAClickTwoDrummersHoldTheTempo(@TempDir Path dir) throws Exception {
+        for (int seed = 0; seed < 10; seed++) {
+            Session.Duo d = Session.together(dir.resolve("t.wav"), practised(dir, "a" + seed + ".life", 4, LESSON.bar()),
+                practised(dir, "b" + seed + ".life", 4, "p...n...p.p.n..."), 16, 92, seed);
+            assertEquals(92, d.tempoFirstBars(), 2.0, "they start at the click's tempo");
+            assertEquals(92, d.tempoLastBars(), 2.0, "and are still there sixteen bars later");
+            assertTrue(Math.abs(d.landedApartMs()) < 40, "and end together");
+        }
+    }
+
+    @Test
+    void aNewbornNoLongerDragsAPractisedDrummerWhenBothHaveAClick(@TempDir Path dir) throws Exception {
+        double without = 0, with = 0;
+        for (int seed = 0; seed < 10; seed++) {
+            without += Session.together(dir.resolve("t.wav"), practised(dir, "a" + seed + ".life", 4, LESSON.bar()), dir.resolve("n" + seed + ".life"), 16, 0, seed).first().unsteadyMs() / 10;
+            with += Session.together(dir.resolve("t.wav"), practised(dir, "c" + seed + ".life", 4, LESSON.bar()), dir.resolve("m" + seed + ".life"), 16, 92, seed).first().unsteadyMs() / 10;
+        }
+        assertTrue(with < without * 0.7, "the practised drummer's unsteadiness: " + without + " ms without the click, " + with + " ms with it");
+    }
+
+    @Test
+    void aClickHelpsAYoungDrummerLearnFromAnother(@TempDir Path dir) throws Exception {
+        double[] like = new double[2];
+        for (int c = 0; c < 2; c++)
+            for (int d = 0; d < 8; d++) {
+                Path young = dir.resolve(c + "y" + d + ".life");
+                for (int s = 0; s < 12; s++) {
+                    Session.Taught t = Session.teach(dir.resolve("t.wav"), practised(dir, c + "o" + d + ".life", 4, LESSON.bar()), young, 4, 8, c == 0 ? 0 : 92, 1000L * d + s);
+                    if (s == 11) like[c] += t.matchesAfter() / 8.0;
+                }
+            }
+        System.out.printf(Locale.ROOT, "CLICK after twelve lessons: like the teacher in %.1f of 16 places without a click, %.1f with one%n", like[0], like[1]);
+        assertTrue(like[1] > like[0] + 0.5, "more like the teacher with a click: " + like[0] + " without, " + like[1] + " with");
     }
 
     @Test

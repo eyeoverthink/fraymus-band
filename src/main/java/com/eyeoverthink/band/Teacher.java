@@ -28,7 +28,7 @@ public final class Teacher implements Player, Hits {
     }
 
     @Override public String name() { return "the record"; }
-    @Override public void hear(float[] others, float[] own, int n, long blockStart) { }
+    @Override public void hear(float[] others, float[] own, float[] click, int n, long blockStart) { }
 
     @Override
     public void play(float[] out, int n, long blockStart) {

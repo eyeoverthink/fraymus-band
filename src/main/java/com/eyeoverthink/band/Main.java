@@ -8,6 +8,8 @@ public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
         Path with = null, teach = null;
+        boolean click = false;
+        double tempo = 92;
         long seed = System.nanoTime();
         Path wav = Path.of("out", "session.wav");
         Path life = Path.of("lives", "drummer.life");
@@ -19,14 +21,17 @@ public final class Main {
                 case "--seed" -> seed = Long.parseLong(args[i + 1]);
                 case "--out" -> wav = Path.of(args[i + 1]);
                 case "--life" -> life = Path.of(args[i + 1]);
+                case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
+                case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         if (teach != null) {                                 // one drummer gives the lesson to another
-            Session.Taught t = Session.teach(wav, life, teach, answers, together < 0 ? 8 : together, seed);
+            Session.Taught t = Session.teach(wav, life, teach, answers, together < 0 ? 8 : together, click ? tempo : 0, seed);
+            if (click) System.out.printf(Locale.ROOT, "Both had a click in their ears at %.0f bpm. It is not on the recording.%n", tempo);
             System.out.printf(Locale.ROOT, "%s played its pattern for %s: %s%n", t.teacher(), t.learner(), t.teacherPattern());
             System.out.printf(Locale.ROOT, "With %d ticks to the pulse %s heard it as: %s%n", t.ticksAfter(), t.learner(), t.heardAs());
             System.out.printf(Locale.ROOT, "Its pattern before: %s (like the teacher's in %d of 16 places)%n", t.patternBefore(), t.matchesBefore());
@@ -41,7 +46,8 @@ public final class Main {
             return;
         }
         if (with != null) {                                  // two drummers, no record
-            Session.Duo d = Session.together(wav, life, with, together < 0 ? 16 : together, seed);
+            Session.Duo d = Session.together(wav, life, with, together < 0 ? 16 : together, click ? tempo : 0, seed);
+            if (click) System.out.printf(Locale.ROOT, "Both had a click in their ears at %.0f bpm. It is not on the recording.%n", tempo);
             System.out.printf(Locale.ROOT, "%d bars, %.1f s, no record. %s started; %s came in after a bar.%n", d.bars(), d.seconds(), d.first().name(), d.second().name());
             for (Session.Part p : new Session.Part[] {d.first(), d.second()})
                 System.out.printf(Locale.ROOT, "%s: %s, %d ticks to the pulse, %d hits, unsteadiness %.1f ms, listening %.2f to %.2f, %d hits with nothing of the other's near.%n",
@@ -53,7 +59,8 @@ public final class Main {
         }
         if (together < 0) together = 8;
         Lesson lesson = Lesson.read(lessonFile);
-        Session.Report r = Session.run(wav, life, lesson, answers, together, seed);
+        Session.Report r = Session.run(wav, life, lesson, answers, together, click, seed);
+        if (click) System.out.printf(Locale.ROOT, "The drummer had a click in its ears at the record's tempo. It is not on the recording.%n");
         System.out.printf(Locale.ROOT, "The record played \"%s\" at %.0f bpm: %s%n", lesson.name(), lesson.tempo(), lesson.bar());
         System.out.printf(Locale.ROOT, "With %d ticks to the pulse the drummer heard it as: %s%n", r.ticksAfter(), r.lessonAsHeard());
         System.out.printf(Locale.ROOT, "Its pattern before: %s (like the lesson in %d of 16 places)%n", r.patternBefore(), r.matchesBefore());

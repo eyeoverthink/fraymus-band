@@ -21,8 +21,16 @@ public final class Session {
     public static final double NEAR = 0.003, ACROSS = 0.009;
 
     public static Report run(Path wav, Path lifeFile, Lesson lesson, int answers, int barsTogether, long seed) throws IOException {
+        return run(wav, lifeFile, lesson, answers, barsTogether, false, seed);
+    }
+
+    /** The same, with or without a click in the drummer's ears. The record was made to the same click. */
+    public static Report run(Path wav, Path lifeFile, Lesson lesson, int answers, int barsTogether, boolean click, long seed) throws IOException {
+        Metronome metronome = click ? new Metronome(lesson.tempo(), 0.25) : null;
+        double start = click ? metronome.firstBarSeconds() : 0.25;
+        float[] clicks = new float[Audio.BLOCK];
         Life life = Life.open(lifeFile, "the drummer");
-        Teacher teacher = new Teacher(lesson, answers, barsTogether, 0.25);
+        Teacher teacher = new Teacher(lesson, answers, barsTogether, start);
         Drummer drummer = new Drummer(life.name(), 92.0, life.hitsPlayed(), life.listening(), life.ticks(), life.pattern(), answers, barsTogether, seed);
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
@@ -34,10 +42,9 @@ public final class Session {
             long tooLong = (long) Audio.samples(60.0 + 30.0 * answers + 8.0 * barsTogether);   // nothing here should ever need this
             while (!drummer.done(now)) {
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");                     // no objects are made inside this loop
-                room.carry(0, others, own, Audio.BLOCK, now);
-                teacher.hear(others, own, Audio.BLOCK, now);
+                if (click) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                drummer.hear(others, own, Audio.BLOCK, now);
+                drummer.hear(others, own, clicks, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromRecord, 0f);
                 java.util.Arrays.fill(fromDrummer, 0f);
                 teacher.play(fromRecord, Audio.BLOCK, now);
@@ -104,9 +111,17 @@ public final class Session {
      * clock and its own life, and each listens to the other. Nobody keeps time for them.
      */
     public static Duo together(Path wav, Path firstLife, Path secondLife, int bars, long seed) throws IOException {
+        return together(wav, firstLife, secondLife, bars, 0, seed);
+    }
+
+    /** The same, with a click at {@code clickBpm} in both drummers' ears, or none if that is 0. */
+    public static Duo together(Path wav, Path firstLife, Path secondLife, int bars, double clickBpm, long seed) throws IOException {
+        Metronome metronome = clickBpm > 0 ? new Metronome(clickBpm, 0.25) : null;
+        double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
+        float[] clicks = new float[Audio.BLOCK];
         Life lifeA = Life.open(firstLife, "the drummer"), lifeB = Life.open(secondLife, "the second drummer");
-        Drummer a = Drummer.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, seed);
-        Drummer b = Drummer.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, seed ^ 0x9E3779B97F4A7C15L);
+        Drummer a = Drummer.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, start, seed);
+        Drummer b = Drummer.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, start, seed ^ 0x9E3779B97F4A7C15L);
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
         float[] fromA = new float[Audio.BLOCK], fromB = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
@@ -115,10 +130,11 @@ public final class Session {
         try (WavWriter out = new WavWriter(wav)) {
             while (!(a.done(now) && b.done(now))) {          // no objects are made inside this loop
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
+                if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(0, others, own, Audio.BLOCK, now);
-                a.hear(others, own, Audio.BLOCK, now);
+                a.hear(others, own, clicks, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                b.hear(others, own, Audio.BLOCK, now);
+                b.hear(others, own, clicks, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromA, 0f);
                 java.util.Arrays.fill(fromB, 0f);
                 a.play(fromA, Audio.BLOCK, now);
@@ -153,8 +169,16 @@ public final class Session {
      * room, on its own clock; the learner answers. After the last answer they play on together.
      */
     public static Taught teach(Path wav, Path teacherLife, Path learnerLife, int calls, int barsTogether, long seed) throws IOException {
+        return teach(wav, teacherLife, learnerLife, calls, barsTogether, 0, seed);
+    }
+
+    /** The same, with a click at {@code clickBpm} in both drummers' ears, or none if that is 0. */
+    public static Taught teach(Path wav, Path teacherLife, Path learnerLife, int calls, int barsTogether, double clickBpm, long seed) throws IOException {
+        Metronome metronome = clickBpm > 0 ? new Metronome(clickBpm, 0.25) : null;
+        double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
+        float[] clicks = new float[Audio.BLOCK];
         Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer");
-        Drummer t = Drummer.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, seed);
+        Drummer t = Drummer.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, start, seed);
         Drummer l = new Drummer(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
         Lesson given = new Lesson(lifeT.name(), 92.0, lifeT.pattern());      // only used afterwards, to count how alike they ended
         Room room = new Room(2, NEAR, ACROSS);
@@ -165,10 +189,11 @@ public final class Session {
         try (WavWriter out = new WavWriter(wav)) {
             while (!(t.done(now) && l.done(now))) {          // no objects are made inside this loop
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
+                if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(0, others, own, Audio.BLOCK, now);
-                t.hear(others, own, Audio.BLOCK, now);
+                t.hear(others, own, clicks, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                l.hear(others, own, Audio.BLOCK, now);
+                l.hear(others, own, clicks, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromT, 0f);
                 java.util.Arrays.fill(fromL, 0f);
                 t.play(fromT, Audio.BLOCK, now);

@@ -47,6 +47,13 @@ exactly as it treated the record and hears only what its ticks can reach. Becaus
 unsteady teacher can be wrong, a learner believes a place only if it has heard it there in at least half
 the calls so far. After the last answer the two play on together.
 
+**The click.** A click track at a steady tempo, counting one bar in. It is not in the room: every player
+hears it in its own ears, the way a band wears a click, and it is not on the recording. A drummer with a
+click takes its time from it. It leans its pulse toward the gaps between clicks, shifts its nearest pulse
+part of the way toward each click, and stops taking its time from the other players, though it still
+listens to them for what they play. How strongly it leans is its own listening, so a newborn follows a
+click badly and a practised drummer well. The click says nothing about where the one is.
+
 **The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
 else's in 9 ms, so it can tell its own hits from the others'. It learns how long after it hits it hears
 itself, and it can see how much farther away the others are, so it places their hits when they were
@@ -64,7 +71,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.6.0.jar
+    java -jar target/fraymus-band-0.7.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -72,17 +79,20 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.6.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.7.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.6.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.7.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
+
+Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
+lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Write your own lesson
 
@@ -132,7 +142,24 @@ drummer playing the first lesson's pattern.
 That is slower than learning from the record, which never wavers. A teacher whose own time moves is
 harder to hear.
 
-`mvn test` reproduces the first and third tables and checks the first row of the second. It fails if practice stops
+**With and without a click.** The same measurements, with a click in every player's ears.
+
+| | Without a click | With a click |
+|---|---:|---:|
+| Two practised drummers, tempo over 16 bars | 92.1 to 88.9 bpm | 92.0 to 92.0 bpm |
+| Two practised drummers, apart | 6.4 ms | 10.8 ms |
+| A practised drummer's unsteadiness beside a newborn | 25.4 ms | 10.6 ms |
+| Two newborns' unsteadiness | 37.6 ms | 14.4 ms |
+| Taught by a drummer for 16 sessions: like the teacher (of 16) | 13.4 | 15.2 |
+| Taught by a drummer for 16 sessions: have four ticks | 4 of 16 | 15 of 16 |
+| With the record, session 24: apart | 19.8 ms | 8.3 ms |
+| With the record, session 24: have four ticks | 13 of 20 | 19 of 20 |
+
+The click fixes the slowing and stops a newborn dragging a practised drummer. It costs something: two
+practised drummers land a little farther apart, because each follows the click and no longer the other.
+
+`mvn test` reproduces the first and third tables, checks the first row of the second, and checks that
+the click holds the tempo, protects a practised drummer from a newborn, and speeds up learning. It fails if practice stops
 bringing a drummer closer to the record, if two practised drummers cannot hold time together, or if a
 drummer plays or hears a place its ticks cannot reach.
 
@@ -151,11 +178,12 @@ drummer plays or hears a place its ticks cannot reach.
 - It finds the one by weight, so a lesson with nothing on the one will confuse it.
 - A drummer that has drifted far from the record can lose its place for a whole call and hear almost
   nothing of the lesson that round.
-- Two practised drummers who follow each other slow down, about 3 bpm over 16 bars. Half of that was a
-  bias in how they leaned on short gaps, now fixed. The rest is not explained yet.
+- Without a click, two practised drummers who follow each other slow down, about 3 bpm over 16 bars.
+  Half of that was a bias in how they leaned on short gaps, now fixed. The rest is not explained yet.
+- With a click, players take no timing from each other at all. A band does both.
 - Learning from a drummer is slow and sometimes wrong: its time moves, so the learner misplaces hits.
 - The teacher does not listen to the answers or change what it plays to help.
-- A newborn pulls a practised drummer's time around. Nobody yet decides whom to follow.
+- Without a click, a newborn pulls a practised drummer's time around. Nobody yet decides whom to follow.
 - Mono, one drummer.
 
 ## Layout
@@ -165,6 +193,7 @@ drummer plays or hears a place its ticks cannot reach.
 - `Room` the shared air: each player's sound, and how long it takes to reach the others
 - `Thump`, `Pan`, `Kit` the two sounds and the hands that ring them
 - `Lesson`, `Teacher` the bar to learn and the record that plays it
+- `Metronome` the click in the players' ears
 - `Drummer` the player
 - `Life` the lineage file
 - `Session` one sitting, written to a WAV

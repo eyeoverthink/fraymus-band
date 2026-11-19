@@ -1,6 +1,6 @@
 name: the drummer
 age: 0
-listens to itself: 0.08
+listens to itself: 0.77
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: pn.pn...p.p.n..n
@@ -32,3 +32,8 @@ session 24: played its pattern for the second drummer, 4 calls and 8 bars togeth
 session 25: played its pattern for the second drummer, 4 calls and 8 bars together, hits=126, unsteadiness 49.2 ms, listening 0.47, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
 session 26: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 10.2 ms, listening 0.29, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 11 of 16 places
 session 27: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.5 ms, listening 0.08, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 12 of 16 places
+session 28: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 33.4 ms, listening 0.26, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 11 of 16 places
+session 29: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 15.0 ms, listening 0.62, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
+session 30: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.9 ms, listening 0.74, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
+session 31: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 12.6 ms, listening 0.80, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
+session 32: played 16 bars with the second drummer, no record, hits=129, unsteadiness 10.6 ms, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 8 ms apart
