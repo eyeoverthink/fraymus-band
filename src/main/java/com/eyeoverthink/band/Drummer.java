@@ -30,8 +30,13 @@ import java.util.SplittableRandom;
  * is finished, it stops and listens. If it waits two bars and the record does not come back, it comes in
  * on its own.
  *
- * The ending. After its last answer it lands the one of the next bar and lets that hit ring for one pulse
- * of its own clock, whatever its tempo has become.
+ * Together. After the last answer the record plays straight through, and this time the drummer keeps
+ * playing. It still puts every hit of the record's at the nearest tick it has and shifts its own tick part
+ * of the way toward it, and it leans its pulse toward the record's. Nothing else holds the two clocks
+ * together. If a heavy hit lands where it has no tick, it takes that as the one and counts again from there.
+ *
+ * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
+ * its own clock, whatever its tempo has become.
  *
  * Its listening, its ticks and its pattern are written into its life and are where the next session starts.
  * It is never told a tempo, and it is never shown the lesson. It only hears it.
@@ -74,20 +79,25 @@ public final class Drummer implements Player {
     static final double TAP = 0.5;
     /** How often a change is its own idea and not something it heard. */
     static final int OWN_IDEA_ONE_IN = 4;
-    /** A sound this soon after its own hit is its own hit coming back. */
-    static final double MINE = 0.080;
+    /** While playing together, a hit this heavy next to the heaviest it has heard is the one. */
+    static final double NEARLY_THE_HEAVIEST = 0.93;
     public static final String FIRST_PATTERN = "p...p...p...p...";
 
     private static final byte REST = Kit.REST, POT = Kit.POT, PAN = Kit.PAN;
-    private static final int WAITING = 0, LISTENING = 1, ANSWERING = 2;
+    private static final int WAITING = 0, LISTENING = 1, ANSWERING = 2, TOGETHER = 3;
 
     private final String name;
     private final Clock clock;
-    private final Ear ear = new Ear();
+    private final Ear ear = new Ear();        // on everyone else
+    private final Ear ownEar = new Ear();     // on itself
+    private long ownHitsUsed;
+    private double heaviest;                  // the heaviest hit it has heard from the record
+    private long ticksTogether; private long placedTogether = -1; private long placedTogetherAt;
     private final Kit kit = new Kit();
     private final SplittableRandom chance;
     private final double comfortable;
     private final int bars;               // bars it will play in all its answers
+    private final int allBars;            // and counting the bars it plays together with the record
 
     private double listening;             // how strongly it follows what it hears
     private double trying = TRY;
@@ -129,7 +139,6 @@ public final class Drummer implements Player {
     private long strikeAt = -1;
     private byte strikeSound;
     private int strikeSlot;
-    private long lastStrike = Long.MIN_VALUE / 2;
     private boolean landing;
     private double lastPulse;
     private long endAt = -1;
@@ -139,17 +148,18 @@ public final class Drummer implements Player {
     private int hitCount;
 
     public Drummer(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
-                   int ticksSoFar, String patternSoFar, int answers, long seed) {
+                   int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed) {
         this.name = name;
         this.listening = listeningSoFar;
         this.ticks = ticksSoFar;
         for (int i = 0; i < SLOTS; i++) pattern[i] = Kit.read(i < patternSoFar.length() ? patternSoFar.charAt(i) : '.');
         this.bars = answers * TURN;
+        this.allBars = bars + barsTogether;
         this.comfortable = Audio.periodOf(comfortableBpm);
         this.clock = new Clock(comfortable, 0);
         this.chance = new SplittableRandom(seed);
         this.experience = experienceSoFar;
-        this.hits = new long[bars * SLOTS + 8];
+        this.hits = new long[allBars * SLOTS + 8];
         this.hitSlots = new int[hits.length];
     }
 
@@ -159,17 +169,18 @@ public final class Drummer implements Player {
     int trust() { return (int) Math.min(Ear.MEMORY, 1 + experience / 12); }
 
     @Override
-    public void hear(float[] heard, int n, long blockStart) {
-        ear.listen(heard, n, blockStart);
+    public void hear(float[] others, float[] own, int n, long blockStart) {
+        ear.listen(others, n, blockStart);
         if (ear.hitsEver() != hitsUsed) {
             hitsUsed = ear.hitsEver();
-            long at = ear.hitTime();
-            boolean mine = at - lastStrike >= 0 && at - lastStrike <= Audio.samples(MINE);
-            if (!mine) someoneElse(at, ear.hitBright(), ear.hitLoud());
-            else {                                           // its own hit, come back: only these tell it how it is playing
-                if (mineBefore >= 0) ownGap(at - mineBefore);
-                mineBefore = at;
-            }
+            someoneElse(ear.hitTime(), ear.hitBright(), ear.hitLoud());
+        }
+        ownEar.listen(own, n, blockStart);
+        if (ownEar.hitsEver() != ownHitsUsed) {              // only its own hits tell it how it is playing
+            ownHitsUsed = ownEar.hitsEver();
+            long at = ownEar.hitTime();
+            if (mineBefore >= 0 && (mode == ANSWERING || mode == TOGETHER)) ownGap(at - mineBefore);
+            mineBefore = at;
         }
     }
 
@@ -177,15 +188,23 @@ public final class Drummer implements Player {
     private void someoneElse(long at, boolean bright, double loud) {
         byte kind = bright ? PAN : POT;
         double tick = clock.period() / ticks;
+        if (loud > heaviest) heaviest = loud;
+        if (mode == TOGETHER) { alongside(at, loud, tick); return; }
         if (mode == ANSWERING) {
             boolean firstBar = bar % TURN == 0 && tickInBar > 0;
             if (firstBar) return;                            // too soon to be the record coming back; let it go
-            if (bar % TURN != 0) {                           // the record is back before it finished: stop and listen
+            if (bar % TURN != 0) {                           // the record is back before it finished
                 cutShort++;
                 strikeAt = -1;
                 bar = (bar / TURN + 1) * TURN; tickInBar = 0;
             }
             endOfAnswer();
+            if (bar >= bars) {                               // that was its last answer: this is the record's one, play on from it
+                mode = TOGETHER;
+                clock.startAt(at + tick); tickInBar = 1; ticksTogether = 1;
+                placedTogether = 0; placedTogetherAt = at;
+                return;
+            }
             mode = WAITING;
         }
         if (mode == WAITING) {                               // the first hit after the quiet is the one
@@ -226,6 +245,38 @@ public final class Drummer implements Player {
             clock.pullToward((double) (at - placedAt) / (best - placedTick) * ticks, listening);
             placedTick = best; placedAt = at;
         }
+    }
+
+    /** A hit of the record's while it is playing too. */
+    private void alongside(long at, double loud, double tick) {
+        int barTicks = PULSES * ticks;
+        int back = 0; double off = Double.MAX_VALUE;
+        for (int b = 0; b <= 2; b++) {
+            double d = at - (clock.nextBeat() - b * tick);
+            if (Math.abs(d) < Math.abs(off)) { off = d; back = b; }
+        }
+        boolean heavy = loud > NEARLY_THE_HEAVIEST * heaviest;
+        if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) {
+            if (heavy) {                                     // the one, where it has no tick: count again from here
+                if (tickInBar > barTicks / 2) bar++;
+                clock.startAt(at + tick); tickInBar = 1;
+                ticksTogether++; placedTogether = ticksTogether - 1; placedTogetherAt = at;
+                strikeAt = -1;
+                refoundTheOne++;
+            }
+            return;
+        }
+        int inBar = ((tickInBar - back) % barTicks + barTicks) % barTicks;
+        if (heavy && inBar != 0) {                           // on one of its ticks, but that tick is the one
+            if (inBar > barTicks / 2 && tickInBar - back >= 0) bar++;
+            tickInBar = ((tickInBar - inBar) % barTicks + barTicks) % barTicks;
+            refoundTheOne++;
+        }
+        clock.nudge(TAP * off);
+        long which = ticksTogether - back;
+        if (placedTogether >= 0 && which > placedTogether)
+            clock.pullToward((double) (at - placedTogetherAt) / (which - placedTogether) * ticks, listening);
+        if (which > placedTogether) { placedTogether = which; placedTogetherAt = at; }
     }
 
     /** A gap between two of its own hits, come back through the room. */
@@ -298,9 +349,10 @@ public final class Drummer implements Player {
         if (ticks < 4 && tickUnevenness() < EARN) {
             if (++evenBars >= 2) { ticks *= 2; evenBars = 0; tickCount = 0; }
         } else evenBars = 0;
-        if (bar % TURN == 0) {
+        if (mode == ANSWERING && bar % TURN == 0) {
             endOfAnswer();
             if (bar < bars) mode = WAITING;                  // quiet now, until the record's one
+            else if (allBars > bars) { mode = TOGETHER; ticksTogether = 0; placedTogether = -1; }   // play on, with the record
         }
     }
 
@@ -391,7 +443,7 @@ public final class Drummer implements Player {
                 if (mode == WAITING) break;
             }
             int slot = tickInBar * (SLOTS / PULSES / ticks);
-            boolean last = bar >= bars;                      // the one after its last answer: where it lands
+            boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             byte sound = last ? POT : pattern[slot];
             if (sound != REST) {
                 long meant = Math.round(clock.nextBeat() + chance.nextGaussian() * Audio.samples(slip()));
@@ -402,14 +454,14 @@ public final class Drummer implements Player {
             }
             if (last) break;
             step();
-            if (++tickInBar == PULSES * ticks) { tickInBar = 0; bar++; }
+            if (mode == TOGETHER) ticksTogether++;
+            if (++tickInBar >= PULSES * ticks) { tickInBar = 0; bar++; }
         }
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
                 kit.strike(strikeSound, (float) (Kit.weight(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitSlots[hitCount++] = strikeSlot; }
                 experience++;
-                lastStrike = blockStart + i;
                 strikeAt = -1;
                 if (landing) { lastPulse = clock.period(); endAt = blockStart + i + Math.round(lastPulse); }
             }
@@ -439,6 +491,8 @@ public final class Drummer implements Player {
     public int hitCount() { return hitCount; }
     public long hitAt(int i) { return hits[i]; }
     public int hitSlot(int i) { return hitSlots[i]; }
+    /** The first place, counted from the start, that belongs to the bars played together with the record. */
+    public int togetherFrom() { return bars * SLOTS; }
     public double tempoNow() { return Audio.bpmOf(clock.period()); }
     public double lastPulse() { return lastPulse; }
     public long experience() { return experience; }

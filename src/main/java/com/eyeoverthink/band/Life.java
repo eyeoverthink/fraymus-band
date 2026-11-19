@@ -71,7 +71,7 @@ public final class Life {
     }
 
     public void remember(String lesson, int answers, int hits, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs,
-                         double listeningNow, int ticksNow, String patternNow, int matches) throws IOException {
+                         double listeningNow, int ticksNow, String patternNow, int matches, int barsTogether, double apartMs) throws IOException {
         sessions++;
         hitsPlayed += hits;
         listening = listeningNow; ticks = ticksNow; pattern = patternNow;
@@ -82,7 +82,9 @@ public final class Life {
         set("pattern", patternNow);
         lines.add(String.format(Locale.ROOT,
             "session %d: heard \"%s\", answers=%d, hits=%d, tempo %.1f to %.1f bpm, unsteadiness %.1f ms at the start, %.1f ms by the end, listening %.2f, ticks to the pulse %d, pattern %s, like the lesson in %d of 16 places",
-            sessions, lesson, answers, hits, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow, ticksNow, patternNow, matches));
+            sessions, lesson, answers, hits, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow, ticksNow, patternNow, matches)
+            + (barsTogether == 0 ? "" : apartMs < 0 ? String.format(Locale.ROOT, ", %d bars with the record but never landed near it", barsTogether)
+                                                    : String.format(Locale.ROOT, ", %d bars with the record, %.0f ms apart", barsTogether, apartMs)));
         if (file.getParent() != null) Files.createDirectories(file.getParent());
         Files.write(file, lines, StandardCharsets.UTF_8);
     }

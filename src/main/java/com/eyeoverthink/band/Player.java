@@ -7,9 +7,9 @@ package com.eyeoverthink.band;
 public interface Player {
     String name();
 
-    /** What reached this player's ears during this block. {@code blockStart} is the sample time of {@code heard[0]}. */
-    void hear(float[] heard, int n, long blockStart);
+    /** What reached this player during this block: everyone else, and its own sound. */
+    void hear(float[] others, float[] own, int n, long blockStart);
 
-    /** Add this player's sound for this block to {@code out}. */
+    /** Put this player's sound for this block into {@code out}. */
     void play(float[] out, int n, long blockStart);
 }

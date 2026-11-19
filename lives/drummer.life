@@ -3,7 +3,7 @@ age: 0
 listens to itself: 0.77
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
-pattern: p..pn...p.p.n..n
+pattern: pn.pn...p.p.n..n
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
 session 2: bars=16, hits=65, tempo 92.0 to 95.7 bpm, unsteadiness 20.7 ms at the start, 16.8 ms by the end, listening 0.39, ticks to the pulse 1, pattern p...p...n...p...
@@ -21,3 +21,5 @@ session 13: heard "first lesson", answers=6, hits=85, tempo 92.0 to 95.6 bpm, un
 session 14: heard "first lesson", answers=6, hits=85, tempo 92.0 to 93.8 bpm, unsteadiness 12.6 ms at the start, 13.8 ms by the end, listening 0.95, ticks to the pulse 4, pattern p..pn...n.p.n..n, like the lesson in 15 of 16 places
 session 15: heard "first lesson", answers=6, hits=86, tempo 92.0 to 93.2 bpm, unsteadiness 7.3 ms at the start, 8.5 ms by the end, listening 0.83, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
 session 16: heard "first lesson", answers=6, hits=93, tempo 92.0 to 97.0 bpm, unsteadiness 7.1 ms at the start, 8.8 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
+session 17: heard "first lesson", answers=4, hits=126, tempo 92.0 to 95.9 bpm, unsteadiness 5.4 ms at the start, 6.3 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...n.p.n.nn, like the lesson in 14 of 16 places, 8 bars with the record, 9 ms apart
+session 18: heard "first lesson", answers=4, hits=128, tempo 92.0 to 96.2 bpm, unsteadiness 7.0 ms at the start, 12.0 ms by the end, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, like the lesson in 15 of 16 places, 8 bars with the record, 13 ms apart

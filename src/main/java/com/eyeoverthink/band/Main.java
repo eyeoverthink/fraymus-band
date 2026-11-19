@@ -6,7 +6,7 @@ import java.util.Locale;
 /** Put a record on, sit the drummer down, and write what happened. */
 public final class Main {
     public static void main(String[] args) throws Exception {
-        int answers = 6;
+        int answers = 4, together = 8;
         long seed = System.nanoTime();
         Path wav = Path.of("out", "session.wav");
         Path life = Path.of("lives", "drummer.life");
@@ -14,15 +14,16 @@ public final class Main {
         for (int i = 0; i + 1 < args.length; i += 2) {
             switch (args[i]) {
                 case "--answers" -> answers = Integer.parseInt(args[i + 1]);
+                case "--together" -> together = Integer.parseInt(args[i + 1]);
                 case "--seed" -> seed = Long.parseLong(args[i + 1]);
                 case "--out" -> wav = Path.of(args[i + 1]);
                 case "--life" -> life = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         Lesson lesson = Lesson.read(lessonFile);
-        Session.Report r = Session.run(wav, life, lesson, answers, seed);
+        Session.Report r = Session.run(wav, life, lesson, answers, together, seed);
         System.out.printf(Locale.ROOT, "The record played \"%s\" at %.0f bpm: %s%n", lesson.name(), lesson.tempo(), lesson.bar());
         System.out.printf(Locale.ROOT, "With %d ticks to the pulse the drummer heard it as: %s%n", r.ticksAfter(), r.lessonAsHeard());
         System.out.printf(Locale.ROOT, "Its pattern before: %s (like the lesson in %d of 16 places)%n", r.patternBefore(), r.matchesBefore());
@@ -31,6 +32,11 @@ public final class Main {
             r.answers(), r.hits(), r.seconds(), r.copied(), r.ownIdeas(), r.changesKept(), r.changesTakenBack(), r.cutShort());
         System.out.printf(Locale.ROOT, "Ticks to the pulse: %d before, %d after. Listening: %.2f before, %.2f after.%n", r.ticksBefore(), r.ticksAfter(), r.listeningBefore(), r.listeningAfter());
         System.out.printf(Locale.ROOT, "Unsteadiness: %.1f ms at the start, %.1f ms by the end. Its tempo ended at %.1f bpm.%n", r.earlyUnsteadyMs(), r.lateUnsteadyMs(), r.endedBpm());
+        if (r.barsTogether() > 0) {
+            System.out.printf(Locale.ROOT, "Together for %d bars: %d of its hits landed with the record, %.0f ms apart on average (%+.0f ms: plus is behind the record); %d landed nowhere near.%n",
+                r.barsTogether(), r.hitsTogether(), r.apartMs(), r.leanMs(), r.alone());
+            System.out.printf(Locale.ROOT, "Their last hits were %.0f ms apart.%n", Math.abs(r.landedApartMs()));
+        }
         System.out.printf(Locale.ROOT, "It landed on the one and let it ring %.2f s; its pulse was %.2f s.%n", r.ringSeconds(), r.lastPulseSeconds());
         System.out.println("Wrote " + r.wav() + " and added the session to " + life);
     }

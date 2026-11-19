@@ -5,7 +5,7 @@ public final class Audio {
     /** Samples per second. */
     public static final int RATE = 44_100;
     /** Samples handled per step. Everything is sized from this once, before the first note. */
-    public static final int BLOCK = 256;
+    public static final int BLOCK = 64;
 
     private Audio() {}
 

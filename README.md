@@ -30,7 +30,15 @@ in four an idea of its own. If the answer sounded clearly more uneven than its p
 change was more than its hand could hold and it takes it back. The one of the bar stays on the pot, and a
 pulse is never left empty. If the record comes back before it has finished, it stops and listens.
 
-**The ending.** After its last answer it lands the one of the next bar and lets that hit ring for one pulse
+**Together.** After the last answer the record plays straight through and the drummer keeps playing. It
+still puts every hit of the record's at the nearest tick it has, shifts its own tick part of the way
+toward it, and leans its pulse toward the record's. Nothing else holds the two clocks together. If a
+heavy hit lands where it has no tick, it takes that as the one and counts again from there.
+
+**The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
+else's in 9 ms, so it can tell its own hits from the others'.
+
+**The ending.** After its last bar it lands the one of the next bar and lets that hit ring for one pulse
 of its own clock, whatever its tempo has become.
 
 **Its life.** `lives/drummer.life` is read before every session and added to after it. Its listening, its
@@ -42,11 +50,11 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.3.0.jar
+    java -jar target/fraymus-band-0.4.0.jar
 
-The record plays `lessons/first.lesson`, the drummer answers six times, the take goes to
-`out/session.wav`, and a line is added to `lives/drummer.life`.
-Options: `--lesson FILE --answers N --seed N --out FILE --life FILE`.
+The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
+together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
+Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life FILE`.
 
 ## Write your own lesson
 
@@ -59,31 +67,33 @@ nothing. Put the heaviest hit on the one; that is how the drummer finds it.
 
 ## What was measured
 
-Forty drummers, each living twenty-four sessions with the first lesson.
+Forty drummers, each living twenty-four sessions with the first lesson: four answers, then eight bars
+together. "Apart" is how far each of the drummer's hits landed from the record's nearest hit.
 
-| Session | Like the lesson (of 16 places) | Have two ticks | Have four ticks | Unsteadiness (ms) | Listening |
-|--------:|-------------------------------:|---------------:|----------------:|------------------:|----------:|
-| 1  | 11.9 | 1 of 40 | 0 of 40 | 18.1 | 0.18 |
-| 4  | 12.0 | 7  | 0  | 16.2 | 0.35 |
-| 8  | 12.6 | 26 | 4  | 11.7 | 0.54 |
-| 12 | 13.2 | 34 | 10 | 11.3 | 0.58 |
-| 16 | 14.1 | 39 | 21 | 9.8  | 0.63 |
-| 20 | 14.5 | 39 | 30 | 9.5  | 0.66 |
-| 24 | 14.4 | 40 | 35 | 8.9  | 0.61 |
+| Session | Apart, playing together (ms) | Last hits within 40 ms | Like the lesson (of 16) | Have two ticks | Have four ticks | Unsteadiness (ms) |
+|--------:|-----------------------------:|-----------------------:|------------------------:|---------------:|----------------:|------------------:|
+| 1  | 26.7 | 20 of 40 | 11.9 | 9  | 0  | 17.7 |
+| 4  | 27.6 | 21 | 12.1 | 29 | 3  | 13.4 |
+| 8  | 20.1 | 35 | 12.9 | 38 | 16 | 9.9  |
+| 12 | 18.0 | 33 | 14.0 | 40 | 27 | 9.2  |
+| 16 | 17.1 | 36 | 14.4 | 40 | 34 | 7.9  |
+| 20 | 15.4 | 35 | 14.2 | 40 | 39 | 7.9  |
+| 24 | 16.4 | 35 | 14.4 | 40 | 40 | 7.2  |
 
-A drummer playing only the pot on every pulse already matches 11 of 16 places, because most places in
-this lesson are empty. Practised drummers hear the whole lesson correctly in 19 of 20 takes with four
-ticks, and their part of it in 15 of 20 takes with two.
+About 9 to 10 ms of "apart" is the room: the drummer hears the record 9 ms late and plays to what it
+hears, so it sits that far behind. A drummer playing only the pot on every pulse already matches 11 of
+16 places, because most places in this lesson are empty.
 
-`mvn test` reproduces the table and fails if nobody has to grow into the lesson, or if a drummer plays or
-hears a place its ticks cannot reach.
+`mvn test` reproduces the table and fails if practice stops bringing the drummer closer to the record,
+or if a drummer plays or hears a place its ticks cannot reach.
 
 ## What is given and what is learned
 
 - Learned by the drummer: how much to listen, which ticks it can hold, its pattern, and the lesson, by ear.
 - Given to it: its hand gets surer with every hit by a fixed rule. A heavier hit on the one and lighter
   hits on the small ticks. The one stays on the pot. Tapping along to what it hears is a reflex. The form
-  (two bars of record, two bars of answer) is told to it.
+  (two bars of record, two bars of answer, then so many bars together) is told to it. It can tell its
+  own hits from everyone else's.
 - Not there yet: taste of its own. It copies the one record it hears. Its own ideas are picked by chance.
 
 ## Known limits
@@ -92,7 +102,8 @@ hears a place its ticks cannot reach.
 - It finds the one by weight, so a lesson with nothing on the one will confuse it.
 - A drummer that has drifted far from the record can lose its place for a whole call and hear almost
   nothing of the lesson that round.
-- The record and the drummer take turns. They do not yet play at the same time.
+- It plays behind the record by the time sound takes to cross the room. It has not learned to lean ahead.
+- The record does not listen. Only the drummer adjusts.
 - Mono, one drummer.
 
 ## Layout
