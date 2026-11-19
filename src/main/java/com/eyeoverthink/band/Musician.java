@@ -72,6 +72,13 @@ import java.util.SplittableRandom;
  * has earned its second note: the same note an octave up. From then on it stops ignoring the bright hits.
  * It puts the low note where it hears a pot and the high note where it hears a pan.
  *
+ * Settling. Each of the sixteen places in its bar has a habit, from 0 to 9. Every round, a place where what
+ * it plays agrees with what it hears gets one more settled; a place where it does not gets two less; a
+ * place it has just changed starts again from nothing. An idea of its own at a place only goes ahead if
+ * chance beats that place's habit, so a place at 9 takes a new idea one time in ten and a place at 0
+ * always. Copying what it hears is never held back. So a young player is restless everywhere, and an old
+ * one mostly leaves alone what has worked for a long time. Its habits are written into its life.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -176,6 +183,8 @@ public final class Musician implements Player, Hits {
     private int ticks;                    // ticks to the pulse it can hold: 1, 2 or 4
     private int evenBars;
     private final byte[] pattern = new byte[SLOTS];
+    private final int[] habit = new int[SLOTS];   // how settled each place is, 0 to 9
+    private int ideasHeldBack;
     private int triedSlot = -1;
     private byte triedWas;
     private int changesKept, changesTakenBack, copied, ownIdeas, cutShort;
@@ -578,6 +587,12 @@ public final class Musician implements Player, Hits {
     /** Could it hold the change it tried? */
     private void endOfAnswer() {
         double rough = roundGaps > 0 ? roundUneven / roundGaps : 0;
+        int step = SLOTS / PULSES / ticks;                   // every place it can reach gets more settled, or less
+        for (int s = 0; s < SLOTS; s += step) {
+            if (s == triedSlot) habit[s] = 0;
+            else if (!hasLesson || !wants(s)) habit[s] = Math.min(9, habit[s] + 1);
+            else habit[s] = Math.max(0, habit[s] - 2);
+        }
         if (triedSlot >= 0) {
             if (roundGaps > 0 && rough > HOLD && usual >= 0 && rough > ROUGHER * usual) { pattern[triedSlot] = triedWas; changesTakenBack++; }
             else changesKept++;
@@ -645,6 +660,7 @@ public final class Musician implements Player, Hits {
         int step = SLOTS / PULSES / ticks;
         int slot = step * chance.nextInt(SLOTS / step);
         if (slot == 0) return false;
+        if (chance.nextInt(10) < habit[slot]) { ideasHeldBack++; return false; }   // too settled there to bother
         byte was = pattern[slot];
         if (oneNote) pattern[slot] = was != REST ? REST : notes >= 2 && chance.nextBoolean() ? PAN : POT;
         else pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
@@ -758,6 +774,17 @@ public final class Musician implements Player, Hits {
     public int refoundTheOne() { return refoundTheOne; }
     public int cameInAlone() { return cameInAlone; }
     public String plays() { return hands.describe(); }
+    /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
+    public String habits() {
+        char[] c = new char[SLOTS];
+        for (int i = 0; i < SLOTS; i++) c[i] = (char) ('0' + habit[i]);
+        return new String(c);
+    }
+    /** Where its life says its habits had got to. */
+    public void habits(String soFar) {
+        for (int i = 0; i < SLOTS && i < soFar.length(); i++) habit[i] = Math.max(0, Math.min(9, soFar.charAt(i) - '0'));
+    }
+    public int ideasHeldBack() { return ideasHeldBack; }
     /** How many notes a bass player has earned. */
     public int notes() { return notes; }
     /** How far out of tune its notes were this session on average, by its own ear, in hundredths of a semitone. */

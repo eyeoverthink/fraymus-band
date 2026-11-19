@@ -81,6 +81,13 @@ hundredths of a semitone on average, two bars running, it has earned its second 
 up. From then on it stops ignoring the bright hits. It puts the low note where it hears a pot and the
 high note where it hears a pan. In its pattern `p` is the low note and `n` the high one.
 
+**Settling.** Each of the sixteen places in a player's bar has a habit, from 0 to 9. Every round, a place
+where what it plays agrees with what it hears gets one more settled; a place where it does not gets two
+less; a place it has just changed starts again from nothing. An idea of its own at a place only goes
+ahead if chance beats that place's habit: always at 0, one time in ten at 9. Copying what it hears is
+never held back. So a young player is restless everywhere and an old one mostly leaves alone what has
+worked for a long time. Habits are written into its life.
+
 **The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
 else's in 9 ms, so it can tell its own hits from the others'. It learns how long after it hits it hears
 itself, and it can see how much farther away the others are, so it places their hits when they were
@@ -98,7 +105,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.10.0.jar
+    java -jar target/fraymus-band-0.11.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -106,21 +113,21 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.10.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.11.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
@@ -215,6 +222,16 @@ practised drummers and a click. The drummers' pots fall on four places of the ba
 Most of them settle on `p...n...p.p.n...`: the low note with the pots, the high note with the pans.
 Nobody told them to; it is what they listen for.
 
+**Settling.** The same lives measured before and after players had habits.
+
+| | Before | With habits |
+|---|---:|---:|
+| Bass player, sessions 13 to 24: ends on the pattern most of them find | 60 of 144 takes | 105 of 144 |
+| Bass player, sessions 13 to 24: ends a session on the pattern it began with | 31 of 144 | 101 of 144 |
+| Bass player: ideas of its own per session | 3.3 | 1.0 |
+| Drummer with the record, sessions 21 to 30: plays the lesson exactly | 48 of 120 | 96 of 120 |
+| Taught by a drummer for 16 sessions: like the teacher (of 16) | 13.4 | 14.6 |
+
 Without a click a newborn bass player beside two drummers loses its place: in twelve takes it ended
 together with them in none.
 
@@ -246,7 +263,10 @@ drummer plays or hears a place its ticks cannot reach.
 - Without a click, a newborn pulls a practised drummer's time around. Nobody yet decides whom to follow.
 - The bass has two notes, a low E and the E above. Two notes an octave apart is not yet a bass line.
 - A bass player rarely earns four ticks to the pulse, so it seldom reaches the drummers' sixteenth notes.
-- The bass player's own ideas keep knocking its part off the pattern it found.
+- Settling is not taste. A player settles on agreeing with what it hears. An idea of its own that nobody
+  else plays never lasts, so nothing original survives.
+- What a player has learned wanders. Listening and leaning are found by trial on noisy evidence, and a
+  player can drift into a bad stretch. Late in life about one take in ten has someone unsteadier than 14 ms.
 - Without a click, three players do not hold together.
 - The drummers do not listen to the bass for anything but time.
 - Mono.

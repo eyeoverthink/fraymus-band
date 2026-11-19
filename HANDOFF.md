@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.10.0. 28 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.11.0. 30 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -82,6 +82,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 8 | With a click, each drummer also learns how much to lean its tick toward the others, so they land together while the click holds the tempo. |
 | 9 | The first non-drummer: a bass player with one note. Same player class, different instrument. It listens for the pots and moves its notes onto them while it plays. The class `Drummer` was renamed `Musician`. This handoff was written. |
 | 10 | The bass earns a second note (the octave) by playing in tune, judged by its own ear on its own sound. With two notes it puts the low one on the pots and the high one on the pans. |
+| 11 | Settling. Every place in a player's bar has a habit (0 to 9) that grows while what it plays agrees with what it hears. Its own ideas are held back at settled places. Players now stay on a pattern they have found. |
 
 ### The players that exist (do not reset these)
 
@@ -102,11 +103,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.10.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.10.0.jar --click on
-    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.10.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.11.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.11.0.jar --click on
+    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.11.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -142,7 +143,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepElevenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -160,6 +161,7 @@ Learned, by trial, and saved in its life:
 - **pattern**: sixteen places. One change per round; kept unless that round sounded clearly rougher than
   its playing usually does.
 - **the lesson**: only what it heard, at the places its ticks reach.
+- **habits**: sixteen digits, how settled each place of its bar is.
 - **notes** (bass: 1 or 2): the second is earned when its last eight notes were within 12 hundredths of a
   semitone on average, two bars running.
 - **leaning on the others** (0 to 0.6): with a click, how far it shifts its tick toward other players.
@@ -204,6 +206,9 @@ Given, as fixed rules (be honest about these):
   45 ms after.
 - **Measuring pitch from the whole shape of the note was off by up to 13 hundredths of a semitone**, because
   the upper tones die away at different speeds. `PitchEar` follows only the bottom tone.
+- **Tried and taken back out (step 11):** making a player weigh its own steadiness when judging how hard to
+  lean on the others. It sounded right and measured no better (36 rough takes in 256 against 25), so it
+  was removed. Do not keep a change because it is plausible; measure it.
 - **A take that never ended**, twice: a waiting player with nobody left to wait for (it now comes in alone
   after two bars), and a final hit cancelled by a re-anchor. `Session` now throws if a take runs absurdly
   long, so a hang shows up as a failed test.
@@ -227,8 +232,13 @@ Given, as fixed rules (be honest about these):
 - Every session starts at 92 bpm, the tempo the players' bodies like.
 - The bass has two notes an octave apart. That is not yet a bass line.
 - A bass player rarely earns four ticks to the pulse.
-- Every player's own ideas (one change in four) keep knocking it off a pattern it has found. There is no
-  taste yet, and nothing that says "this is good, stop changing it".
+- Settling is not taste. Players settle on agreeing with what they hear; an idea nobody else plays never
+  lasts. Nothing original survives yet.
+- **Learned settings wander.** Listening and leaning are found by hill-climbing on noisy evidence. In the
+  real band, over sessions 25 to 42, the bass player's listening fell from 0.81 to 0.29 and its unsteadiness
+  rose from 6 to about 18 ms. Averaged over many simulated bands there is no decline, but any one player can
+  have a bad stretch: about one take in ten late in life has someone unsteadier than 14 ms. This needs a
+  steadier way of learning (longer evidence before each change, or smaller steps as a player ages).
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -240,6 +250,7 @@ Given, as fixed rules (be honest about these):
 
 The bass player exists (step 9). Roughly in this order unless Vaughn says otherwise:
 
+0. Probably first: stop learned settings wandering (see section 7).
 1. More notes for the bass (a fifth, then a scale), each earned by playing the ones it has in tune. A third
    note needs a third symbol in the pattern and a reason to choose it; pots and pans only give two.
 2. Lessons in other feels (a clave, a hip hop bar, a swing bar). "Genre lives in the ticks."

@@ -23,6 +23,7 @@ public final class Life {
     private int ticks = 1;
     private double leaning;
     private int notes = 1;
+    private String habits = "0000000000000000";
     private String sounds = "a pot (p) and a pan (n)";
     private String pattern = Musician.FIRST_PATTERN;
 
@@ -41,6 +42,7 @@ public final class Life {
                 if (s.startsWith("name:")) life.name = s.substring(5).trim();
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
+                else if (s.startsWith("habits:")) life.habits = s.substring(7).trim();
                 else if (s.startsWith("notes:")) life.notes = Integer.parseInt(s.substring(6).trim());
                 else if (s.startsWith("ticks to the pulse:")) life.ticks = Integer.parseInt(s.substring(19).trim());
                 else if (s.startsWith("pattern:")) life.pattern = s.substring(8).trim();
@@ -72,6 +74,11 @@ public final class Life {
     public double leaning() { return leaning; }
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
+
+    /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
+    public String habits() { return habits; }
+    /** Note where its habits have got to. It is written with the next session. */
+    public void habits(String now) { habits = now; set("habits", now); }
 
     /** How many notes a bass player has earned. */
     public int notes() { return notes; }

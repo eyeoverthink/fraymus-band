@@ -35,7 +35,7 @@ public final class Session {
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
         float[] fromRecord = new float[Audio.BLOCK], fromDrummer = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
-        drummer.leaning(life.leaning());
+        drummer.leaning(life.leaning()); drummer.habits(life.habits());
         double startedBpm = drummer.tempoNow();
 
         long now = 0;
@@ -71,7 +71,7 @@ public final class Session {
                 drummer.hitSlot(n - 1), Audio.seconds(out.samples() - drummer.hitAt(n - 1)), drummer.lastPulse() / Audio.RATE,
                 out.peak(), wav,
                 barsTogether, together, together == 0 ? 0 : apart / together, together == 0 ? 0 : lean / together, alone, landedApart);
-            life.leaning(drummer.leaning());
+            life.leaning(drummer.leaning()); life.habits(drummer.habits());
             life.remember(lesson.name(), answers, n, startedBpm, drummer.tempoNow(), early, late, drummer.listening(), drummer.ticks(),
                 drummer.pattern(), lesson.matches(drummer.pattern()), barsTogether, together == 0 ? -1 : apart / together);
             return report;
@@ -124,7 +124,7 @@ public final class Session {
         Life lifeA = Life.open(firstLife, "the drummer"), lifeB = Life.open(secondLife, "the second drummer");
         Musician a = Musician.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, start, seed);
         Musician b = Musician.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, start, seed ^ 0x9E3779B97F4A7C15L);
-        a.leaning(lifeA.leaning()); b.leaning(lifeB.leaning());
+        a.leaning(lifeA.leaning()); b.leaning(lifeB.leaning()); a.habits(lifeA.habits()); b.habits(lifeB.habits());
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
         float[] fromA = new float[Audio.BLOCK], fromB = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
@@ -154,7 +154,7 @@ public final class Session {
             Part second = new Part(lifeB.name(), b.hitCount(), uB, lifeB.listening(), b.listening(), lifeB.ticks(), b.ticks(), b.pattern(), bToA.alone(), lifeB.leaning(), b.leaning());
             Duo duo = new Duo(bars, Audio.seconds(out.samples()), first, second, bToA.together(), bToA.ms(), bToA.leanMs(), bToA.landed(),
                 tempoOver(a, 0, 2), tempoOver(a, bars - 2, bars), out.peak(), wav);
-            lifeA.leaning(a.leaning()); lifeB.leaning(b.leaning());
+            lifeA.leaning(a.leaning()); lifeB.leaning(b.leaning()); lifeA.habits(a.habits()); lifeB.habits(b.habits());
             lifeA.rememberTogether(lifeB.name(), bars, a.hitCount(), uA, a.listening(), a.ticks(), a.pattern(), bToA.together(), bToA.ms());
             lifeB.rememberTogether(lifeA.name(), bars, b.hitCount(), uB, b.listening(), b.ticks(), b.pattern(), bToA.together(), bToA.ms());
             return duo;
@@ -184,7 +184,7 @@ public final class Session {
         Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer");
         Musician t = Musician.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, start, seed);
         Musician l = new Musician(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
-        t.leaning(lifeT.leaning()); l.leaning(lifeL.leaning());
+        t.leaning(lifeT.leaning()); l.leaning(lifeL.leaning()); t.habits(lifeT.habits()); l.habits(lifeL.habits());
         Lesson given = new Lesson(lifeT.name(), 92.0, lifeT.pattern());      // only used afterwards, to count how alike they ended
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
@@ -216,7 +216,7 @@ public final class Session {
                 lifeL.name(), l.hitCount(), lifeL.ticks(), l.ticks(), l.lessonAsHeard(), lifeL.pattern(), l.pattern(), before, after,
                 l.copied(), l.ownIdeas(), l.changesKept(), l.changesTakenBack(), l.cutShort(), lifeL.listening(), l.listening(), uL,
                 with.together(), with.ms(), with.alone(), barsTogether == 0 ? 0 : with.landed(), out.peak(), wav);
-            lifeT.leaning(t.leaning()); lifeL.leaning(l.leaning());
+            lifeT.leaning(t.leaning()); lifeL.leaning(l.leaning()); lifeT.habits(t.habits()); lifeL.habits(l.habits());
             lifeT.rememberTaught(lifeL.name(), calls, barsTogether, t.hitCount(), uT, t.listening(), t.ticks(), t.pattern(), after);
             lifeL.remember(lifeT.name(), calls, l.hitCount(), 92.0, l.tempoNow(), unsteadiness(l, 0, Math.min(24, l.hitCount() / 2)),
                 unsteadiness(l, l.hitCount() - Math.min(24, l.hitCount() / 2), l.hitCount()), l.listening(), l.ticks(), l.pattern(), after,
@@ -249,7 +249,7 @@ public final class Session {
             players[i] = i == bassAt
                 ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)
                 : Musician.withAnother(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, i == 0, start, chance);
-            players[i].leaning(lives[i].leaning());
+            players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits());
             lives[i].plays(players[i].plays());
         }
         Room room = new Room(n, NEAR, ACROSS);
@@ -305,7 +305,7 @@ public final class Session {
                 names.setLength(0);
                 for (int k = 0; k < n; k++) if (k != i) names.append(names.length() == 0 ? "" : " and ").append(lives[k].name());
                 Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
-                lives[i].leaning(players[i].leaning());
+                lives[i].leaning(players[i].leaning()); lives[i].habits(players[i].habits());
                 if (i == bassAt) lives[i].notes(players[i].notes());
                 lives[i].rememberTogether(names.toString(), bars, players[i].hitCount(), parts.get(i).unsteadyMs(), players[i].listening(),
                     players[i].ticks(), players[i].pattern(), a.together(), a.ms());
