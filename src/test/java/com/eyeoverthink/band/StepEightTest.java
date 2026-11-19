@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step seven: a click in the players' ears. */
-class StepSevenTest {
+/** Step eight: with a click, each drummer also learns how much to lean on the others. */
+class StepEightTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -167,6 +167,28 @@ class StepSevenTest {
             }
         System.out.printf(Locale.ROOT, "CLICK after twelve lessons: like the teacher in %.1f of 16 places without a click, %.1f with one%n", like[0], like[1]);
         assertTrue(like[1] > like[0] + 0.5, "more like the teacher with a click: " + like[0] + " without, " + like[1] + " with");
+    }
+
+    @Test
+    void withAClickTheyLearnToLeanOnEachOtherAndLandCloser(@TempDir Path dir) throws Exception {
+        int pairs = 8, sessions = 8;
+        double[] apart = new double[sessions], leaning = new double[sessions];
+        for (int d = 0; d < pairs; d++) {
+            Path a = practised(dir, "a" + d + ".life", 4, LESSON.bar()), b = practised(dir, "b" + d + ".life", 4, "p...n...p.p.n...");
+            for (int s = 0; s < sessions; s++) {
+                Session.Duo duo = Session.together(dir.resolve("t.wav"), a, b, 16, 92, 1000L * d + s);
+                if (s == 0) assertEquals(0, duo.first().leaningBefore(), "nobody starts out leaning on the others");
+                else assertEquals(Life.open(a, "x").leaning(), duo.first().leaningAfter(), 0.006, "what it learned is in its life");
+                apart[s] += duo.apartMs() / pairs;
+                leaning[s] += (duo.first().leaningAfter() + duo.second().leaningAfter()) / 2 / pairs;
+                assertEquals(92, duo.tempoLastBars(), 2.0, "the click still holds the tempo");
+            }
+        }
+        for (int s = 0; s < sessions; s++)
+            System.out.printf(Locale.ROOT, "LEAN session %d: %.1f ms apart, leaning on each other %.2f%n", s + 1, apart[s], leaning[s]);
+        double late = (apart[sessions - 3] + apart[sessions - 2] + apart[sessions - 1]) / 3;
+        assertTrue(late < apart[0] - 1.5, "they land closer: " + apart[0] + " ms at first, " + late + " ms later");
+        assertTrue(leaning[sessions - 1] > 0.1, "because they learned to lean: " + leaning[sessions - 1]);
     }
 
     @Test
@@ -325,7 +347,7 @@ class StepSevenTest {
         assertEquals("p...nnn.p.p.n.n.", life.pattern());
         Session.run(dir.resolve("t.wav"), file, LESSON, 2, 0, 1);
         List<String> lines = Files.readAllLines(file);
-        assertTrue(lines.get(7).startsWith("session 1: pulses=64"), "what it lived stays as it was written");
+        assertTrue(lines.contains("session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27"), "what it lived stays as it was written");
         assertTrue(lines.get(lines.size() - 1).startsWith("session 3: heard"));
     }
 

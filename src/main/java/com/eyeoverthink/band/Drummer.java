@@ -52,6 +52,12 @@ import java.util.SplittableRandom;
  * it leans is its own listening, so a newborn follows a click badly and a practised drummer well. The click
  * says nothing about where the one is.
  *
+ * The click and the others. Its pulse comes from the click, but where exactly it puts its tick can also
+ * lean toward the other players, so their hits land together. How much it leans on them is not given to it.
+ * It starts at nothing. Every so often it tries leaning a little more or a little less, and keeps whichever
+ * made the others' hits land closer to its own ticks. Leaning on a steady player pays; leaning on an
+ * unsteady one does not, so it learns whom to follow without being told.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -96,6 +102,9 @@ public final class Drummer implements Player, Hits {
     static final double TAP = 0.5;
     /** How often a change is its own idea and not something it heard. */
     static final int OWN_IDEA_ONE_IN = 4;
+    /** How big a change in leaning on the others it tries each time, the most it ever leans, and how many hits it weighs before judging. */
+    static final double LEAN_TRY = 0.05, LEAN_MOST = 0.6;
+    static final int LEAN_JUDGE_EVERY = 16;
     /** While playing together, a hit this heavy next to the heaviest it has heard is the one. */
     static final double NEARLY_THE_HEAVIEST = 0.84;
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
@@ -114,6 +123,8 @@ public final class Drummer implements Player, Hits {
     private final Ear clickEar = new Ear();   // on the click in its ears, if there is one
     private long clicksUsed, lastClick = -1, clicksHeard;
     private boolean ticking;
+    private double leaning;               // how far it shifts its tick toward the other players when it has a click; learned
+    private double tryingLean = LEAN_TRY, farBefore = -1, farSum; private int farCount;
     private long lastStrike = -1;
     private double ownDelay = Audio.samples(Session.NEAR);   // learned from its own hits
     private double heaviest;                  // the heaviest hit it has heard from the record
@@ -335,7 +346,7 @@ public final class Drummer implements Player, Hits {
     private void alongside(long at, double loud, double tick) {
         if (landing) return;                                 // its last hit is already on its way
         if (bar < teachBars) return;                         // while it is giving the lesson it holds its own time
-        if (onAClick()) return;                              // its time comes from the click, not from the others
+        if (onAClick()) { leanOnTheOthers(at, tick); return; }   // its pulse comes from the click; only its tick leans on the others
         int barTicks = PULSES * ticks;
         int back = 0; double off = Double.MAX_VALUE;
         for (int b = 0; b <= 2; b++) {
@@ -385,6 +396,24 @@ public final class Drummer implements Player, Hits {
      */
     private void leanToward(double gap, long ticksApart) {
         clock.pullToward(gap / ticksApart * ticks, listening);
+    }
+
+    /** With a click: shift its tick a learned part of the way toward a hit of someone else's, and learn from how far off it was. */
+    private void leanOnTheOthers(long at, double tick) {
+        double off = Double.MAX_VALUE;
+        for (int b = 0; b <= 2; b++) {
+            double d = at - (clock.nextBeat() - b * tick);
+            if (Math.abs(d) < Math.abs(off)) off = d;
+        }
+        if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
+        clock.nudge(leaning * off);
+        farSum += Math.abs(off);
+        if (++farCount < LEAN_JUDGE_EVERY) return;
+        double farNow = farSum / farCount;                   // did the last change bring the others closer to its ticks?
+        farSum = 0; farCount = 0;
+        if (farBefore >= 0 && farNow > farBefore) { leaning -= tryingLean; tryingLean = -tryingLean; }
+        farBefore = farNow;
+        leaning = Math.max(0, Math.min(LEAN_MOST, leaning + tryingLean));
     }
 
     /** A gap between two of its own hits, come back through the room. */
@@ -621,6 +650,10 @@ public final class Drummer implements Player, Hits {
     public double lastPulse() { return lastPulse; }
     public long experience() { return experience; }
     public double listening() { return listening; }
+    /** How far it shifts its tick toward the other players when it has a click, from 0 to 0.6. */
+    public double leaning() { return leaning; }
+    /** Where its life says its leaning had got to. */
+    public void leaning(double soFar) { leaning = Math.max(0, Math.min(LEAN_MOST, soFar)); }
     public int ticks() { return ticks; }
     public int changesKept() { return changesKept; }
     public int changesTakenBack() { return changesTakenBack; }

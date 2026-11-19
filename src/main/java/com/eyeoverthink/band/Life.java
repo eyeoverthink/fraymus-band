@@ -21,6 +21,7 @@ public final class Life {
     private int sessions;
     private double listening = Drummer.NEWBORN_LISTENING;
     private int ticks = 1;
+    private double leaning;
     private String pattern = Drummer.FIRST_PATTERN;
 
     private Life(Path file) { this.file = file; }
@@ -33,6 +34,7 @@ public final class Life {
                 String s = line.trim();
                 if (s.startsWith("name:")) life.name = s.substring(5).trim();
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
+                else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
                 else if (s.startsWith("ticks to the pulse:")) life.ticks = Integer.parseInt(s.substring(19).trim());
                 else if (s.startsWith("pattern:")) life.pattern = s.substring(8).trim();
                 else if (s.startsWith("session ")) {
@@ -59,6 +61,11 @@ public final class Life {
     public double listening() { return listening; }
     /** How finely it can cut its pulse: 1, 2 or 4 ticks. */
     public int ticks() { return ticks; }
+    /** How far it has learned to lean on the other players when it has a click, from 0 to 0.6. */
+    public double leaning() { return leaning; }
+    /** Note where its leaning has got to. It is written with the next session. */
+    public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
+
     /** The sixteen places of its bar: p for the pot, n for the pan, a dot for nothing. */
     public String pattern() { return pattern; }
 

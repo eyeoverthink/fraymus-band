@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.eyeoverthink</groupId>
   <artifactId>fraymus-band</artifactId>
-  <version>0.7.0</version>
+  <version>0.8.0</version>
   <name>Fraymus Band</name>
   <description>Players that grow up with music. Step one: an infant drummer with one sound and its own clock.</description>
   <properties>
