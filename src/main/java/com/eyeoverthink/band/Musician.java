@@ -58,13 +58,21 @@ import java.util.SplittableRandom;
  * made the others' hits land closer to its own ticks. Leaning on a steady player pays; leaning on an
  * unsteady one does not, so it learns whom to follow without being told.
  *
+ * Other instruments. The same player can sit at a bass that has one note. Everything about time is the
+ * same: its own clock, its listening, its ticks, the click. What differs is what it plays and what it
+ * listens for. A newborn bass player has its one note on the one and nothing else. It listens for the dark
+ * hits, the pots, and ignores the bright ones. While it plays, every two bars, it changes one place its
+ * ticks can reach: most times it puts a note where it has been hearing a pot, or takes one away where it
+ * has listened four times and never heard one; one time in four it tries an idea of its own. It keeps a change unless those two bars sounded
+ * clearly rougher than its playing usually does.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
  * Its listening, its ticks and its pattern are written into its life and are where the next session starts.
  * It is never told a tempo, and it is never shown the lesson. It only hears it.
  */
-public final class Drummer implements Player, Hits {
+public final class Musician implements Player, Hits {
     /** How far the pulse wanders each pulse, as a fraction of itself. */
     static final double WANDER = 0.030;
     /** How far a newborn's hit lands from where it was meant, in seconds (one standard deviation). */
@@ -110,6 +118,8 @@ public final class Drummer implements Player, Hits {
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
     static final double FARTHER = Audio.samples(Session.ACROSS - Session.NEAR);
     public static final String FIRST_PATTERN = "p...p...p...p...";
+    /** A newborn bass player: its one note, on the one. */
+    public static final String FIRST_BASS_PATTERN = "p...............";
 
     private static final byte REST = Kit.REST, POT = Kit.POT, PAN = Kit.PAN;
     private static final long READY = Math.round(Audio.samples(0.012));
@@ -129,7 +139,8 @@ public final class Drummer implements Player, Hits {
     private double ownDelay = Audio.samples(Session.NEAR);   // learned from its own hits
     private double heaviest;                  // the heaviest hit it has heard from the record
     private long ticksTogether; private long placedTogether = -1; private long placedTogetherAt;
-    private final Kit kit = new Kit();
+    private final Instrument hands;
+    private final boolean oneNote;        // a bass: one note, listens only for the dark hits, and learns while it plays
     private final SplittableRandom chance;
     private final double comfortable;
     private final int bars;               // bars it will play in all its answers
@@ -189,29 +200,37 @@ public final class Drummer implements Player, Hits {
     private int hitCount;
 
     /** A drummer for a session with the record: so many answers, then so many bars together. */
-    public Drummer(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+    public Musician(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed) {
-        this(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, answers, barsTogether, seed, true, false, 0);
+        this(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, answers, barsTogether, seed, true, false, 0, new Kit());
     }
 
     /** A drummer for a session with another drummer. The one who starts plays from the top; the other comes in after a bar. */
-    public static Drummer withAnother(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+    /** A bass player joining others who are already playing. It comes in after a bar. */
+    public static Musician onBass(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                                  int ticksSoFar, String patternSoFar, int bars, long seed) {
+        return new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, new Bass());
+    }
+
+    public static Musician withAnother(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                       int ticksSoFar, String patternSoFar, int bars, boolean starts, double startSeconds, long seed) {
-        Drummer d = new Drummer(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, starts, 0);
+        Musician d = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, starts, 0, new Kit());
         if (starts) d.clock.startAt(Audio.samples(startSeconds));
         return d;
     }
 
     /** A drummer who gives the lesson: so many calls of two bars with two bars of room after each, then so many bars together. */
-    public static Drummer teaching(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+    public static Musician teaching(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                    int ticksSoFar, String patternSoFar, int calls, int barsTogether, double startSeconds, long seed) {
-        Drummer d = new Drummer(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, calls * 2 * TURN + barsTogether, seed, false, true, calls * 2 * TURN);
+        Musician d = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, calls * 2 * TURN + barsTogether, seed, false, true, calls * 2 * TURN, new Kit());
         d.clock.startAt(Audio.samples(startSeconds));
         return d;
     }
 
-    private Drummer(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
-                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars) {
+    private Musician(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars, Instrument hands) {
+        this.hands = hands;
+        this.oneNote = hands instanceof Bass;
         this.withARecord = withARecord;
         this.teachBars = teachBars;
         this.listenBars = withARecord ? TURN : 1;
@@ -283,7 +302,7 @@ public final class Drummer implements Player, Hits {
         byte kind = bright ? PAN : POT;
         double tick = clock.period() / ticks;
         if (loud > heaviest) heaviest = loud;
-        if (mode == TOGETHER) { alongside(at, loud, tick); return; }
+        if (mode == TOGETHER) { if (oneNote) noteWhatItHears(at, kind, loud, tick); alongside(at, loud, tick); return; }
         if (mode == ANSWERING) {
             boolean firstBar = bar % TURN == 0 && tickInBar > 0;
             if (firstBar) return;                            // too soon to be the record coming back; let it go
@@ -340,6 +359,20 @@ public final class Drummer implements Player, Hits {
             leanToward(at - placedAt, best - placedTick);
             placedTick = best; placedAt = at;
         }
+    }
+
+    /** While it plays: which of its places was that hit nearest to? A bass player only notes the dark ones. */
+    private void noteWhatItHears(long at, byte kind, double loud, double tick) {
+        if (kind != POT) return;
+        int barTicks = PULSES * ticks, back = 0;
+        double off = Double.MAX_VALUE;
+        for (int b = 0; b <= 2; b++) {
+            double d = at - (clock.nextBeat() - b * tick);
+            if (Math.abs(d) < Math.abs(off)) { off = d; back = b; }
+        }
+        if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
+        int place = (((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks);
+        hearing[place] = kind;
     }
 
     /** A hit of the record's while it is playing too. */
@@ -486,6 +519,13 @@ public final class Drummer implements Player, Hits {
         if (ticks < 4 && tickUnevenness() < EARN) {
             if (++evenBars >= 2) { ticks *= 2; evenBars = 0; tickCount = 0; }
         } else evenBars = 0;
+        if (mode == TOGETHER && oneNote && bar % TURN == 0 && bar < allBars) {   // it learns while it plays, two bars at a time
+            endOfAnswer();
+            believe();
+            java.util.Arrays.fill(hearing, REST);
+            if (chance.nextInt(OWN_IDEA_ONE_IN) != 0 && copyOnePlace()) copied++;
+            else if (ownIdea()) ownIdeas++;
+        }
         if (mode == ANSWERING && bar % TURN == 0) {
             endOfAnswer();
             if (bar < bars) mode = WAITING;                  // quiet now, until the record's one
@@ -515,19 +555,23 @@ public final class Drummer implements Player, Hits {
             System.arraycopy(shifted, 0, hearing, 0, SLOTS);
             refoundTheOne++;
         }
-        // One hearing can be wrong. It believes a place only if it has heard it there in at least half the calls so far.
-        callsHeard++;
-        for (int s = 0; s < SLOTS; s++) {
-            if (hearing[s] != REST) votes[hearing[s]][s]++;
-            byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
-            lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
-        }
-        hasLesson = true;
+        believe();
         mode = ANSWERING;
         tickInBar = ((SLOTS - one) % SLOTS) / (SLOTS / PULSES / ticks);
         mineBefore = -1; gapCount = 0;
         if (hasLesson && chance.nextInt(OWN_IDEA_ONE_IN) != 0 && copyOnePlace()) copied++;
         else if (ownIdea()) ownIdeas++;
+    }
+
+    /** One hearing can be wrong. It believes a place only if it has heard it there in at least half its hearings so far. */
+    private void believe() {
+        callsHeard++;
+        for (int s = 0; s < SLOTS; s++) {
+            if (hearing[s] != REST && !(oneNote && hearing[s] == PAN)) votes[hearing[s]][s]++;   // a bass player has no use for the bright hits
+            byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
+            lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
+        }
+        hasLesson = true;
     }
 
     /** Move one place it can reach toward what it heard. False if it already plays everything it heard. */
@@ -545,7 +589,14 @@ public final class Drummer implements Player, Hits {
     }
 
     /** A place where it heard something other than what it plays. A pulse is never left empty. */
-    private boolean wants(int s) { return lesson[s] != pattern[s] && !(lesson[s] == REST && s % (SLOTS / PULSES) == 0); }
+    private boolean wants(int s) {
+        if (lesson[s] == pattern[s]) return false;
+        if (!oneNote) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
+        // A bass player adds a note where it believes there is a pot. It takes one away only when it has
+        // listened at least four times this session and never once heard a pot there: not hearing something
+        // is weak evidence that it is not there.
+        return lesson[s] == POT || (callsHeard >= 4 && votes[POT][s] == 0);
+    }
 
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
     private boolean ownIdea() {
@@ -553,7 +604,8 @@ public final class Drummer implements Player, Hits {
         int slot = step * chance.nextInt(SLOTS / step);
         if (slot == 0) return false;
         byte was = pattern[slot];
-        pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
+        if (oneNote) pattern[slot] = was == REST ? POT : REST;
+        else pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
                       : was == POT ? PAN
                       : slot % (SLOTS / PULSES) == 0 ? POT : REST;
         triedSlot = slot; triedWas = was;
@@ -610,14 +662,14 @@ public final class Drummer implements Player, Hits {
         }
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
-                kit.strike(strikeSound, (float) (Kit.weight(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
+                hands.strike(strikeSound, (float) (Kit.weight(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitSlots[hitCount++] = strikeSlot; }
                 experience++;
                 lastStrike = blockStart + i;
                 strikeAt = -1;
                 if (landing) { lastPulse = clock.period(); endAt = blockStart + i + Math.round(lastPulse); }
             }
-            out[i] += kit.next();
+            out[i] += hands.next();
         }
     }
 
@@ -662,4 +714,5 @@ public final class Drummer implements Player, Hits {
     public int cutShort() { return cutShort; }
     public int refoundTheOne() { return refoundTheOne; }
     public int cameInAlone() { return cameInAlone; }
+    public String plays() { return hands.describe(); }
 }

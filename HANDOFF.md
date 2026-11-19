@@ -65,8 +65,8 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.8.0. 23 tests pass (`mvn test`, about four minutes). Two drummers exist, each with a real life
-file. There is a record that plays lessons and a click track.
+Version 0.9.0. 26 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
 
@@ -80,12 +80,15 @@ file. There is a record that plays lessons and a click track.
 | 6 | One drummer teaches another its pattern, call and answer, then together. A learner believes a place only if it heard it in at least half the calls. |
 | 7 | A click track in the players' ears (Vaughn's suggestion). Not in the room, not on the recording. Fixed the slowdown, stopped a newborn dragging a practised drummer, sped up learning. |
 | 8 | With a click, each drummer also learns how much to lean its tick toward the others, so they land together while the click holds the tempo. |
+| 9 | The first non-drummer: a bass player with one note. Same player class, different instrument. It listens for the pots and moves its notes onto them while it plays. The class `Drummer` was renamed `Musician`. This handoff was written. |
 
 ### The players that exist (do not reset these)
 
 - `lives/drummer.life`: "the drummer". Born in step 1. Four ticks to the pulse. Learned the first lesson
   from the record, then drifted a little with its own ideas.
 - `lives/second.life`: "the second drummer". Born in step 5. Taught by the first.
+- `lives/bass.life`: "the bass player". Born in step 9. One note, two ticks to the pulse, its notes mostly
+  on the drummers' pots.
 
 **These files are the players' lived history. Never hand-edit them, never delete them, never regenerate
 them.** Tests use throwaway lives in temporary folders. If a format changes, make the reader accept the
@@ -98,12 +101,13 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.8.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.8.0.jar --click on
-    java -jar target/fraymus-band-0.8.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.8.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.9.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.9.0.jar --click on
+    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.9.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
-Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --click on --tempo BPM
+Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
 each life file involved (committed).
 
@@ -121,21 +125,24 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `Clock`: one player's pulse. `period`, `nextBeat`, `advance`, `drift`, `pullToward`, `nudge`.
 - `Ear`: finds hits in a stream of sound: when, how loud, bright or dark. One ear per stream.
 - `Room`: one ring buffer per player. A player's own sound reaches it in 3 ms, others' in 9 ms.
-- `Sound`, `Thump` (pot), `Pan`, `Kit`: sounds are worked out once into tables and only read while playing.
+- `Instrument`: what a player's hands are on. `Kit` (pot and pan) and `Bass` (one low E) implement it.
+- `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
 - `Lesson`: a bar of sixteen places (`p` pot, `n` pan, `.` nothing) and a tempo. Files in `lessons/`.
 - `Teacher`: the record. Plays the lesson for two bars, leaves two, repeats; then plays straight through.
 - `Metronome`: the click. One bar of count-in, then every pulse.
-- `Drummer`: the player. This is where nearly all the behaviour is. Read its class comment first.
+- `Musician`: the player (called `Drummer` until step 9). This is where nearly all the behaviour is. Read
+  its class comment first. The same class plays the kit or the bass; `oneNote` marks a bass player.
 - `Life`: the lineage file. Header lines say where the player is now; `session N:` lines are what it lived.
-- `Session`: one sitting. `run` (with the record), `together` (two drummers), `teach` (one teaches one).
+- `Session`: one sitting. `run` (with the record), `together` (two drummers), `teach` (one teaches one),
+  `band` (one or two drummers and the bass player).
   Also measures the take afterwards from when hits actually landed.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepEightTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepNineTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
-### The drummer's states
+### The player's states
 
 `WAITING` (quiet until it hears someone), `LISTENING` (ticking along quietly, placing what it hears),
 `ANSWERING` (playing its two bars after a call), `TOGETHER` (playing while others play).
@@ -181,6 +188,10 @@ Given, as fixed rules (be honest about these):
 - **Anchoring on the wrong hit.** A listener takes the first hit after quiet as the one. If that hit was
   masked or it came in late, everything it heard was shifted. Fixes: the heaviest hit is the one; an
   unplaceable heavy hit restarts the count.
+- **A bass player that dropped notes it should have kept.** Not hearing a pot once was treated as proof
+  there was none. It now removes a note only after listening four times and never hearing one there.
+- **A pan in the bass part.** What it heard while waiting to come in still counted the bright hits. A bass
+  player now ignores them when it decides what it believes.
 - **A take that never ended**, twice: a waiting player with nobody left to wait for (it now comes in alone
   after two bars), and a final hit cancelled by a re-anchor. `Session` now throws if a take runs absurdly
   long, so a hang shows up as a failed test.
@@ -202,19 +213,19 @@ Given, as fixed rules (be honest about these):
 - The teacher does not listen to the answers.
 - A drummer's own ideas are picked by chance. There is no taste yet beyond copying what it hears.
 - Every session starts at 92 bpm, the tempo the players' bodies like.
-- Mono. Two drummers on a pot and a pan. No pitched instrument yet.
+- The bass has one note and has never earned four ticks to the pulse, so it cannot reach sixteenth-note pots.
+- Without a click, three players do not hold together.
+- The drummers take nothing from the bass but time.
+- Mono.
 - The repository is public and has no license file. Vaughn has been told.
 
 ---
 
 ## 8. What comes next
 
-Agreed with Vaughn on 2026-11-19: **the first non-drummer, a bass.** One note at a time, locked to the
-drummer's pot. Like every player it must start as a newborn with almost nothing and grow.
+The bass player exists (step 9). Roughly in this order unless Vaughn says otherwise:
 
-After that, roughly in this order unless he says otherwise:
-
-1. More notes for the bass, earned.
+1. More notes for the bass, earned the way ticks are earned. Decide with him what "earning a note" means.
 2. Lessons in other feels (a clave, a hip hop bar, a swing bar). "Genre lives in the ticks."
 3. Taste: a reason to prefer one pattern over another that is not just copying.
 4. Trading bars between players as soloists.

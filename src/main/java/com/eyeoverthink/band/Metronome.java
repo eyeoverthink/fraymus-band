@@ -6,7 +6,7 @@ package com.eyeoverthink.band;
  * in for one bar before anyone plays.
  */
 public final class Metronome {
-    public static final int COUNT_IN = Drummer.PULSES;
+    public static final int COUNT_IN = Musician.PULSES;
 
     private final Clock clock;
     private final float[] tick;

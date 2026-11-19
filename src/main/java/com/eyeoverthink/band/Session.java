@@ -31,7 +31,7 @@ public final class Session {
         float[] clicks = new float[Audio.BLOCK];
         Life life = Life.open(lifeFile, "the drummer");
         Teacher teacher = new Teacher(lesson, answers, barsTogether, start);
-        Drummer drummer = new Drummer(life.name(), 92.0, life.hitsPlayed(), life.listening(), life.ticks(), life.pattern(), answers, barsTogether, seed);
+        Musician drummer = new Musician(life.name(), 92.0, life.hitsPlayed(), life.listening(), life.ticks(), life.pattern(), answers, barsTogether, seed);
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
         float[] fromRecord = new float[Audio.BLOCK], fromDrummer = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
@@ -85,7 +85,7 @@ public final class Session {
     }
 
     /** Each of the drummer's hits from place {@code from} on, against the other player's nearest hit. Called after the take. */
-    static Apart apart(Drummer d, int from, Hits other) {
+    static Apart apart(Musician d, int from, Hits other) {
         int together = 0, alone = 0, t = 0, n = d.hitCount();
         double sum = 0, lean = 0;
         if (other.hitCount() == 0 || n == 0) return new Apart(0, n, 0, 0, 0);
@@ -122,8 +122,8 @@ public final class Session {
         double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
         float[] clicks = new float[Audio.BLOCK];
         Life lifeA = Life.open(firstLife, "the drummer"), lifeB = Life.open(secondLife, "the second drummer");
-        Drummer a = Drummer.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, start, seed);
-        Drummer b = Drummer.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, start, seed ^ 0x9E3779B97F4A7C15L);
+        Musician a = Musician.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, start, seed);
+        Musician b = Musician.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, start, seed ^ 0x9E3779B97F4A7C15L);
         a.leaning(lifeA.leaning()); b.leaning(lifeB.leaning());
         Room room = new Room(2, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
@@ -182,8 +182,8 @@ public final class Session {
         double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
         float[] clicks = new float[Audio.BLOCK];
         Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer");
-        Drummer t = Drummer.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, start, seed);
-        Drummer l = new Drummer(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
+        Musician t = Musician.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, start, seed);
+        Musician l = new Musician(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
         t.leaning(lifeT.leaning()); l.leaning(lifeL.leaning());
         Lesson given = new Lesson(lifeT.name(), 92.0, lifeT.pattern());      // only used afterwards, to count how alike they ended
         Room room = new Room(2, NEAR, ACROSS);
@@ -225,18 +225,104 @@ public final class Session {
         }
     }
 
-    private static final int SLOTS_IN_A_BAR = Drummer.SLOTS;
+    /** What happened when drummers and a bass player played together. */
+    public record Band(int bars, double seconds, java.util.List<Part> parts, double tempoFirstBars, double tempoLastBars,
+                       String bassBefore, String bassAfter, int bassNotes, int bassNotesOnAPot, int bassHits, double bassApartMs,
+                       int bassCopied, int bassOwnIdeas, int bassKept, int bassTakenBack, double landedApartMs, float peak, Path wav) {}
+
+    /**
+     * One or two drummers and a bass player, with no record. The first drummer starts; everyone else hears
+     * a bar and comes in. Each has its own clock and its own life. The bass player listens for the pots and
+     * moves its notes toward them while it plays. The last life given is the bass player's.
+     */
+    public static Band band(Path wav, java.util.List<Path> drummerLives, Path bassLife, int bars, double clickBpm, long seed) throws IOException {
+        Metronome metronome = clickBpm > 0 ? new Metronome(clickBpm, 0.25) : null;
+        double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
+        int n = drummerLives.size() + 1, bassAt = n - 1;
+        Life[] lives = new Life[n];
+        Musician[] players = new Musician[n];
+        String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
+        for (int i = 0; i < n; i++) {
+            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            long chance = seed + 0x9E3779B97F4A7C15L * i;
+            players[i] = i == bassAt
+                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, chance)
+                : Musician.withAnother(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, i == 0, start, chance);
+            players[i].leaning(lives[i].leaning());
+            lives[i].plays(players[i].plays());
+        }
+        Room room = new Room(n, NEAR, ACROSS);
+        float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK], clicks = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
+        float[][] from = new float[n][Audio.BLOCK];
+
+        long now = 0, tooLong = (long) Audio.samples(30.0 + 8.0 * bars);
+        try (WavWriter out = new WavWriter(wav)) {
+            while (true) {                                   // no objects are made inside this loop
+                boolean allDone = true;
+                for (int i = 0; i < n; i++) allDone &= players[i].done(now);
+                if (allDone) break;
+                if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
+                if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
+                for (int i = 0; i < n; i++) {
+                    room.carry(i, others, own, Audio.BLOCK, now);
+                    players[i].hear(others, own, clicks, Audio.BLOCK, now);
+                }
+                java.util.Arrays.fill(mix, 0f);
+                for (int i = 0; i < n; i++) {
+                    java.util.Arrays.fill(from[i], 0f);
+                    players[i].play(from[i], Audio.BLOCK, now);
+                    room.fill(i, from[i], Audio.BLOCK, now);
+                    for (int k = 0; k < Audio.BLOCK; k++) mix[k] += from[i][k] * BAND_LEVEL;
+                }
+                out.write(mix, Audio.BLOCK);
+                now += Audio.BLOCK;
+            }
+            Musician first = players[0], bass = players[bassAt];
+            java.util.List<Part> parts = new java.util.ArrayList<>();
+            StringBuilder names = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
+                parts.add(new Part(lives[i].name(), players[i].hitCount(), unsteadiness(players[i], 0, players[i].hitCount()),
+                    lives[i].listening(), players[i].listening(), lives[i].ticks(), players[i].ticks(), players[i].pattern(), a.alone(),
+                    lives[i].leaning(), players[i].leaning()));
+            }
+            Apart bassToFirst = apart(bass, 0, first);
+            int notes = 0, onAPot = 0;
+            for (int s = 0; s < Musician.SLOTS; s++) {
+                if (bass.pattern().charAt(s) != 'p') continue;
+                notes++;
+                for (int i = 0; i < bassAt; i++) if (players[i].pattern().charAt(s) == 'p') { onAPot++; break; }
+            }
+            Band band = new Band(bars, Audio.seconds(out.samples()), parts, tempoOver(first, 0, 2), tempoOver(first, bars - 2, bars),
+                lives[bassAt].pattern(), bass.pattern(), notes, onAPot, bassToFirst.together(), bassToFirst.ms(),
+                bass.copied(), bass.ownIdeas(), bass.changesKept(), bass.changesTakenBack(), bassToFirst.landed(), out.peak(), wav);
+            for (int i = 0; i < n; i++) {
+                names.setLength(0);
+                for (int k = 0; k < n; k++) if (k != i) names.append(names.length() == 0 ? "" : " and ").append(lives[k].name());
+                Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
+                lives[i].leaning(players[i].leaning());
+                lives[i].rememberTogether(names.toString(), bars, players[i].hitCount(), parts.get(i).unsteadyMs(), players[i].listening(),
+                    players[i].ticks(), players[i].pattern(), a.together(), a.ms());
+            }
+            return band;
+        }
+    }
+
+    /** With three or more players the mix is turned down so that all of them hitting at once cannot clip. */
+    static final float BAND_LEVEL = 0.7f;
+
+    private static final int SLOTS_IN_A_BAR = Musician.SLOTS;
 
     /** The tempo a drummer actually played from one bar to another, from when its hits landed. */
-    static double tempoOver(Drummer d, int fromBar, int toBar) {
+    static double tempoOver(Musician d, int fromBar, int toBar) {
         int first = -1, last = -1;
         for (int i = 0; i < d.hitCount(); i++) {
-            int bar = d.hitSlot(i) / Drummer.SLOTS;
+            int bar = d.hitSlot(i) / Musician.SLOTS;
             if (bar >= fromBar && bar <= toBar) { if (first < 0) first = i; last = i; }
         }
         if (first < 0 || last == first) return 0;
         double places = d.hitSlot(last) - d.hitSlot(first);
-        double pulse = (d.hitAt(last) - d.hitAt(first)) / places * (Drummer.SLOTS / Drummer.PULSES);
+        double pulse = (d.hitAt(last) - d.hitAt(first)) / places * (Musician.SLOTS / Musician.PULSES);
         return Audio.bpmOf(pulse);
     }
 
@@ -245,13 +331,14 @@ public final class Session {
      * said it would, allowing for how many places apart they are. Only hits inside the same answer are
      * compared. A slow change of tempo does not count against the player; a lurch does.
      */
-    static double unsteadiness(Drummer d, int from, int to) {
-        int count = 0, answer = Drummer.TURN * Drummer.SLOTS;
+    static double unsteadiness(Musician d, int from, int to) {
+        int count = 0, answer = Musician.TURN * Musician.SLOTS;
         double sumSquares = 0;
         for (int i = from + 2; i < to; i++) {
             if (d.hitSlot(i) / answer != d.hitSlot(i - 2) / answer) continue;
             double gapA = d.hitAt(i - 1) - d.hitAt(i - 2), gapB = d.hitAt(i) - d.hitAt(i - 1);
             double placesA = d.hitSlot(i - 1) - d.hitSlot(i - 2), placesB = d.hitSlot(i) - d.hitSlot(i - 1);
+            if (placesA <= 0 || placesB <= 0) continue;      // it lost count of its bars there; nothing to compare
             double off = gapB - gapA * placesB / placesA;
             sumSquares += off * off;
             count++;

@@ -7,7 +7,7 @@ import java.util.Locale;
 public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
-        Path with = null, teach = null;
+        Path with = null, teach = null, bass = null;
         boolean click = false;
         double tempo = 92;
         long seed = System.nanoTime();
@@ -24,10 +24,26 @@ public final class Main {
                 case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
                 case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (bass != null) {                                  // drummers and a bass player
+            java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
+            Session.Band b = Session.band(wav, drummers, bass, together < 0 ? 16 : together, click ? tempo : 0, seed);
+            System.out.printf(Locale.ROOT, "%d bars, %.1f s, no record. %s started; the others came in after a bar.%n", b.bars(), b.seconds(), b.parts().get(0).name());
+            if (click) System.out.printf(Locale.ROOT, "Everyone had a click in their ears at %.0f bpm. It is not on the recording.%n", tempo);
+            for (Session.Part p : b.parts())
+                System.out.printf(Locale.ROOT, "%s: %s, %d ticks to the pulse, %d hits, unsteadiness %.1f ms, listening %.2f to %.2f, leaning on the others %.2f to %.2f.%n",
+                    p.name(), p.pattern(), p.ticksAfter(), p.hits(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter(), p.leaningBefore(), p.leaningAfter());
+            System.out.printf(Locale.ROOT, "The bass went from %s to %s: %d notes in the bar, %d of them where a drummer has a pot.%n", b.bassBefore(), b.bassAfter(), b.bassNotes(), b.bassNotesOnAPot());
+            System.out.printf(Locale.ROOT, "It tried %d places it had heard a pot and %d ideas of its own; %d kept, %d taken back.%n", b.bassCopied(), b.bassOwnIdeas(), b.bassKept(), b.bassTakenBack());
+            System.out.printf(Locale.ROOT, "%d of its notes landed with the first drummer's hits, %.0f ms apart on average. Their last hits were %.0f ms apart.%n", b.bassHits(), b.bassApartMs(), Math.abs(b.landedApartMs()));
+            System.out.printf(Locale.ROOT, "They started near %.1f bpm and ended near %.1f bpm.%n", b.tempoFirstBars(), b.tempoLastBars());
+            System.out.println("Wrote " + b.wav() + " and added the session to every life.");
+            return;
         }
         if (teach != null) {                                 // one drummer gives the lesson to another
             Session.Taught t = Session.teach(wav, life, teach, answers, together < 0 ? 8 : together, click ? tempo : 0, seed);

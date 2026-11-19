@@ -1,10 +1,10 @@
 name: the drummer
 age: 0
-listens to itself: 0.95
+listens to itself: 0.83
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: pn.pn...p.p.n..n
-leans on the others: 0.20
+leans on the others: 0.55
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
 session 2: bars=16, hits=65, tempo 92.0 to 95.7 bpm, unsteadiness 20.7 ms at the start, 16.8 ms by the end, listening 0.39, ticks to the pulse 1, pattern p...p...n...p...
@@ -44,3 +44,11 @@ session 35: played 16 bars with the second drummer, no record, hits=129, unstead
 session 36: played 16 bars with the second drummer, no record, hits=129, unsteadiness 7.2 ms, listening 0.83, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
 session 37: played 16 bars with the second drummer, no record, hits=129, unsteadiness 8.7 ms, listening 0.95, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
 session 38: played 16 bars with the second drummer, no record, hits=129, unsteadiness 10.3 ms, listening 0.95, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 39: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.0 ms, listening 0.65, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 40: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.9 ms, listening 0.71, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 41: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 8.7 ms, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 4 ms apart
+session 42: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 10.8 ms, listening 0.83, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 43: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 11.7 ms, listening 0.83, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 44: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 10.3 ms, listening 0.95, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 45: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.2 ms, listening 0.89, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 46: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 8.5 ms, listening 0.83, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart

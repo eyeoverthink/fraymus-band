@@ -19,15 +19,20 @@ public final class Life {
     private String name = "unnamed";
     private long hitsPlayed;
     private int sessions;
-    private double listening = Drummer.NEWBORN_LISTENING;
+    private double listening = Musician.NEWBORN_LISTENING;
     private int ticks = 1;
     private double leaning;
-    private String pattern = Drummer.FIRST_PATTERN;
+    private String sounds = "a pot (p) and a pan (n)";
+    private String pattern = Musician.FIRST_PATTERN;
 
     private Life(Path file) { this.file = file; }
 
-    public static Life open(Path file, String nameIfNew) throws IOException {
+    public static Life open(Path file, String nameIfNew) throws IOException { return open(file, nameIfNew, Musician.FIRST_PATTERN); }
+
+    /** The same, for a player whose first pattern is not a drummer's. */
+    public static Life open(Path file, String nameIfNew, String patternIfNew) throws IOException {
         Life life = new Life(file);
+        life.pattern = patternIfNew;
         if (Files.exists(file)) {
             for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
                 life.lines.add(line);
@@ -66,6 +71,9 @@ public final class Life {
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
 
+    /** What it plays, for a life that does not say yet. */
+    public void plays(String what) { sounds = what; }
+
     /** The sixteen places of its bar: p for the pot, n for the pan, a dot for nothing. */
     public String pattern() { return pattern; }
 
@@ -100,7 +108,7 @@ public final class Life {
         hitsPlayed += hits;
         listening = listeningNow; ticks = ticksNow; pattern = patternNow;
         lines.removeIf(l -> l.trim().startsWith("sound:"));
-        set("sounds", "a pot (p) and a pan (n)");
+        if (lines.stream().noneMatch(l -> l.trim().startsWith("sounds:"))) set("sounds", sounds);
         set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
         set("ticks to the pulse", Integer.toString(ticksNow));
         set("pattern", patternNow);
@@ -118,7 +126,7 @@ public final class Life {
         hitsPlayed += hits;
         listening = listeningNow; ticks = ticksNow; pattern = patternNow;
         lines.removeIf(l -> l.trim().startsWith("sound:"));
-        set("sounds", "a pot (p) and a pan (n)");
+        if (lines.stream().noneMatch(l -> l.trim().startsWith("sounds:"))) set("sounds", sounds);
         set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
         set("ticks to the pulse", Integer.toString(ticksNow));
         set("pattern", patternNow);

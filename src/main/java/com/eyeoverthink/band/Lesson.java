@@ -14,7 +14,7 @@ import java.nio.file.Path;
  */
 public record Lesson(String name, double tempo, String bar) {
     public Lesson {
-        if (bar.length() != Drummer.SLOTS) throw new IllegalArgumentException("A bar has " + Drummer.SLOTS + " places, this one has " + bar.length() + ": " + bar);
+        if (bar.length() != Musician.SLOTS) throw new IllegalArgumentException("A bar has " + Musician.SLOTS + " places, this one has " + bar.length() + ": " + bar);
         if (!bar.matches("[pn.]+")) throw new IllegalArgumentException("A bar is written with p, n and dots only: " + bar);
         if (tempo < 40 || tempo > 200) throw new IllegalArgumentException("Tempo should be between 40 and 200: " + tempo);
     }
@@ -35,7 +35,7 @@ public record Lesson(String name, double tempo, String bar) {
     /** How many of the sixteen places of a pattern are the same as this lesson's. */
     public int matches(String pattern) {
         int same = 0;
-        for (int i = 0; i < Drummer.SLOTS; i++) if (pattern.charAt(i) == bar.charAt(i)) same++;
+        for (int i = 0; i < Musician.SLOTS; i++) if (pattern.charAt(i) == bar.charAt(i)) same++;
         return same;
     }
 }

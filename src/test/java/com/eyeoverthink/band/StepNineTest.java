@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step eight: with a click, each drummer also learns how much to lean on the others. */
-class StepEightTest {
+/** Step nine: the first player who is not a drummer, a bass player with one note. */
+class StepNineTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -192,6 +192,70 @@ class StepEightTest {
     }
 
     @Test
+    void theBassIsDarkToTheEarLikeAPot() {
+        Ear ear = new Ear();
+        Bass bass = new Bass();
+        assertEquals("one low note (p)", bass.describe());
+        bass.strike(Kit.POT, 1f);
+        float[] air = new float[Audio.RATE / 2];
+        for (int i = 1000; i < air.length; i++) air[i] = bass.next();
+        ear.listen(air, air.length, 0);
+        assertEquals(1, ear.hitsEver(), "one note is one hit");
+        assertFalse(ear.hitBright(), "a drummer or a bass player hears it as dark");
+    }
+
+    @Test
+    void aBassPlayerIsBornWithOneNoteOnTheOne(@TempDir Path dir) throws Exception {
+        Path a = practised(dir, "a.life", 4, LESSON.bar()), b = practised(dir, "b.life", 4, "p...n...p.p.n..."), bass = dir.resolve("bass.life");
+        Session.Band band = Session.band(dir.resolve("t.wav"), List.of(a, b), bass, 8, 92, 4);
+        assertEquals("p...............", band.bassBefore());
+        assertEquals(3, band.parts().size());
+        assertEquals("the bass player", band.parts().get(2).name());
+        assertEquals(1, band.parts().get(2).ticksBefore());
+        assertEquals(LESSON.bar(), band.parts().get(0).pattern(), "the drummers keep their own patterns");
+        assertEquals("p...n...p.p.n...", band.parts().get(1).pattern());
+        assertTrue(band.peak() > 0.2f && band.peak() < 1.0f, "loud enough to hear, never clipped: " + band.peak());
+        List<String> life = Files.readAllLines(bass);
+        assertTrue(life.contains("sounds: one low note (p)"));
+        assertTrue(life.get(life.size() - 1).startsWith("session 1: played 8 bars with the drummer and the drummer, no record"), "both test drummers are named the drummer");
+        assertTrue(Files.readAllLines(a).get(Files.readAllLines(a).size() - 1).contains("and the bass player, no record"), "the drummers remember who they played with");
+    }
+
+    /** Six newborn bass players, each living twelve sessions with two practised drummers and a click. */
+    @Test
+    void aBassPlayerGrowsOntoTheDrummersPots(@TempDir Path dir) throws Exception {
+        int players = 6, sessions = 12;
+        double[] notes = new double[sessions], onAPot = new double[sessions], apart = new double[sessions];
+        int[] together = new int[sessions];
+        for (int d = 0; d < players; d++) {
+            Path bass = dir.resolve("bass" + d + ".life");
+            for (int s = 0; s < sessions; s++) {
+                Session.Band band = Session.band(dir.resolve("t.wav"), List.of(practised(dir, "a" + d + ".life", 4, LESSON.bar()),
+                    practised(dir, "b" + d + ".life", 4, "p...n...p.p.n...")), bass, 16, 92, 1000L * d + s);
+                String p = band.bassAfter();
+                int reach = Musician.SLOTS / Musician.PULSES / band.parts().get(2).ticksAfter();
+                assertEquals('p', p.charAt(0), "its note stays on the one");
+                for (int i = 0; i < Musician.SLOTS; i++) {
+                    assertNotEquals('n', p.charAt(i), "a bass has no pan");
+                    if (i % reach != 0) assertEquals('.', p.charAt(i), "it only plays places its ticks can reach: " + p);
+                }
+                notes[s] += band.bassNotes() / (double) players;
+                onAPot[s] += band.bassNotesOnAPot() / (double) players;
+                apart[s] += band.bassApartMs() / players;
+                if (Math.abs(band.landedApartMs()) < 40) together[s]++;
+                assertEquals(92, band.tempoLastBars(), 2.5, "the click holds the tempo with three players too");
+            }
+        }
+        for (int s = 0; s < sessions; s += 2)
+            System.out.printf(Locale.ROOT, "BASS session %2d: %.1f notes in the bar, %.1f on a pot, %.1f ms from the drummer, ended together %d of %d%n",
+                s + 1, notes[s], onAPot[s], apart[s], together[s], players);
+        double early = (onAPot[0] + onAPot[1] + onAPot[2]) / 3, late = (onAPot[sessions - 3] + onAPot[sessions - 2] + onAPot[sessions - 1]) / 3;
+        double farEarly = (apart[0] + apart[1] + apart[2]) / 3, farLate = (apart[sessions - 3] + apart[sessions - 2] + apart[sessions - 1]) / 3;
+        assertTrue(late > early + 0.3, "more of its notes sit on a pot: " + early + " at first, " + late + " later");
+        assertTrue(farLate < farEarly - 4, "and they land closer to the drummer: " + farEarly + " ms at first, " + farLate + " ms later");
+    }
+
+    @Test
     void aSessionOfTeachingIsWrittenIntoBothLives(@TempDir Path dir) throws Exception {
         Path old = practised(dir, "old.life", 4, LESSON.bar()), young = dir.resolve("young.life");
         Session.Taught t = Session.teach(dir.resolve("t.wav"), old, young, 3, 4, 9);
@@ -218,8 +282,8 @@ class StepEightTest {
                 like[s] += t.matchesAfter() / (double) pairs;
                 believed[s] += LESSON.matches(t.heardAs()) / (double) pairs;
                 if (t.ticksAfter() == 4) atFour[s]++;
-                int reach = Drummer.SLOTS / Drummer.PULSES / t.ticksAfter();
-                for (int i = 0; i < Drummer.SLOTS; i++) {
+                int reach = Musician.SLOTS / Musician.PULSES / t.ticksAfter();
+                for (int i = 0; i < Musician.SLOTS; i++) {
                     if (i % reach != 0) assertEquals('.', t.patternAfter().charAt(i), "it only plays places its ticks can reach");
                     if (i % reach != 0) assertEquals('.', t.heardAs().charAt(i), "and only hears those places too");
                 }
@@ -275,7 +339,7 @@ class StepEightTest {
         int close = 0, landed = 0;
         for (int seed = 0; seed < 10; seed++) {
             Session.Report r = Session.run(dir.resolve("t.wav"), practised(dir, seed + ".life", 4, LESSON.bar()), LESSON, 2, 8, seed);
-            assertEquals((2 * Drummer.TURN + 8) * Drummer.SLOTS, r.lastHitPlace(), "it counts its bars and lands the one after them");
+            assertEquals((2 * Musician.TURN + 8) * Musician.SLOTS, r.lastHitPlace(), "it counts its bars and lands the one after them");
             if (r.hitsTogether() > 40 && r.apartMs() < 25) close++;
             if (Math.abs(r.landedApartMs()) < 40) landed++;
         }
@@ -303,7 +367,7 @@ class StepEightTest {
         double shortest = 9, longest = 0;
         for (int seed = 0; seed < 12; seed++) {
             Session.Report r = Session.run(dir.resolve("t.wav"), dir.resolve(seed + ".life"), LESSON, 2, 0, seed);
-            assertEquals(2 * Drummer.TURN * Drummer.SLOTS, r.lastHitPlace(), "the last hit is the one after its last answer");
+            assertEquals(2 * Musician.TURN * Musician.SLOTS, r.lastHitPlace(), "the last hit is the one after its last answer");
             assertEquals(r.lastPulseSeconds(), r.ringSeconds(), 2.0 * Audio.BLOCK / Audio.RATE, "it rings for one pulse");
             shortest = Math.min(shortest, r.ringSeconds());
             longest = Math.max(longest, r.ringSeconds());
@@ -375,9 +439,9 @@ class StepEightTest {
                 assertTrue(r.ticksAfter() >= had && r.ticksAfter() <= 4 && r.ticksAfter() != 3, "ticks only ever get finer");
                 had = r.ticksAfter();
                 String p = r.patternAfter();
-                int reach = Drummer.SLOTS / Drummer.PULSES / had;
+                int reach = Musician.SLOTS / Musician.PULSES / had;
                 assertEquals('p', p.charAt(0), "the one stays on the pot");
-                for (int i = 0; i < Drummer.SLOTS; i++) {
+                for (int i = 0; i < Musician.SLOTS; i++) {
                     if (i % reach != 0) assertEquals('.', p.charAt(i), "it only plays places its ticks can reach: " + p + " with " + had);
                     if (i % reach != 0) assertEquals('.', r.lessonAsHeard().charAt(i), "and only hears those places too");
                     if (i % 4 == 0) assertNotEquals('.', p.charAt(i), "a pulse is never left empty: " + p);
