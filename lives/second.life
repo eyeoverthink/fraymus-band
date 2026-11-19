@@ -1,10 +1,16 @@
 name: the second drummer
 age: 0
 sounds: a pot (p) and a pan (n)
-listens to itself: 0.21
+listens to itself: 0.57
 ticks to the pulse: 2
-pattern: p...p...p...p...
+pattern: p...n...p.p.n.n.
 
 session 1: played 16 bars with the drummer, no record, hits=61, unsteadiness 14.8 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 15 ms apart
 session 2: played 16 bars with the drummer, no record, hits=61, unsteadiness 15.1 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 14 ms apart
 session 3: played 16 bars with the drummer, no record, hits=61, unsteadiness 13.7 ms, listening 0.21, ticks to the pulse 2, pattern p...p...p...p..., 9 ms apart
+session 4: heard "the drummer", answers=4, hits=57, tempo 92.0 to 79.5 bpm, unsteadiness 14.3 ms at the start, 229.7 ms by the end, listening 0.21, ticks to the pulse 2, pattern p...n...p...p..., like the lesson in 11 of 16 places, 8 bars with the record, 64 ms apart
+session 5: heard "the drummer", answers=4, hits=56, tempo 92.0 to 76.5 bpm, unsteadiness 18.4 ms at the start, 288.1 ms by the end, listening 0.33, ticks to the pulse 2, pattern p...n...p...p..., like the lesson in 11 of 16 places, 8 bars with the record, 31 ms apart
+session 6: heard "the drummer", answers=4, hits=70, tempo 92.0 to 85.4 bpm, unsteadiness 10.4 ms at the start, 152.7 ms by the end, listening 0.45, ticks to the pulse 2, pattern p...n...p.p.n..., like the lesson in 13 of 16 places, 8 bars with the record, 55 ms apart
+session 7: heard "the drummer", answers=4, hits=82, tempo 92.0 to 114.0 bpm, unsteadiness 9.5 ms at the start, 91.5 ms by the end, listening 0.51, ticks to the pulse 2, pattern p...n...p.p.n..., like the lesson in 13 of 16 places, 8 bars with the record, 50 ms apart
+session 8: heard "the drummer", answers=4, hits=93, tempo 92.0 to 103.2 bpm, unsteadiness 10.0 ms at the start, 12.7 ms by the end, listening 0.63, ticks to the pulse 2, pattern p...n.n.p.p.p..., like the lesson in 11 of 16 places, 8 bars with the record, 8 ms apart
+session 9: heard "the drummer", answers=4, hits=86, tempo 92.0 to 92.9 bpm, unsteadiness 11.2 ms at the start, 50.5 ms by the end, listening 0.57, ticks to the pulse 2, pattern p...n...p.p.n.n., like the lesson in 12 of 16 places, 8 bars with the record, 24 ms apart

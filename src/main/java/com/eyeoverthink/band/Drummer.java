@@ -20,8 +20,8 @@ import java.util.SplittableRandom;
  * Each hit it hears, it puts at the nearest tick it has, and notes whether it was bright or dark. A hit
  * that falls between its ticks it cannot place, so a drummer with one tick to the pulse hears only the
  * pulses of the lesson. If a hit turns out heavier than the one it took for the one, it takes the heavy
- * hit as the one and shifts everything to fit. What it made of the two bars is all it knows of the
- * lesson.
+ * hit as the one and shifts everything to fit. One hearing can be wrong, so it believes a place only if it
+ * has heard it there in at least half the calls so far. That is all it knows of the lesson.
  *
  * The answer. Then it plays two bars of its own. It starts life with the pot on every pulse. Before each
  * answer it changes one place its ticks can reach. Most times it moves one place toward what it just heard;
@@ -40,6 +40,11 @@ import java.util.SplittableRandom;
  * the record: shifts its tick part of the way toward the other's hits and leans its pulse toward the
  * other's. If the other's one lands where it has no tick, it moves half way to it; the other is doing the
  * same. Neither is in charge. Each still plays its own pattern.
+ *
+ * Teaching. A drummer can be the one the lesson comes from. It plays its own pattern for two bars and
+ * leaves two bars of room, as the record did, but on its own unsteady clock, and it holds its own time
+ * while the other answers. After the last answer it plays on and listens, as it would with any drummer.
+ * The one learning treats it exactly as it treated the record. It hears only what its ticks can reach.
  *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
@@ -110,7 +115,8 @@ public final class Drummer implements Player, Hits {
     private final int bars;               // bars it will play in all its answers
     private final int allBars;            // and counting the bars it plays together with someone
     private final int listenBars;         // bars it ticks along quietly before it comes in
-    private final boolean withARecord;    // a record's heaviest hit is always its one; another drummer's is not
+    private final boolean withARecord;    // it is following someone whose heavy hit it takes for the one
+    private final int teachBars;          // bars of call and room it gives before playing on, when it is the one teaching
 
     private double listening;             // how strongly it follows what it hears
     private double trying = TRY;
@@ -136,6 +142,8 @@ public final class Drummer implements Player, Hits {
     private double usual = -1;            // how uneven its answers usually sound
     private final byte[] lesson = new byte[SLOTS];    // what it made of the last two bars it heard
     private boolean hasLesson;
+    private final int[][] votes = new int[3][SLOTS];   // how many times this session it heard a pot, or a pan, at each place
+    private int callsHeard;
     private int heardPlaced, heardUnplaced;
 
     private final double[] gaps = new double[Ear.MEMORY];
@@ -163,18 +171,25 @@ public final class Drummer implements Player, Hits {
     /** A drummer for a session with the record: so many answers, then so many bars together. */
     public Drummer(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed) {
-        this(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, answers, barsTogether, seed, true, false);
+        this(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, answers, barsTogether, seed, true, false, 0);
     }
 
     /** A drummer for a session with another drummer. The one who starts plays from the top; the other comes in after a bar. */
     public static Drummer withAnother(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                       int ticksSoFar, String patternSoFar, int bars, boolean starts, long seed) {
-        return new Drummer(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, starts);
+        return new Drummer(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, starts, 0);
+    }
+
+    /** A drummer who gives the lesson: so many calls of two bars with two bars of room after each, then so many bars together. */
+    public static Drummer teaching(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                                   int ticksSoFar, String patternSoFar, int calls, int barsTogether, long seed) {
+        return new Drummer(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, calls * 2 * TURN + barsTogether, seed, false, true, calls * 2 * TURN);
     }
 
     private Drummer(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
-                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts) {
+                    int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars) {
         this.withARecord = withARecord;
+        this.teachBars = teachBars;
         this.listenBars = withARecord ? TURN : 1;
         this.name = name;
         this.listening = listeningSoFar;
@@ -280,6 +295,7 @@ public final class Drummer implements Player, Hits {
     /** A hit of the record's while it is playing too. */
     private void alongside(long at, double loud, double tick) {
         if (landing) return;                                 // its last hit is already on its way
+        if (bar < teachBars) return;                         // while it is giving the lesson it holds its own time
         int barTicks = PULSES * ticks;
         int back = 0; double off = Double.MAX_VALUE;
         for (int b = 0; b <= 2; b++) {
@@ -430,7 +446,13 @@ public final class Drummer implements Player, Hits {
             System.arraycopy(shifted, 0, hearing, 0, SLOTS);
             refoundTheOne++;
         }
-        System.arraycopy(hearing, 0, lesson, 0, SLOTS);
+        // One hearing can be wrong. It believes a place only if it has heard it there in at least half the calls so far.
+        callsHeard++;
+        for (int s = 0; s < SLOTS; s++) {
+            if (hearing[s] != REST) votes[hearing[s]][s]++;
+            byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
+            lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
+        }
         hasLesson = true;
         mode = ANSWERING;
         tickInBar = ((SLOTS - one) % SLOTS) / (SLOTS / PULSES / ticks);
@@ -503,7 +525,8 @@ public final class Drummer implements Player, Hits {
             }
             int slot = tickInBar * (SLOTS / PULSES / ticks);
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
-            byte sound = last ? POT : pattern[slot];
+            boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
+            byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
             if (sound != REST) {
                 long meant = Math.round(clock.nextBeat() + chance.nextGaussian() * Audio.samples(slip()));
                 strikeAt = Math.max(meant, blockStart);
@@ -540,7 +563,7 @@ public final class Drummer implements Player, Hits {
     public boolean done(long now) { return endAt >= 0 && now >= endAt; }
 
     public String pattern() { return write(pattern); }
-    /** What it made of the last two bars the record played. */
+    /** What it believes the lesson is, from every call it has heard this session. */
     public String lessonAsHeard() { return write(lesson); }
     private static String write(byte[] b) {
         char[] c = new char[SLOTS];
@@ -552,7 +575,7 @@ public final class Drummer implements Player, Hits {
     @Override public long hitAt(int i) { return hits[i]; }
     public int hitSlot(int i) { return hitSlots[i]; }
     /** The first place, counted from the start, that belongs to the bars played together with the record. */
-    public int togetherFrom() { return bars * SLOTS; }
+    public int togetherFrom() { return Math.max(bars, teachBars) * SLOTS; }
     public double tempoNow() { return Audio.bpmOf(clock.period()); }
     public double lastPulse() { return lastPulse; }
     public long experience() { return experience; }

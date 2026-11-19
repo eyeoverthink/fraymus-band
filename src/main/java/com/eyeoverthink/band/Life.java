@@ -70,6 +70,22 @@ public final class Life {
         lines.add(blank < 0 ? lines.size() : blank, line);
     }
 
+    /** A session in which this player gave the lesson. */
+    public void rememberTaught(String other, int calls, int barsTogether, int hits, double unsteadyMs, double listeningNow, int ticksNow,
+                               String patternNow, int otherMatches) throws IOException {
+        sessions++;
+        hitsPlayed += hits;
+        listening = listeningNow; ticks = ticksNow; pattern = patternNow;
+        set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
+        set("ticks to the pulse", Integer.toString(ticksNow));
+        set("pattern", patternNow);
+        lines.add(String.format(Locale.ROOT,
+            "session %d: played its pattern for %s, %d calls and %d bars together, hits=%d, unsteadiness %.1f ms, listening %.2f, ticks to the pulse %d, pattern %s, and %s ended like it in %d of 16 places",
+            sessions, other, calls, barsTogether, hits, unsteadyMs, listeningNow, ticksNow, patternNow, other, otherMatches));
+        if (file.getParent() != null) Files.createDirectories(file.getParent());
+        Files.write(file, lines, StandardCharsets.UTF_8);
+    }
+
     /** A session played with another drummer and no record. */
     public void rememberTogether(String other, int bars, int hits, double unsteadyMs, double listeningNow, int ticksNow,
                                  String patternNow, int hitsTogether, double apartMs) throws IOException {

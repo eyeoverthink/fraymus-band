@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step five: two drummers and no record, each on its own clock, each listening to the other. */
-class StepFiveTest {
+/** Step six: one drummer gives the lesson to another. */
+class StepSixTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -100,6 +100,47 @@ class StepFiveTest {
         }
         assertEquals(near, ownAt);
         assertEquals(across, othersAt);
+    }
+
+    @Test
+    void aSessionOfTeachingIsWrittenIntoBothLives(@TempDir Path dir) throws Exception {
+        Path old = practised(dir, "old.life", 4, LESSON.bar()), young = dir.resolve("young.life");
+        Session.Taught t = Session.teach(dir.resolve("t.wav"), old, young, 3, 4, 9);
+        assertEquals(LESSON.bar(), t.teacherPattern(), "the teacher plays its own pattern and does not change it");
+        assertEquals(LESSON.bar(), Life.open(old, "x").pattern());
+        assertEquals(1, t.ticksBefore(), "the learner is born here");
+        assertTrue(t.peak() > 0.2f && t.peak() < 1.0f, "loud enough to hear, never clipped: " + t.peak());
+        List<String> o = Files.readAllLines(old), y = Files.readAllLines(young);
+        assertTrue(o.get(o.size() - 1).contains("played its pattern for the second drummer, 3 calls and 4 bars together"));
+        assertTrue(y.get(y.size() - 1).startsWith("session 1: heard \"the drummer\", answers=3"));
+        assertEquals(t.learnerHits(), Life.open(young, "x").hitsPlayed());
+    }
+
+    /** Sixteen newborns, each taught for sixteen sessions by a practised drummer who never changes its pattern. */
+    @Test
+    void aYoungDrummerGrowsTowardTheOneWhoTeachesIt(@TempDir Path dir) throws Exception {
+        int pairs = 16, sessions = 16;
+        double[] like = new double[sessions], believed = new double[sessions];
+        int[] atFour = new int[sessions];
+        for (int d = 0; d < pairs; d++) {
+            Path young = dir.resolve("y" + d + ".life");
+            for (int s = 0; s < sessions; s++) {
+                Session.Taught t = Session.teach(dir.resolve("t.wav"), practised(dir, "o" + d + ".life", 4, LESSON.bar()), young, 4, 8, 1000L * d + s);
+                like[s] += t.matchesAfter() / (double) pairs;
+                believed[s] += LESSON.matches(t.heardAs()) / (double) pairs;
+                if (t.ticksAfter() == 4) atFour[s]++;
+                int reach = Drummer.SLOTS / Drummer.PULSES / t.ticksAfter();
+                for (int i = 0; i < Drummer.SLOTS; i++) {
+                    if (i % reach != 0) assertEquals('.', t.patternAfter().charAt(i), "it only plays places its ticks can reach");
+                    if (i % reach != 0) assertEquals('.', t.heardAs().charAt(i), "and only hears those places too");
+                }
+            }
+        }
+        for (int s = 0; s < sessions; s += 3)
+            System.out.printf(Locale.ROOT, "TAUGHT session %2d: like the teacher in %.1f of 16 places, believes the lesson right in %.1f, at four ticks %d of %d%n",
+                s + 1, like[s], believed[s], atFour[s], pairs);
+        double early = (like[0] + like[1] + like[2]) / 3, late = (like[sessions - 3] + like[sessions - 2] + like[sessions - 1]) / 3;
+        assertTrue(late > early + 0.8, "it ends more like its teacher than it began: " + early + " to " + late);
     }
 
     @Test

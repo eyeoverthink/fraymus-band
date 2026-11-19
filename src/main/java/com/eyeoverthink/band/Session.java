@@ -141,6 +141,59 @@ public final class Session {
         }
     }
 
+    /** What happened when one drummer gave the lesson to another. */
+    public record Taught(int calls, int barsTogether, double seconds, String teacher, String teacherPattern, int teacherHits, double teacherUnsteadyMs,
+                         String learner, int learnerHits, int ticksBefore, int ticksAfter, String heardAs, String patternBefore, String patternAfter,
+                         int matchesBefore, int matchesAfter, int copied, int ownIdeas, int changesKept, int changesTakenBack, int cutShort,
+                         double listeningBefore, double listeningAfter, double learnerUnsteadyMs,
+                         int hitsTogether, double apartMs, int alone, double landedApartMs, float peak, Path wav) {}
+
+    /**
+     * One drummer teaches another. The teacher plays its own pattern for two bars and leaves two bars of
+     * room, on its own clock; the learner answers. After the last answer they play on together.
+     */
+    public static Taught teach(Path wav, Path teacherLife, Path learnerLife, int calls, int barsTogether, long seed) throws IOException {
+        Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer");
+        Drummer t = Drummer.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, seed);
+        Drummer l = new Drummer(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
+        Lesson given = new Lesson(lifeT.name(), 92.0, lifeT.pattern());      // only used afterwards, to count how alike they ended
+        Room room = new Room(2, NEAR, ACROSS);
+        float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK];
+        float[] fromT = new float[Audio.BLOCK], fromL = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
+
+        long now = 0, tooLong = (long) Audio.samples(60.0 + 30.0 * calls + 8.0 * barsTogether);
+        try (WavWriter out = new WavWriter(wav)) {
+            while (!(t.done(now) && l.done(now))) {          // no objects are made inside this loop
+                if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
+                room.carry(0, others, own, Audio.BLOCK, now);
+                t.hear(others, own, Audio.BLOCK, now);
+                room.carry(1, others, own, Audio.BLOCK, now);
+                l.hear(others, own, Audio.BLOCK, now);
+                java.util.Arrays.fill(fromT, 0f);
+                java.util.Arrays.fill(fromL, 0f);
+                t.play(fromT, Audio.BLOCK, now);
+                l.play(fromL, Audio.BLOCK, now);
+                room.fill(0, fromT, Audio.BLOCK, now);
+                room.fill(1, fromL, Audio.BLOCK, now);
+                for (int i = 0; i < Audio.BLOCK; i++) mix[i] = fromT[i] + fromL[i];
+                out.write(mix, Audio.BLOCK);
+                now += Audio.BLOCK;
+            }
+            Apart with = apart(l, l.togetherFrom(), t);
+            double uT = unsteadiness(t, 0, t.hitCount()), uL = unsteadiness(l, 0, l.hitCount());
+            int before = given.matches(lifeL.pattern()), after = given.matches(l.pattern());
+            Taught taught = new Taught(calls, barsTogether, Audio.seconds(out.samples()), lifeT.name(), t.pattern(), t.hitCount(), uT,
+                lifeL.name(), l.hitCount(), lifeL.ticks(), l.ticks(), l.lessonAsHeard(), lifeL.pattern(), l.pattern(), before, after,
+                l.copied(), l.ownIdeas(), l.changesKept(), l.changesTakenBack(), l.cutShort(), lifeL.listening(), l.listening(), uL,
+                with.together(), with.ms(), with.alone(), barsTogether == 0 ? 0 : with.landed(), out.peak(), wav);
+            lifeT.rememberTaught(lifeL.name(), calls, barsTogether, t.hitCount(), uT, t.listening(), t.ticks(), t.pattern(), after);
+            lifeL.remember(lifeT.name(), calls, l.hitCount(), 92.0, l.tempoNow(), unsteadiness(l, 0, Math.min(24, l.hitCount() / 2)),
+                unsteadiness(l, l.hitCount() - Math.min(24, l.hitCount() / 2), l.hitCount()), l.listening(), l.ticks(), l.pattern(), after,
+                barsTogether, with.together() == 0 ? -1 : with.ms());
+            return taught;
+        }
+    }
+
     private static final int SLOTS_IN_A_BAR = Drummer.SLOTS;
 
     /** The tempo a drummer actually played from one bar to another, from when its hits landed. */

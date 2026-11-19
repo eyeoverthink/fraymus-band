@@ -1,6 +1,6 @@
 name: the drummer
 age: 0
-listens to itself: 0.89
+listens to itself: 0.08
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: pn.pn...p.p.n..n
@@ -26,3 +26,9 @@ session 18: heard "first lesson", answers=4, hits=128, tempo 92.0 to 96.2 bpm, u
 session 19: played 16 bars with the second drummer, no record, hits=129, unsteadiness 15.3 ms, listening 0.65, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 15 ms apart
 session 20: played 16 bars with the second drummer, no record, hits=129, unsteadiness 13.1 ms, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 14 ms apart
 session 21: played 16 bars with the second drummer, no record, hits=129, unsteadiness 12.2 ms, listening 0.89, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 9 ms apart
+session 22: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.8 ms, listening 0.95, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 11 of 16 places
+session 23: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 11.2 ms, listening 0.83, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 11 of 16 places
+session 24: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 10.7 ms, listening 0.65, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
+session 25: played its pattern for the second drummer, 4 calls and 8 bars together, hits=126, unsteadiness 49.2 ms, listening 0.47, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 13 of 16 places
+session 26: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 10.2 ms, listening 0.29, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 11 of 16 places
+session 27: played its pattern for the second drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.5 ms, listening 0.08, ticks to the pulse 4, pattern pn.pn...p.p.n..n, and the second drummer ended like it in 12 of 16 places

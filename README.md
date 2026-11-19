@@ -41,6 +41,12 @@ shifts its tick part of the way toward the other's hits and leans its pulse towa
 other's one lands where it has no tick, it moves half way to it, and the other is doing the same. Neither
 is in charge. Each keeps its own pattern and its own life file.
 
+**Teaching.** A drummer can be the one the lesson comes from. It plays its own pattern for two bars and
+leaves two bars of room, as the record did, but on its own unsteady clock. The one learning treats it
+exactly as it treated the record and hears only what its ticks can reach. Because one hearing of an
+unsteady teacher can be wrong, a learner believes a place only if it has heard it there in at least half
+the calls so far. After the last answer the two play on together.
+
 **The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
 else's in 9 ms, so it can tell its own hits from the others'. It learns how long after it hits it hears
 itself, and it can see how much farther away the others are, so it places their hits when they were
@@ -58,7 +64,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.5.0.jar
+    java -jar target/fraymus-band-0.6.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -66,10 +72,17 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.5.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.6.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
+
+To have one drummer teach another its pattern:
+
+    java -jar target/fraymus-band-0.6.0.jar --teach lives/second.life
+
+The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
+eight bars together.
 
 ## Write your own lesson
 
@@ -104,7 +117,22 @@ pairings could be compared.
 | Practised and newborn | 19.5 | 6 of 60 | 92.4 to 90.3 bpm | 14 of 20 |
 | Two newborns | 24.5 | 15 of 60 | 92.7 to 93.9 bpm | 14 of 20 |
 
-`mvn test` reproduces the first table and checks the first row of the second. It fails if practice stops
+**One drummer teaching another.** Sixteen newborns, each taught for sixteen sessions by a practised
+drummer playing the first lesson's pattern.
+
+| Session | Like the teacher (of 16) | Believes the lesson right (of 16) | Have four ticks |
+|--------:|-------------------------:|----------------------------------:|----------------:|
+| 1  | 11.6 | 12.0 | 0 of 16 |
+| 4  | 12.4 | 12.7 | 0 |
+| 7  | 12.3 | 12.9 | 0 |
+| 10 | 12.7 | 12.5 | 1 |
+| 13 | 13.2 | 13.2 | 2 |
+| 16 | 13.4 | 13.8 | 4 |
+
+That is slower than learning from the record, which never wavers. A teacher whose own time moves is
+harder to hear.
+
+`mvn test` reproduces the first and third tables and checks the first row of the second. It fails if practice stops
 bringing a drummer closer to the record, if two practised drummers cannot hold time together, or if a
 drummer plays or hears a place its ticks cannot reach.
 
@@ -125,7 +153,8 @@ drummer plays or hears a place its ticks cannot reach.
   nothing of the lesson that round.
 - Two practised drummers who follow each other slow down, about 3 bpm over 16 bars. Half of that was a
   bias in how they leaned on short gaps, now fixed. The rest is not explained yet.
-- Two drummers together do not change their patterns or learn from each other. They only keep time.
+- Learning from a drummer is slow and sometimes wrong: its time moves, so the learner misplaces hits.
+- The teacher does not listen to the answers or change what it plays to help.
 - A newborn pulls a practised drummer's time around. Nobody yet decides whom to follow.
 - Mono, one drummer.
 

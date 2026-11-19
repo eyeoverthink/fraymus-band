@@ -7,7 +7,7 @@ import java.util.Locale;
 public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
-        Path with = null;
+        Path with = null, teach = null;
         long seed = System.nanoTime();
         Path wav = Path.of("out", "session.wav");
         Path life = Path.of("lives", "drummer.life");
@@ -20,9 +20,25 @@ public final class Main {
                 case "--out" -> wav = Path.of(args[i + 1]);
                 case "--life" -> life = Path.of(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (teach != null) {                                 // one drummer gives the lesson to another
+            Session.Taught t = Session.teach(wav, life, teach, answers, together < 0 ? 8 : together, seed);
+            System.out.printf(Locale.ROOT, "%s played its pattern for %s: %s%n", t.teacher(), t.learner(), t.teacherPattern());
+            System.out.printf(Locale.ROOT, "With %d ticks to the pulse %s heard it as: %s%n", t.ticksAfter(), t.learner(), t.heardAs());
+            System.out.printf(Locale.ROOT, "Its pattern before: %s (like the teacher's in %d of 16 places)%n", t.patternBefore(), t.matchesBefore());
+            System.out.printf(Locale.ROOT, "Its pattern after:  %s (like the teacher's in %d of 16 places)%n", t.patternAfter(), t.matchesAfter());
+            System.out.printf(Locale.ROOT, "%d answers, %.1f s. %d changes copied, %d its own idea; %d kept, %d taken back; cut short %d times.%n",
+                t.calls(), t.seconds(), t.copied(), t.ownIdeas(), t.changesKept(), t.changesTakenBack(), t.cutShort());
+            System.out.printf(Locale.ROOT, "Ticks to the pulse: %d before, %d after. Listening: %.2f before, %.2f after.%n", t.ticksBefore(), t.ticksAfter(), t.listeningBefore(), t.listeningAfter());
+            System.out.printf(Locale.ROOT, "Unsteadiness: the teacher %.1f ms, the learner %.1f ms.%n", t.teacherUnsteadyMs(), t.learnerUnsteadyMs());
+            System.out.printf(Locale.ROOT, "Together for %d bars: %d of the learner's hits landed with the teacher's, %.0f ms apart on average; %d landed nowhere near. Their last hits were %.0f ms apart.%n",
+                t.barsTogether(), t.hitsTogether(), t.apartMs(), t.alone(), Math.abs(t.landedApartMs()));
+            System.out.println("Wrote " + t.wav() + " and added the session to " + life + " and " + teach);
+            return;
         }
         if (with != null) {                                  // two drummers, no record
             Session.Duo d = Session.together(wav, life, with, together < 0 ? 16 : together, seed);
