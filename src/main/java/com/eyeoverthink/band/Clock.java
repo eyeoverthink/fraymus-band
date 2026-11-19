@@ -25,6 +25,12 @@ public final class Clock {
     /** Move on by part of a pulse: one tick, when the player is dividing its pulse into ticks. */
     public void advance(double partOfPulse) { nextBeat += period * partOfPulse; }
 
+    /** Shift where the next tick falls, without changing the pulse. */
+    public void nudge(double samples) { nextBeat += samples; }
+
+    /** Start counting again from a moment the player picked. */
+    public void startAt(double firstBeat) { nextBeat = firstBeat; }
+
     /** Let the pulse wander by a fraction of itself, the way an unpractised hand does. */
     public void drift(double fraction) { period *= 1.0 + fraction; }
 

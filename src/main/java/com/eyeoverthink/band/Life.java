@@ -70,8 +70,8 @@ public final class Life {
         lines.add(blank < 0 ? lines.size() : blank, line);
     }
 
-    public void remember(int bars, int hits, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs,
-                         double listeningNow, int ticksNow, String patternNow) throws IOException {
+    public void remember(String lesson, int answers, int hits, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs,
+                         double listeningNow, int ticksNow, String patternNow, int matches) throws IOException {
         sessions++;
         hitsPlayed += hits;
         listening = listeningNow; ticks = ticksNow; pattern = patternNow;
@@ -81,8 +81,8 @@ public final class Life {
         set("ticks to the pulse", Integer.toString(ticksNow));
         set("pattern", patternNow);
         lines.add(String.format(Locale.ROOT,
-            "session %d: bars=%d, hits=%d, tempo %.1f to %.1f bpm, unsteadiness %.1f ms at the start, %.1f ms by the end, listening %.2f, ticks to the pulse %d, pattern %s",
-            sessions, bars, hits, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow, ticksNow, patternNow));
+            "session %d: heard \"%s\", answers=%d, hits=%d, tempo %.1f to %.1f bpm, unsteadiness %.1f ms at the start, %.1f ms by the end, listening %.2f, ticks to the pulse %d, pattern %s, like the lesson in %d of 16 places",
+            sessions, lesson, answers, hits, startedBpm, endedBpm, earlyUnsteadyMs, lateUnsteadyMs, listeningNow, ticksNow, patternNow, matches));
         if (file.getParent() != null) Files.createDirectories(file.getParent());
         Files.write(file, lines, StandardCharsets.UTF_8);
     }

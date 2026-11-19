@@ -1,9 +1,9 @@
 name: the drummer
 age: 0
-listens to itself: 0.75
+listens to itself: 0.77
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
-pattern: p...nnn.p.p.n.n.
+pattern: p..pn...p.p.n..n
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
 session 2: bars=16, hits=65, tempo 92.0 to 95.7 bpm, unsteadiness 20.7 ms at the start, 16.8 ms by the end, listening 0.39, ticks to the pulse 1, pattern p...p...n...p...
@@ -15,3 +15,9 @@ session 7: bars=16, hits=123, tempo 92.0 to 86.9 bpm, unsteadiness 5.1 ms at the
 session 8: bars=16, hits=115, tempo 92.0 to 96.3 bpm, unsteadiness 8.6 ms at the start, 8.4 ms by the end, listening 0.63, ticks to the pulse 2, pattern p.p.n.n.n...n.p.
 session 9: bars=16, hits=111, tempo 92.0 to 93.0 bpm, unsteadiness 11.6 ms at the start, 8.4 ms by the end, listening 0.81, ticks to the pulse 4, pattern p.n.n.n.p...p.n.
 session 10: bars=16, hits=137, tempo 92.0 to 90.0 bpm, unsteadiness 8.3 ms at the start, 6.0 ms by the end, listening 0.75, ticks to the pulse 4, pattern p...nnn.p.p.n.n.
+session 11: heard "first lesson", answers=6, hits=87, tempo 92.0 to 93.3 bpm, unsteadiness 10.3 ms at the start, 12.8 ms by the end, listening 0.95, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
+session 12: heard "first lesson", answers=6, hits=87, tempo 92.0 to 96.6 bpm, unsteadiness 14.9 ms at the start, 10.0 ms by the end, listening 0.71, ticks to the pulse 4, pattern p..pn...p.p.n..., like the lesson in 15 of 16 places
+session 13: heard "first lesson", answers=6, hits=85, tempo 92.0 to 95.6 bpm, unsteadiness 8.3 ms at the start, 8.5 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
+session 14: heard "first lesson", answers=6, hits=85, tempo 92.0 to 93.8 bpm, unsteadiness 12.6 ms at the start, 13.8 ms by the end, listening 0.95, ticks to the pulse 4, pattern p..pn...n.p.n..n, like the lesson in 15 of 16 places
+session 15: heard "first lesson", answers=6, hits=86, tempo 92.0 to 93.2 bpm, unsteadiness 7.3 ms at the start, 8.5 ms by the end, listening 0.83, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
+session 16: heard "first lesson", answers=6, hits=93, tempo 92.0 to 97.0 bpm, unsteadiness 7.1 ms at the start, 8.8 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
