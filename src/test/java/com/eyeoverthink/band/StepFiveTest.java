@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step four: after the answers, the record and the drummer play at the same time, each on its own clock. */
-class StepFourTest {
+/** Step five: two drummers and no record, each on its own clock, each listening to the other. */
+class StepFiveTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -100,6 +100,44 @@ class StepFourTest {
         }
         assertEquals(near, ownAt);
         assertEquals(across, othersAt);
+    }
+
+    @Test
+    void twoPractisedDrummersHoldTimeTogetherWithNoRecord(@TempDir Path dir) throws Exception {
+        int close = 0, landed = 0; double slowest = 9;
+        for (int seed = 0; seed < 10; seed++) {
+            Path a = practised(dir, "a" + seed + ".life", 4, LESSON.bar()), b = practised(dir, "b" + seed + ".life", 4, "p...n...p.p.n...");
+            Session.Duo d = Session.together(dir.resolve("t.wav"), a, b, 16, seed);
+            assertTrue(d.peak() > 0.2f && d.peak() < 1.0f, "loud enough to hear, never clipped: " + d.peak());
+            assertEquals(LESSON.bar(), d.first().pattern(), "each keeps its own pattern");
+            assertEquals("p...n...p.p.n...", d.second().pattern());
+            if (d.hitsTogether() > 60 && d.apartMs() < 15) close++;
+            if (Math.abs(d.landedApartMs()) < 40) landed++;
+            slowest = Math.min(slowest, d.tempoLastBars() / d.tempoFirstBars());
+        }
+        assertTrue(close >= 8, "within 15 ms of each other in " + close + " of 10 takes");
+        assertTrue(landed >= 8, "their last hits within 40 ms of each other in " + landed + " of 10 takes");
+        assertTrue(slowest > 0.88, "the tempo they share does not collapse: " + slowest);
+    }
+
+    @Test
+    void aSessionTogetherIsWrittenIntoBothLives(@TempDir Path dir) throws Exception {
+        Path a = practised(dir, "a.life", 4, LESSON.bar()), b = dir.resolve("b.life");
+        Session.Duo d = Session.together(dir.resolve("t.wav"), a, b, 8, 5);
+        assertEquals("the second drummer", d.second().name());
+        assertEquals(1, d.second().ticksBefore(), "the second drummer is born here, with one tick and the pot on every pulse");
+        List<String> first = Files.readAllLines(a), second = Files.readAllLines(b);
+        assertTrue(first.get(first.size() - 1).contains("played 8 bars with the second drummer, no record"));
+        assertTrue(second.get(second.size() - 1).startsWith("session 1: played 8 bars with the drummer, no record"));
+        assertEquals(d.second().hits(), Life.open(b, "x").hitsPlayed());
+        assertEquals(3000 + d.first().hits(), Life.open(a, "x").hitsPlayed());
+    }
+
+    @Test
+    void theSameTwoLivesAndTheSameChanceGiveTheSameTakeTogether(@TempDir Path dir) throws Exception {
+        for (String take : new String[] {"x", "y"})
+            Session.together(dir.resolve(take + ".wav"), practised(dir, take + "a.life", 4, LESSON.bar()), practised(dir, take + "b.life", 2, "p...n...p.p.n..."), 6, 77);
+        assertArrayEquals(Files.readAllBytes(dir.resolve("x.wav")), Files.readAllBytes(dir.resolve("y.wav")));
     }
 
     @Test
@@ -228,6 +266,6 @@ class StepFourTest {
         assertTrue(early[sessions - 1] < early[0] - 6, "and their time is far steadier");
         assertTrue(listen[sessions - 1] > listen[0] + 0.2, "because they learned to listen");
         assertTrue(apart[sessions - 1] < apart[0] - 6, "and they land closer to the record when they play with it");
-        assertTrue(landed[sessions - 1] > landed[0] + drummers / 5, "and far more of them end together with it");
+        assertTrue(landed[sessions - 1] >= landed[0] && landed[sessions - 1] > drummers * 0.8, "and nearly all of them end together with it");
     }
 }

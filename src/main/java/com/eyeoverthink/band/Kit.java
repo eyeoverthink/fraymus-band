@@ -23,7 +23,7 @@ public final class Kit {
 
     /** How hard a place in the bar is hit: the one hardest, the pulses next, the small ticks softest. */
     public static double weight(int place) {
-        return place == 0 ? 1.0 : place % 4 == 0 ? 0.85 : place % 2 == 0 ? 0.7 : 0.6;
+        return place == 0 ? 1.0 : place % 4 == 0 ? 0.75 : place % 2 == 0 ? 0.62 : 0.52;
     }
 
     public static byte read(char c) { return c == 'p' ? POT : c == 'n' ? PAN : REST; }

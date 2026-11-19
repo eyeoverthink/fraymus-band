@@ -1,6 +1,6 @@
 name: the drummer
 age: 0
-listens to itself: 0.77
+listens to itself: 0.89
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: pn.pn...p.p.n..n
@@ -23,3 +23,6 @@ session 15: heard "first lesson", answers=6, hits=86, tempo 92.0 to 93.2 bpm, un
 session 16: heard "first lesson", answers=6, hits=93, tempo 92.0 to 97.0 bpm, unsteadiness 7.1 ms at the start, 8.8 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...p.p.n..n, like the lesson in 16 of 16 places
 session 17: heard "first lesson", answers=4, hits=126, tempo 92.0 to 95.9 bpm, unsteadiness 5.4 ms at the start, 6.3 ms by the end, listening 0.77, ticks to the pulse 4, pattern p..pn...n.p.n.nn, like the lesson in 14 of 16 places, 8 bars with the record, 9 ms apart
 session 18: heard "first lesson", answers=4, hits=128, tempo 92.0 to 96.2 bpm, unsteadiness 7.0 ms at the start, 12.0 ms by the end, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, like the lesson in 15 of 16 places, 8 bars with the record, 13 ms apart
+session 19: played 16 bars with the second drummer, no record, hits=129, unsteadiness 15.3 ms, listening 0.65, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 15 ms apart
+session 20: played 16 bars with the second drummer, no record, hits=129, unsteadiness 13.1 ms, listening 0.77, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 14 ms apart
+session 21: played 16 bars with the second drummer, no record, hits=129, unsteadiness 12.2 ms, listening 0.89, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 9 ms apart

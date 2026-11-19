@@ -70,6 +70,25 @@ public final class Life {
         lines.add(blank < 0 ? lines.size() : blank, line);
     }
 
+    /** A session played with another drummer and no record. */
+    public void rememberTogether(String other, int bars, int hits, double unsteadyMs, double listeningNow, int ticksNow,
+                                 String patternNow, int hitsTogether, double apartMs) throws IOException {
+        sessions++;
+        hitsPlayed += hits;
+        listening = listeningNow; ticks = ticksNow; pattern = patternNow;
+        lines.removeIf(l -> l.trim().startsWith("sound:"));
+        set("sounds", "a pot (p) and a pan (n)");
+        set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
+        set("ticks to the pulse", Integer.toString(ticksNow));
+        set("pattern", patternNow);
+        lines.add(String.format(Locale.ROOT,
+            "session %d: played %d bars with %s, no record, hits=%d, unsteadiness %.1f ms, listening %.2f, ticks to the pulse %d, pattern %s, ",
+            sessions, bars, other, hits, unsteadyMs, listeningNow, ticksNow, patternNow)
+            + (hitsTogether == 0 ? "never landed near each other" : String.format(Locale.ROOT, "%.0f ms apart", apartMs)));
+        if (file.getParent() != null) Files.createDirectories(file.getParent());
+        Files.write(file, lines, StandardCharsets.UTF_8);
+    }
+
     public void remember(String lesson, int answers, int hits, double startedBpm, double endedBpm, double earlyUnsteadyMs, double lateUnsteadyMs,
                          double listeningNow, int ticksNow, String patternNow, int matches, int barsTogether, double apartMs) throws IOException {
         sessions++;

@@ -5,7 +5,7 @@ package com.eyeoverthink.band;
  * asked. Then it plays the lesson straight through for some bars more, and ends on the one after them.
  * It has its own clock, it does not listen, and it does not wait.
  */
-public final class Teacher implements Player {
+public final class Teacher implements Player, Hits {
     private static final int CALL = Drummer.TURN * Drummer.SLOTS, CYCLE = 2 * CALL;
 
     private final Clock clock;
@@ -56,6 +56,6 @@ public final class Teacher implements Player {
         }
     }
 
-    public int hitCount() { return hitCount; }
-    public long hitAt(int i) { return hits[i]; }
+    @Override public int hitCount() { return hitCount; }
+    @Override public long hitAt(int i) { return hits[i]; }
 }

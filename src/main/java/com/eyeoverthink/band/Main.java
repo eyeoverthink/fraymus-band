@@ -6,7 +6,8 @@ import java.util.Locale;
 /** Put a record on, sit the drummer down, and write what happened. */
 public final class Main {
     public static void main(String[] args) throws Exception {
-        int answers = 4, together = 8;
+        int answers = 4, together = -1;
+        Path with = null;
         long seed = System.nanoTime();
         Path wav = Path.of("out", "session.wav");
         Path life = Path.of("lives", "drummer.life");
@@ -18,10 +19,23 @@ public final class Main {
                 case "--seed" -> seed = Long.parseLong(args[i + 1]);
                 case "--out" -> wav = Path.of(args[i + 1]);
                 case "--life" -> life = Path.of(args[i + 1]);
+                case "--with" -> with = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
+        if (with != null) {                                  // two drummers, no record
+            Session.Duo d = Session.together(wav, life, with, together < 0 ? 16 : together, seed);
+            System.out.printf(Locale.ROOT, "%d bars, %.1f s, no record. %s started; %s came in after a bar.%n", d.bars(), d.seconds(), d.first().name(), d.second().name());
+            for (Session.Part p : new Session.Part[] {d.first(), d.second()})
+                System.out.printf(Locale.ROOT, "%s: %s, %d ticks to the pulse, %d hits, unsteadiness %.1f ms, listening %.2f to %.2f, %d hits with nothing of the other's near.%n",
+                    p.name(), p.pattern(), p.ticksAfter(), p.hits(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter(), p.alone());
+            System.out.printf(Locale.ROOT, "%d of the second's hits landed with the first's, %.0f ms apart on average (%+.0f ms: plus is behind).%n", d.hitsTogether(), d.apartMs(), d.leanMs());
+            System.out.printf(Locale.ROOT, "They started near %.1f bpm and ended near %.1f bpm. Their last hits were %.0f ms apart.%n", d.tempoFirstBars(), d.tempoLastBars(), Math.abs(d.landedApartMs()));
+            System.out.println("Wrote " + d.wav() + " and added the session to " + life + " and " + with);
+            return;
+        }
+        if (together < 0) together = 8;
         Lesson lesson = Lesson.read(lessonFile);
         Session.Report r = Session.run(wav, life, lesson, answers, together, seed);
         System.out.printf(Locale.ROOT, "The record played \"%s\" at %.0f bpm: %s%n", lesson.name(), lesson.tempo(), lesson.bar());

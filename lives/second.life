@@ -1,0 +1,10 @@
+name: the second drummer
+age: 0
+sounds: a pot (p) and a pan (n)
+listens to itself: 0.21
+ticks to the pulse: 2
+pattern: p...p...p...p...
+
+session 1: played 16 bars with the drummer, no record, hits=61, unsteadiness 14.8 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 15 ms apart
+session 2: played 16 bars with the drummer, no record, hits=61, unsteadiness 15.1 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 14 ms apart
+session 3: played 16 bars with the drummer, no record, hits=61, unsteadiness 13.7 ms, listening 0.21, ticks to the pulse 2, pattern p...p...p...p..., 9 ms apart
