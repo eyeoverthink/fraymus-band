@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.9.0. 26 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.10.0. 28 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -81,14 +81,15 @@ with a real life file. There is a record that plays lessons and a click track.
 | 7 | A click track in the players' ears (Vaughn's suggestion). Not in the room, not on the recording. Fixed the slowdown, stopped a newborn dragging a practised drummer, sped up learning. |
 | 8 | With a click, each drummer also learns how much to lean its tick toward the others, so they land together while the click holds the tempo. |
 | 9 | The first non-drummer: a bass player with one note. Same player class, different instrument. It listens for the pots and moves its notes onto them while it plays. The class `Drummer` was renamed `Musician`. This handoff was written. |
+| 10 | The bass earns a second note (the octave) by playing in tune, judged by its own ear on its own sound. With two notes it puts the low one on the pots and the high one on the pans. |
 
 ### The players that exist (do not reset these)
 
 - `lives/drummer.life`: "the drummer". Born in step 1. Four ticks to the pulse. Learned the first lesson
   from the record, then drifted a little with its own ideas.
 - `lives/second.life`: "the second drummer". Born in step 5. Taught by the first.
-- `lives/bass.life`: "the bass player". Born in step 9. One note, two ticks to the pulse, its notes mostly
-  on the drummers' pots.
+- `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
+  pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own.
 
 **These files are the players' lived history. Never hand-edit them, never delete them, never regenerate
 them.** Tests use throwaway lives in temporary folders. If a format changes, make the reader accept the
@@ -101,11 +102,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.9.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.9.0.jar --click on
-    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.9.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.10.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.10.0.jar --click on
+    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.10.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -125,7 +126,9 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `Clock`: one player's pulse. `period`, `nextBeat`, `advance`, `drift`, `pullToward`, `nudge`.
 - `Ear`: finds hits in a stream of sound: when, how loud, bright or dark. One ear per stream.
 - `Room`: one ring buffer per player. A player's own sound reaches it in 3 ms, others' in 9 ms.
-- `Instrument`: what a player's hands are on. `Kit` (pot and pan) and `Bass` (one low E) implement it.
+- `Instrument`: what a player's hands are on. `Kit` (pot and pan) and `Bass` (fretless, low E and high E).
+- `PitchEar`: measures the pitch of a player's own note from its own sound, by how far the bottom tone
+  turns between two short listens. Accurate to about one hundredth of a semitone.
 - `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
 - `Lesson`: a bar of sixteen places (`p` pot, `n` pan, `.` nothing) and a tempo. Files in `lessons/`.
 - `Teacher`: the record. Plays the lesson for two bars, leaves two, repeats; then plays straight through.
@@ -139,7 +142,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepNineTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -157,12 +160,16 @@ Learned, by trial, and saved in its life:
 - **pattern**: sixteen places. One change per round; kept unless that round sounded clearly rougher than
   its playing usually does.
 - **the lesson**: only what it heard, at the places its ticks reach.
+- **notes** (bass: 1 or 2): the second is earned when its last eight notes were within 12 hundredths of a
+  semitone on average, two bars running.
 - **leaning on the others** (0 to 0.6): with a click, how far it shifts its tick toward other players.
 - **its own delay**: how long after it hits it hears itself.
 
 Given, as fixed rules (be honest about these):
 
 - Its hand gets surer with every hit by a fixed formula (slip 4 ms falling toward 1.2 ms over ~1500 hits).
+  The bass player's pitch hand likewise (30 hundredths of a semitone falling toward 6 over ~600 notes).
+- Which note goes with which sound: low with the pot, high with the pan. And that the second note is the octave.
 - Accents: the one is hit hardest, pulses next, small ticks softest. The one stays on the pot. A pulse is
   never left empty.
 - Tapping along (shifting half way toward a heard hit) is a reflex.
@@ -192,6 +199,11 @@ Given, as fixed rules (be honest about these):
   there was none. It now removes a note only after listening four times and never hearing one there.
 - **A pan in the bass part.** What it heard while waiting to come in still counted the bright hits. A bass
   player now ignores them when it decides what it believes.
+- **Two pots landing almost together sounded bright**, so the bass put high notes on the pots. The ear
+  judged brightness 5 to 20 ms after a hit, where a second player's click could fall. It now judges 25 to
+  45 ms after.
+- **Measuring pitch from the whole shape of the note was off by up to 13 hundredths of a semitone**, because
+  the upper tones die away at different speeds. `PitchEar` follows only the bottom tone.
 - **A take that never ended**, twice: a waiting player with nobody left to wait for (it now comes in alone
   after two bars), and a final hit cancelled by a re-anchor. `Session` now throws if a take runs absurdly
   long, so a hang shows up as a failed test.
@@ -213,7 +225,10 @@ Given, as fixed rules (be honest about these):
 - The teacher does not listen to the answers.
 - A drummer's own ideas are picked by chance. There is no taste yet beyond copying what it hears.
 - Every session starts at 92 bpm, the tempo the players' bodies like.
-- The bass has one note and has never earned four ticks to the pulse, so it cannot reach sixteenth-note pots.
+- The bass has two notes an octave apart. That is not yet a bass line.
+- A bass player rarely earns four ticks to the pulse.
+- Every player's own ideas (one change in four) keep knocking it off a pattern it has found. There is no
+  taste yet, and nothing that says "this is good, stop changing it".
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -225,7 +240,8 @@ Given, as fixed rules (be honest about these):
 
 The bass player exists (step 9). Roughly in this order unless Vaughn says otherwise:
 
-1. More notes for the bass, earned the way ticks are earned. Decide with him what "earning a note" means.
+1. More notes for the bass (a fifth, then a scale), each earned by playing the ones it has in tune. A third
+   note needs a third symbol in the pattern and a reason to choose it; pots and pans only give two.
 2. Lessons in other feels (a clave, a hip hop bar, a swing bar). "Genre lives in the ticks."
 3. Taste: a reason to prefer one pattern over another that is not just copying.
 4. Trading bars between players as soloists.

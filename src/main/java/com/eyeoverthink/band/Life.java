@@ -22,6 +22,7 @@ public final class Life {
     private double listening = Musician.NEWBORN_LISTENING;
     private int ticks = 1;
     private double leaning;
+    private int notes = 1;
     private String sounds = "a pot (p) and a pan (n)";
     private String pattern = Musician.FIRST_PATTERN;
 
@@ -40,6 +41,7 @@ public final class Life {
                 if (s.startsWith("name:")) life.name = s.substring(5).trim();
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
+                else if (s.startsWith("notes:")) life.notes = Integer.parseInt(s.substring(6).trim());
                 else if (s.startsWith("ticks to the pulse:")) life.ticks = Integer.parseInt(s.substring(19).trim());
                 else if (s.startsWith("pattern:")) life.pattern = s.substring(8).trim();
                 else if (s.startsWith("session ")) {
@@ -70,6 +72,11 @@ public final class Life {
     public double leaning() { return leaning; }
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
+
+    /** How many notes a bass player has earned. */
+    public int notes() { return notes; }
+    /** Note how many it has now. It is written with the next session. */
+    public void notes(int now) { notes = now; set("notes", Integer.toString(now)); }
 
     /** What it plays, for a life that does not say yet. */
     public void plays(String what) { sounds = what; }

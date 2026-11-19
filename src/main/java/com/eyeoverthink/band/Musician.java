@@ -66,6 +66,12 @@ import java.util.SplittableRandom;
  * has listened four times and never heard one; one time in four it tries an idea of its own. It keeps a change unless those two bars sounded
  * clearly rougher than its playing usually does.
  *
+ * Earning a note. A bass has no frets, so a note can land sharp or flat. A newborn's hand is far off; it
+ * gets surer with every note by a fixed rule, as its timing hand does. It hears the pitch of each note it
+ * plays, from its own sound. When its last eight notes were close enough to in tune, two bars running, it
+ * has earned its second note: the same note an octave up. From then on it stops ignoring the bright hits.
+ * It puts the low note where it hears a pot and the high note where it hears a pan.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -113,6 +119,10 @@ public final class Musician implements Player, Hits {
     /** How big a change in leaning on the others it tries each time, the most it ever leans, and how many hits it weighs before judging. */
     static final double LEAN_TRY = 0.05, LEAN_MOST = 0.6;
     static final int LEAN_JUDGE_EVERY = 16;
+    /** How far off a newborn bass player's notes land, in hundredths of a semitone; the surest a hand gets; and how many notes that takes. */
+    static final double TUNE_SLIP = 30, TUNE_SUREST = 6, NOTES_TO_LEARN = 600;
+    /** It earns its next note when its last eight notes were this close to in tune on average. */
+    static final double TUNE_EARN = 12;
     /** While playing together, a hit this heavy next to the heaviest it has heard is the one. */
     static final double NEARLY_THE_HEAVIEST = 0.84;
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
@@ -140,7 +150,14 @@ public final class Musician implements Player, Hits {
     private double heaviest;                  // the heaviest hit it has heard from the record
     private long ticksTogether; private long placedTogether = -1; private long placedTogetherAt;
     private final Instrument hands;
-    private final boolean oneNote;        // a bass: one note, listens only for the dark hits, and learns while it plays
+    private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
+    private final Bass bass;              // its instrument, if it is a bass player
+    private final PitchEar pitchEar = new PitchEar();
+    private int notes = 1;                // how many notes it has earned: 1 (low) or 2 (low and high)
+    private byte struck;                  // the note it last played, so it knows what it meant
+    private final double[] outOfTune = new double[Ear.MEMORY];
+    private int tuneHead, tuneCount, inTuneBars;
+    private double centsSum; private int centsCount;
     private final SplittableRandom chance;
     private final double comfortable;
     private final int bars;               // bars it will play in all its answers
@@ -208,8 +225,10 @@ public final class Musician implements Player, Hits {
     /** A drummer for a session with another drummer. The one who starts plays from the top; the other comes in after a bar. */
     /** A bass player joining others who are already playing. It comes in after a bar. */
     public static Musician onBass(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
-                                  int ticksSoFar, String patternSoFar, int bars, long seed) {
-        return new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, new Bass());
+                                  int ticksSoFar, String patternSoFar, int notesSoFar, int bars, long seed) {
+        Musician m = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, new Bass());
+        m.notes = Math.max(1, Math.min(2, notesSoFar));
+        return m;
     }
 
     public static Musician withAnother(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
@@ -231,6 +250,7 @@ public final class Musician implements Player, Hits {
                     int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars, Instrument hands) {
         this.hands = hands;
         this.oneNote = hands instanceof Bass;
+        this.bass = oneNote ? (Bass) hands : null;
         this.withARecord = withARecord;
         this.teachBars = teachBars;
         this.listenBars = withARecord ? TURN : 1;
@@ -266,16 +286,33 @@ public final class Musician implements Player, Hits {
             hitsUsed = ear.hitsEver();
             someoneElse(Math.round(ear.hitTime() - FARTHER - ownDelay), ear.hitBright(), ear.hitLoud());   // when it was played, not when it arrived
         }
+        if (oneNote) hearItsOwnPitch(own, n, blockStart);
         ownEar.listen(own, n, blockStart);
         if (ownEar.hitsEver() != ownHitsUsed) {              // only its own hits tell it how it is playing
             ownHitsUsed = ownEar.hitsEver();
             long at = ownEar.hitTime();
+            if (oneNote) pitchEar.noteBegan(at);
             if (lastStrike >= 0 && at >= lastStrike && at - lastStrike < Audio.samples(0.05))   // how long after it hits does it hear the hit?
                 ownDelay += 0.2 * (at - lastStrike - ownDelay);
             if (mineBefore >= 0 && (mode == ANSWERING || mode == TOGETHER)) ownGap(at - mineBefore);
             mineBefore = at;
         }
     }
+
+    /** Was the note it just played in tune? It finds out from its own sound. */
+    private void hearItsOwnPitch(float[] own, int n, long blockStart) {
+        pitchEar.listen(own, n, blockStart);
+        if (!pitchEar.ready(blockStart + n)) return;
+        double meant = Bass.pitchOf(struck);
+        double off = Math.abs(PitchEar.cents(pitchEar.hz(meant), meant));
+        outOfTune[tuneHead] = off;
+        tuneHead = (tuneHead + 1) % Ear.MEMORY;
+        if (tuneCount < Ear.MEMORY) tuneCount++;
+        centsSum += off; centsCount++;
+    }
+
+    /** How far off its hand lands a note now, in hundredths of a semitone. */
+    double tuneSlip() { return TUNE_SUREST + (TUNE_SLIP - TUNE_SUREST) * Math.exp(-experience / NOTES_TO_LEARN); }
 
     /** A click in its ears. */
     private void onClick(long at) {
@@ -363,7 +400,7 @@ public final class Musician implements Player, Hits {
 
     /** While it plays: which of its places was that hit nearest to? A bass player only notes the dark ones. */
     private void noteWhatItHears(long at, byte kind, double loud, double tick) {
-        if (kind != POT) return;
+        if (kind != POT && notes < 2) return;                // with one note it has no use for the bright hits
         int barTicks = PULSES * ticks, back = 0;
         double off = Double.MAX_VALUE;
         for (int b = 0; b <= 2; b++) {
@@ -519,6 +556,11 @@ public final class Musician implements Player, Hits {
         if (ticks < 4 && tickUnevenness() < EARN) {
             if (++evenBars >= 2) { ticks *= 2; evenBars = 0; tickCount = 0; }
         } else evenBars = 0;
+        if (oneNote && notes < 2 && tuneCount == Ear.MEMORY) {          // has it been in tune enough to earn its next note?
+            double off = 0;
+            for (int j = 0; j < Ear.MEMORY; j++) off += outOfTune[j] / Ear.MEMORY;
+            if (off < TUNE_EARN) { if (++inTuneBars >= 2) notes = 2; } else inTuneBars = 0;
+        }
         if (mode == TOGETHER && oneNote && bar % TURN == 0 && bar < allBars) {   // it learns while it plays, two bars at a time
             endOfAnswer();
             believe();
@@ -567,7 +609,7 @@ public final class Musician implements Player, Hits {
     private void believe() {
         callsHeard++;
         for (int s = 0; s < SLOTS; s++) {
-            if (hearing[s] != REST && !(oneNote && hearing[s] == PAN)) votes[hearing[s]][s]++;   // a bass player has no use for the bright hits
+            if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN)) votes[hearing[s]][s]++;   // a bass player with one note has no use for the bright hits
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
         }
@@ -595,7 +637,7 @@ public final class Musician implements Player, Hits {
         // A bass player adds a note where it believes there is a pot. It takes one away only when it has
         // listened at least four times this session and never once heard a pot there: not hearing something
         // is weak evidence that it is not there.
-        return lesson[s] == POT || (callsHeard >= 4 && votes[POT][s] == 0);
+        return lesson[s] != REST || (callsHeard >= 4 && votes[POT][s] == 0 && votes[PAN][s] == 0);
     }
 
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
@@ -604,7 +646,7 @@ public final class Musician implements Player, Hits {
         int slot = step * chance.nextInt(SLOTS / step);
         if (slot == 0) return false;
         byte was = pattern[slot];
-        if (oneNote) pattern[slot] = was == REST ? POT : REST;
+        if (oneNote) pattern[slot] = was != REST ? REST : notes >= 2 && chance.nextBoolean() ? PAN : POT;
         else pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
                       : was == POT ? PAN
                       : slot % (SLOTS / PULSES) == 0 ? POT : REST;
@@ -662,6 +704,7 @@ public final class Musician implements Player, Hits {
         }
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
+                if (oneNote) { bass.detune(chance.nextGaussian() * tuneSlip()); struck = strikeSound; }
                 hands.strike(strikeSound, (float) (Kit.weight(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitSlots[hitCount++] = strikeSlot; }
                 experience++;
@@ -715,4 +758,8 @@ public final class Musician implements Player, Hits {
     public int refoundTheOne() { return refoundTheOne; }
     public int cameInAlone() { return cameInAlone; }
     public String plays() { return hands.describe(); }
+    /** How many notes a bass player has earned. */
+    public int notes() { return notes; }
+    /** How far out of tune its notes were this session on average, by its own ear, in hundredths of a semitone. */
+    public double outOfTuneCents() { return centsCount == 0 ? 0 : centsSum / centsCount; }
 }

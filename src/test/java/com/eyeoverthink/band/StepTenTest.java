@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step nine: the first player who is not a drummer, a bass player with one note. */
-class StepNineTest {
+/** Step ten: the bass player earns a second note by playing in tune. */
+class StepTenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -195,13 +195,53 @@ class StepNineTest {
     void theBassIsDarkToTheEarLikeAPot() {
         Ear ear = new Ear();
         Bass bass = new Bass();
-        assertEquals("one low note (p)", bass.describe());
         bass.strike(Kit.POT, 1f);
         float[] air = new float[Audio.RATE / 2];
         for (int i = 1000; i < air.length; i++) air[i] = bass.next();
         ear.listen(air, air.length, 0);
         assertEquals(1, ear.hitsEver(), "one note is one hit");
         assertFalse(ear.hitBright(), "a drummer or a bass player hears it as dark");
+    }
+
+    @Test
+    void itsEarHearsHowFarOffANoteIs() {
+        for (byte sound : new byte[] {Kit.POT, Kit.PAN})
+            for (double cents : new double[] {-30, -12, 0, 9, 30}) {
+                Bass bass = new Bass();
+                PitchEar ear = new PitchEar();
+                bass.detune(cents);
+                bass.strike(sound, 0.9f);
+                float[] block = new float[Audio.BLOCK];
+                ear.noteBegan(0);
+                long now = 0;
+                while (!ear.ready(now)) {
+                    for (int i = 0; i < Audio.BLOCK; i++) block[i] = bass.next();
+                    ear.listen(block, Audio.BLOCK, now);
+                    now += Audio.BLOCK;
+                }
+                double meant = Bass.pitchOf(sound);
+                assertEquals(cents, PitchEar.cents(ear.hz(meant), meant), 3.0, "a note " + cents + " hundredths of a semitone off");
+            }
+        assertEquals(1200, PitchEar.cents(Bass.HIGH, Bass.LOW), 1.0, "the high note is an octave above the low one");
+    }
+
+    @Test
+    void withTwoNotesItPutsTheHighOneWhereItHearsThePan(@TempDir Path dir) throws Exception {
+        int onAPan = 0, lowOnAPot = 0, high = 0;
+        for (int d = 0; d < 6; d++) {
+            Path bass = dir.resolve("bass" + d + ".life");
+            Files.write(bass, List.of("name: the bass player", "age: 0", "listens to itself: 0.60", "ticks to the pulse: 2", "notes: 2",
+                "pattern: p...............", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+            Session.Band band = null;
+            for (int s = 0; s < 5; s++)
+                band = Session.band(dir.resolve("t.wav"), List.of(practised(dir, "a" + d + ".life", 4, LESSON.bar()),
+                    practised(dir, "b" + d + ".life", 4, "p...n...p.p.n...")), bass, 16, 92, 1000L * d + s);
+            onAPan += band.bassHighNotesOnAPan(); lowOnAPot += band.bassNotesOnAPot(); high += band.bassHighNotes();
+        }
+        System.out.printf(Locale.ROOT, "HIGH after five sessions, six players: %d high notes, %d of them on a pan; %d low notes on a pot%n", high, onAPan, lowOnAPot);
+        assertTrue(onAPan >= 6, "about one high note each on a pan: " + onAPan);
+        assertTrue(onAPan * 3 >= high * 2, "most of its high notes are where a drummer has a pan: " + onAPan + " of " + high);
+        assertTrue(lowOnAPot >= 12, "and its low notes are on the pots: " + lowOnAPot);
     }
 
     @Test
@@ -216,7 +256,8 @@ class StepNineTest {
         assertEquals("p...n...p.p.n...", band.parts().get(1).pattern());
         assertTrue(band.peak() > 0.2f && band.peak() < 1.0f, "loud enough to hear, never clipped: " + band.peak());
         List<String> life = Files.readAllLines(bass);
-        assertTrue(life.contains("sounds: one low note (p)"));
+        assertTrue(life.stream().anyMatch(l -> l.startsWith("sounds: a low note (p)")));
+        assertTrue(life.contains("notes: 1"), "it is born with one note");
         assertTrue(life.get(life.size() - 1).startsWith("session 1: played 8 bars with the drummer and the drummer, no record"), "both test drummers are named the drummer");
         assertTrue(Files.readAllLines(a).get(Files.readAllLines(a).size() - 1).contains("and the bass player, no record"), "the drummers remember who they played with");
     }
@@ -225,7 +266,8 @@ class StepNineTest {
     @Test
     void aBassPlayerGrowsOntoTheDrummersPots(@TempDir Path dir) throws Exception {
         int players = 6, sessions = 12;
-        double[] notes = new double[sessions], onAPot = new double[sessions], apart = new double[sessions];
+        double[] notes = new double[sessions], onAPot = new double[sessions], apart = new double[sessions], cents = new double[sessions];
+        int[] twoNotes = new int[sessions];
         int[] together = new int[sessions];
         for (int d = 0; d < players; d++) {
             Path bass = dir.resolve("bass" + d + ".life");
@@ -236,23 +278,29 @@ class StepNineTest {
                 int reach = Musician.SLOTS / Musician.PULSES / band.parts().get(2).ticksAfter();
                 assertEquals('p', p.charAt(0), "its note stays on the one");
                 for (int i = 0; i < Musician.SLOTS; i++) {
-                    assertNotEquals('n', p.charAt(i), "a bass has no pan");
+                    if (band.bassNotesKnownAfter() < 2) assertNotEquals('n', p.charAt(i), "it cannot play a note it has not earned: " + p);
                     if (i % reach != 0) assertEquals('.', p.charAt(i), "it only plays places its ticks can reach: " + p);
                 }
                 notes[s] += band.bassNotes() / (double) players;
                 onAPot[s] += band.bassNotesOnAPot() / (double) players;
                 apart[s] += band.bassApartMs() / players;
+                cents[s] += band.bassOutOfTuneCents() / players;
+                if (band.bassNotesKnownAfter() == 2) twoNotes[s]++;
+                assertTrue(band.bassNotesKnownAfter() >= band.bassNotesKnownBefore(), "a note once earned is kept");
                 if (Math.abs(band.landedApartMs()) < 40) together[s]++;
                 assertEquals(92, band.tempoLastBars(), 2.5, "the click holds the tempo with three players too");
             }
         }
         for (int s = 0; s < sessions; s += 2)
-            System.out.printf(Locale.ROOT, "BASS session %2d: %.1f notes in the bar, %.1f on a pot, %.1f ms from the drummer, ended together %d of %d%n",
-                s + 1, notes[s], onAPot[s], apart[s], together[s], players);
+            System.out.printf(Locale.ROOT, "BASS session %2d: %.0f cents out of tune, %d of %d have two notes, %.1f notes in the bar, %.1f low ones on a pot, %.1f ms from the drummer, ended together %d%n",
+                s + 1, cents[s], twoNotes[s], players, notes[s], onAPot[s], apart[s], together[s]);
         double early = (onAPot[0] + onAPot[1] + onAPot[2]) / 3, late = (onAPot[sessions - 3] + onAPot[sessions - 2] + onAPot[sessions - 1]) / 3;
         double farEarly = (apart[0] + apart[1] + apart[2]) / 3, farLate = (apart[sessions - 3] + apart[sessions - 2] + apart[sessions - 1]) / 3;
         assertTrue(late > early + 0.3, "more of its notes sit on a pot: " + early + " at first, " + late + " later");
         assertTrue(farLate < farEarly - 4, "and they land closer to the drummer: " + farEarly + " ms at first, " + farLate + " ms later");
+        assertTrue(cents[sessions - 1] < cents[0] - 5, "and it plays more in tune: " + cents[0] + " cents out at first, " + cents[sessions - 1] + " later");
+        assertTrue(twoNotes[0] <= players / 3, "few have a second note after one session");
+        assertTrue(twoNotes[sessions - 1] >= players - 1, "nearly all have earned it after twelve");
     }
 
     @Test

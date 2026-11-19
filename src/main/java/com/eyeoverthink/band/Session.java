@@ -228,7 +228,8 @@ public final class Session {
     /** What happened when drummers and a bass player played together. */
     public record Band(int bars, double seconds, java.util.List<Part> parts, double tempoFirstBars, double tempoLastBars,
                        String bassBefore, String bassAfter, int bassNotes, int bassNotesOnAPot, int bassHits, double bassApartMs,
-                       int bassCopied, int bassOwnIdeas, int bassKept, int bassTakenBack, double landedApartMs, float peak, Path wav) {}
+                       int bassCopied, int bassOwnIdeas, int bassKept, int bassTakenBack, double landedApartMs, float peak, Path wav,
+                       int bassNotesKnownBefore, int bassNotesKnownAfter, double bassOutOfTuneCents, int bassHighNotes, int bassHighNotesOnAPan) {}
 
     /**
      * One or two drummers and a bass player, with no record. The first drummer starts; everyone else hears
@@ -246,7 +247,7 @@ public final class Session {
             lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
-                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, chance)
+                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)
                 : Musician.withAnother(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, i == 0, start, chance);
             players[i].leaning(lives[i].leaning());
             lives[i].plays(players[i].plays());
@@ -288,19 +289,24 @@ public final class Session {
             }
             Apart bassToFirst = apart(bass, 0, first);
             int notes = 0, onAPot = 0;
+            int high = 0, onAPan = 0;
             for (int s = 0; s < Musician.SLOTS; s++) {
-                if (bass.pattern().charAt(s) != 'p') continue;
+                char played = bass.pattern().charAt(s);
+                if (played == '.') continue;
                 notes++;
-                for (int i = 0; i < bassAt; i++) if (players[i].pattern().charAt(s) == 'p') { onAPot++; break; }
+                if (played == 'n') high++;
+                for (int i = 0; i < bassAt; i++) if (players[i].pattern().charAt(s) == played) { if (played == 'p') onAPot++; else onAPan++; break; }
             }
             Band band = new Band(bars, Audio.seconds(out.samples()), parts, tempoOver(first, 0, 2), tempoOver(first, bars - 2, bars),
                 lives[bassAt].pattern(), bass.pattern(), notes, onAPot, bassToFirst.together(), bassToFirst.ms(),
-                bass.copied(), bass.ownIdeas(), bass.changesKept(), bass.changesTakenBack(), bassToFirst.landed(), out.peak(), wav);
+                bass.copied(), bass.ownIdeas(), bass.changesKept(), bass.changesTakenBack(), bassToFirst.landed(), out.peak(), wav,
+                lives[bassAt].notes(), bass.notes(), bass.outOfTuneCents(), high, onAPan);
             for (int i = 0; i < n; i++) {
                 names.setLength(0);
                 for (int k = 0; k < n; k++) if (k != i) names.append(names.length() == 0 ? "" : " and ").append(lives[k].name());
                 Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
                 lives[i].leaning(players[i].leaning());
+                if (i == bassAt) lives[i].notes(players[i].notes());
                 lives[i].rememberTogether(names.toString(), bars, players[i].hitCount(), parts.get(i).unsteadyMs(), players[i].listening(),
                     players[i].ticks(), players[i].pattern(), a.together(), a.ms());
             }

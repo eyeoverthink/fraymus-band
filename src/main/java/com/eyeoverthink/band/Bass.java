@@ -1,42 +1,46 @@
 package com.eyeoverthink.band;
 
 /**
- * A bass with one note: a plucked low E. The note is worked out once and then only read. The upper
- * partials are kept strong on purpose, so the note can still be heard on a small speaker that cannot
- * move enough air for the bottom of it.
+ * A plucked bass. Its low note is an E; its high note is the E above. It has no frets: the player's hand
+ * decides how far off the note lands, and {@link #detune} is how the hand tells it. The sound is worked
+ * out as it rings, from a few numbers claimed once; nothing is made while playing. The upper partials are
+ * kept strong on purpose, so a note can still be heard on a small speaker that cannot move enough air for
+ * the bottom of it.
  */
 public final class Bass implements Instrument {
-    private final float[] note;
+    public static final double LOW = 82.41, HIGH = 164.81;
+    private static final double[] PARTIAL = {1.0, 0.8, 0.55, 0.35, 0.2};
+    private static final int LENGTH = (int) Audio.samples(0.55);
+    private static final double LEVEL = 0.8 / 1.9;      // so its loudest moment matches the old one-note bass
+
+    private double cents;
+    private double hz;
     private int at = -1;
     private float loud;
 
-    public Bass() {
-        int n = (int) Audio.samples(0.55);
-        note = new float[n];
-        double hz = 82.41;
-        double[] partial = {1.0, 0.8, 0.55, 0.35, 0.2};
-        float peak = 0;
-        for (int i = 0; i < n; i++) {
-            double t = i / (double) Audio.RATE, sum = 0;
-            for (int k = 0; k < partial.length; k++)
-                sum += partial[k] * Math.sin(2 * Math.PI * hz * (k + 1) * t) * Math.exp(-t / (0.30 / (1 + 0.6 * k)));
-            double pluck = Math.min(1.0, t / 0.003);
-            double fadeOut = Math.min(1.0, (n - i) / Audio.samples(0.02));
-            note[i] = (float) (sum * pluck * fadeOut);
-            peak = Math.max(peak, Math.abs(note[i]));
-        }
-        for (int i = 0; i < n; i++) note[i] *= 0.8f / peak;
-    }
+    /** How far off, in hundredths of a semitone, the next note will land. */
+    public void detune(double cents) { this.cents = cents; }
 
-    @Override public void strike(byte sound, float loudness) { at = 0; loud = loudness; }
+    public static double pitchOf(byte sound) { return sound == Kit.PAN ? HIGH : LOW; }
+
+    @Override
+    public void strike(byte sound, float loudness) {
+        hz = pitchOf(sound) * Math.pow(2, cents / 1200.0);
+        at = 0;
+        loud = loudness;
+    }
 
     @Override
     public float next() {
         if (at < 0) return 0f;
-        float s = note[at] * loud * 0.5f;
-        if (++at >= note.length) at = -1;
-        return s;
+        double t = at / (double) Audio.RATE, sum = 0;
+        for (int k = 0; k < PARTIAL.length; k++)
+            sum += PARTIAL[k] * Math.sin(2 * Math.PI * hz * (k + 1) * t) * Math.exp(-t / (0.30 / (1 + 0.6 * k)));
+        double pluck = Math.min(1.0, t / 0.003);
+        double fadeOut = Math.min(1.0, (LENGTH - at) / Audio.samples(0.02));
+        if (++at >= LENGTH) at = -1;
+        return (float) (sum * pluck * fadeOut * LEVEL * loud * 0.5);
     }
 
-    @Override public String describe() { return "one low note (p)"; }
+    @Override public String describe() { return "a low note (p) and, once it has earned it, the same note an octave up (n)"; }
 }

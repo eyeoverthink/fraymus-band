@@ -7,7 +7,7 @@ A band of players built on the computer. Each one owns an instrument, keeps its 
 into a shared room, and has to grow up before it can play well. Java, no interpreted code, every buffer
 claimed before the first sample.
 
-So far there are three players: two drummers with a pot and a pan, and a bass player with one note. There
+So far there are three players: two drummers with a pot and a pan, and a bass player with two notes. There
 is a record for them to learn from and a click for their ears.
 
 ## What the drummer does
@@ -64,7 +64,8 @@ them is not given to it. It starts at nothing. Every sixteen hits it tries leani
 little less and keeps whichever made the others' hits land closer to its own ticks. That is written into
 its life too.
 
-**The bass player.** The same kind of player at a different instrument: a bass with one note, a low E.
+**The bass player.** The same kind of player at a different instrument: a fretless bass. It is born with
+one note, a low E.
 Everything about time is the same: its own clock, its listening, its ticks, the click. A newborn bass
 player has its one note on the one and nothing else. It listens for the dark hits, the pots, and ignores
 the bright ones. While it plays, every two bars, it changes one place its ticks can reach. Most times it
@@ -72,6 +73,13 @@ puts a note where it has been hearing a pot, or takes one away where it has list
 heard one. One time in four it tries an idea of its own. It keeps a change unless those two bars sounded
 clearly rougher than its playing usually does. Nobody tells it to follow the drummers' pots; that is
 simply what it listens for.
+
+**Earning a note.** A bass has no frets, so a note can land sharp or flat. A newborn's hand is far off (30
+hundredths of a semitone); it gets surer with every note by a fixed rule, as its timing hand does. It
+hears the pitch of every note it plays, from its own sound. When its last eight notes were within 12
+hundredths of a semitone on average, two bars running, it has earned its second note: the E an octave
+up. From then on it stops ignoring the bright hits. It puts the low note where it hears a pot and the
+high note where it hears a pan. In its pattern `p` is the low note and `n` the high one.
 
 **The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
 else's in 9 ms, so it can tell its own hits from the others'. It learns how long after it hits it hears
@@ -90,7 +98,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.9.0.jar
+    java -jar target/fraymus-band-0.10.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -98,21 +106,21 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.9.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.10.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.9.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.10.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
@@ -193,18 +201,19 @@ sessions of 16 bars with a click:
 
 The tempo stayed within 2 bpm of the click in every one of those takes.
 
-**The bass player.** Six newborn bass players, each living twelve sessions of 16 bars with two practised
-drummers and a click. The drummers' pots fall on four places of the bar; a bass player with two ticks to
-the pulse can reach three of them.
+**The bass player.** Twelve newborn bass players, each living twenty-four sessions of 16 bars with two
+practised drummers and a click. The drummers' pots fall on four places of the bar and their pans on three.
 
-| Session | Notes in its bar | Of those, on a pot | From the drummer (ms) | Ended together |
-|--------:|-----------------:|-------------------:|----------------------:|---------------:|
-| 1  | 2.0 | 1.7 | 25.2 | 4 of 6 |
-| 3  | 1.8 | 1.7 | 16.6 | 6 |
-| 5  | 2.7 | 2.0 | 19.9 | 6 |
-| 7  | 2.7 | 2.3 | 12.2 | 6 |
-| 9  | 3.3 | 2.3 | 13.0 | 6 |
-| 11 | 3.2 | 2.8 | 14.2 | 6 |
+| Session | Out of tune (hundredths of a semitone) | Have two notes | Low notes on a pot | High notes | High notes on a pan | From the drummer (ms) |
+|--------:|---------------------------------------:|---------------:|-------------------:|-----------:|--------------------:|----------------------:|
+| 1  | 23 | 2 of 12 | 1.6 | 0.0 | 0.0 | 30.4 |
+| 7  | 16 | 11 | 2.7 | 1.2 | 0.9 | 14.1 |
+| 13 | 10 | 12 | 2.7 | 2.0 | 1.8 | 10.6 |
+| 19 | 7  | 12 | 2.8 | 2.2 | 1.6 | 9.4  |
+| 22 | 7  | 12 | 2.9 | 2.0 | 2.0 | 8.7  |
+
+Most of them settle on `p...n...p.p.n...`: the low note with the pots, the high note with the pans.
+Nobody told them to; it is what they listen for.
 
 Without a click a newborn bass player beside two drummers loses its place: in twelve takes it ended
 together with them in none.
@@ -235,8 +244,9 @@ drummer plays or hears a place its ticks cannot reach.
 - Learning from a drummer is slow and sometimes wrong: its time moves, so the learner misplaces hits.
 - The teacher does not listen to the answers or change what it plays to help.
 - Without a click, a newborn pulls a practised drummer's time around. Nobody yet decides whom to follow.
-- The bass has one note. It never earned four ticks to the pulse in any measured life, so it cannot reach
-  the drummers' sixteenth-note pots yet.
+- The bass has two notes, a low E and the E above. Two notes an octave apart is not yet a bass line.
+- A bass player rarely earns four ticks to the pulse, so it seldom reaches the drummers' sixteenth notes.
+- The bass player's own ideas keep knocking its part off the pattern it found.
 - Without a click, three players do not hold together.
 - The drummers do not listen to the bass for anything but time.
 - Mono.
@@ -246,6 +256,7 @@ drummer plays or hears a place its ticks cannot reach.
 - `Clock` each player's own pulse
 - `Ear` hears hits in the room
 - `Room` the shared air: each player's sound, and how long it takes to reach the others
+- `PitchEar` how a player hears whether its own note was in tune
 - `Instrument`, `Kit`, `Bass` what a player's hands are on; `Thump`, `Pan` the kit's two sounds
 - `Lesson`, `Teacher` the bar to learn and the record that plays it
 - `Metronome` the click in the players' ears

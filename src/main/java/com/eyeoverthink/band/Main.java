@@ -38,8 +38,11 @@ public final class Main {
             for (Session.Part p : b.parts())
                 System.out.printf(Locale.ROOT, "%s: %s, %d ticks to the pulse, %d hits, unsteadiness %.1f ms, listening %.2f to %.2f, leaning on the others %.2f to %.2f.%n",
                     p.name(), p.pattern(), p.ticksAfter(), p.hits(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter(), p.leaningBefore(), p.leaningAfter());
-            System.out.printf(Locale.ROOT, "The bass went from %s to %s: %d notes in the bar, %d of them where a drummer has a pot.%n", b.bassBefore(), b.bassAfter(), b.bassNotes(), b.bassNotesOnAPot());
-            System.out.printf(Locale.ROOT, "It tried %d places it had heard a pot and %d ideas of its own; %d kept, %d taken back.%n", b.bassCopied(), b.bassOwnIdeas(), b.bassKept(), b.bassTakenBack());
+            System.out.printf(Locale.ROOT, "The bass went from %s to %s: %d notes in the bar, %d low ones where a drummer has a pot.%n", b.bassBefore(), b.bassAfter(), b.bassNotes(), b.bassNotesOnAPot());
+            System.out.printf(Locale.ROOT, "It has %d note%s (%d before). By its own ear its notes were %.0f hundredths of a semitone out of tune on average.%n",
+                b.bassNotesKnownAfter(), b.bassNotesKnownAfter() == 1 ? "" : "s", b.bassNotesKnownBefore(), b.bassOutOfTuneCents());
+            if (b.bassNotesKnownAfter() > 1) System.out.printf(Locale.ROOT, "%d of the notes in its bar are the high one, %d of them where a drummer has a pan.%n", b.bassHighNotes(), b.bassHighNotesOnAPan());
+            System.out.printf(Locale.ROOT, "It tried %d places it had heard a hit and %d ideas of its own; %d kept, %d taken back.%n", b.bassCopied(), b.bassOwnIdeas(), b.bassKept(), b.bassTakenBack());
             System.out.printf(Locale.ROOT, "%d of its notes landed with the first drummer's hits, %.0f ms apart on average. Their last hits were %.0f ms apart.%n", b.bassHits(), b.bassApartMs(), Math.abs(b.landedApartMs()));
             System.out.printf(Locale.ROOT, "They started near %.1f bpm and ended near %.1f bpm.%n", b.tempoFirstBars(), b.tempoLastBars());
             System.out.println("Wrote " + b.wav() + " and added the session to every life.");

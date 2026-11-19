@@ -26,8 +26,10 @@ public final class Ear {
     private long hitTime;
     private boolean hitBright;
     private double hitLoud;
-    private static final int SKIP = (int) Audio.samples(0.005);     // let the click at the front go by
-    private static final int LOOK = (int) Audio.samples(0.015);
+    // Let the click at the front go by, and the click of anyone else who hit a few milliseconds later:
+    // two pots landing almost together must still sound dark.
+    private static final int SKIP = (int) Audio.samples(0.025);
+    private static final int LOOK = (int) Audio.samples(0.020);
     private static final double BRIGHT = 0.004;
     private final int refractory = (int) Audio.samples(0.070);   // one hit cannot be heard twice
     private static final double ATTACK = 1.0 - Math.exp(-1.0 / Audio.samples(0.002));
