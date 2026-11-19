@@ -1,5 +1,8 @@
 # Fraymus Band
 
+**New here, or picking this up again? Read [HANDOFF.md](HANDOFF.md) first.** It has the whole picture:
+what this is, how the work is done, what has been tried, and what comes next.
+
 A band of players built on the computer. Each one owns an instrument, keeps its own clock, plays live
 into a shared room, and has to grow up before it can play well. Java, no interpreted code, every buffer
 claimed before the first sample.
