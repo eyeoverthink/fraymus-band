@@ -148,6 +148,18 @@ To add the bass player to one or two drummers:
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
+## What does the ear make of a recording?
+
+    java -jar target/fraymus-band-0.14.0.jar --hear songs/some-song.wav
+
+This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
+song.wav`) past the same ear the players use. It teaches nobody anything. It reports how many hits the
+ear noticed, how many were dark and bright, the steady pulse they line up on, and the whole recording
+folded onto one bar, which it also writes out as a lesson with its feel. On a clean recording of the
+record alone it recovers the tempo, the bar and the feel exactly. On a full mix it finds the tempo and
+little else, because the ear was built for a pot and a pan: almost everything in a song sounds bright to
+it. Recordings are kept in `songs/`, which is not committed.
+
 ## Write your own lesson
 
 A lesson is a text file: one bar of sixteen places, a tempo, and optionally how it is played. `p` is the
@@ -334,6 +346,7 @@ drummer plays or hears a place its ticks cannot reach.
 - `PitchEar` how a player hears whether its own note was in tune
 - `Instrument`, `Kit`, `Bass` what a player's hands are on; `Thump`, `Pan` the kit's two sounds
 - `Lesson`, `Teacher` the bar to learn and the record that plays it
+- `Hearing` what the players' ear makes of a recording
 - `Metronome` the click in the players' ears
 - `Musician` the player, at a kit or at the bass
 - `Life` the lineage file

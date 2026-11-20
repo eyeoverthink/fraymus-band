@@ -134,6 +134,8 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `PitchEar`: measures the pitch of a player's own note from its own sound, by how far the bottom tone
   turns between two short listens. Accurate to about one hundredth of a semitone.
 - `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
+- `Hearing`: plays a WAV past the players' ear and reports what it noticed; folds a recording onto one bar
+  and can write that as a lesson. A tool for us, not something the players do yet.
 - `Lesson`: a bar of sixteen places (`p` pot, `n` pan, `.` nothing), a tempo, and optionally its feel
   (`push` in ms and `weight` per place). Files in `lessons/`: `first`, `laid-back`, `on-top`.
 - `Teacher`: the record. Plays the lesson for two bars, leaves two, repeats; then plays straight through.
@@ -303,13 +305,30 @@ who inspired me and they need inspiration also."** He is to be their first influ
 audio from streaming services; he has to send files. **His audio must not be committed to this public
 repository.** Keep it in `songs/`, which is in `.gitignore`.
 
+**What was found when his song was played past the players' ear (2026-11-20, `Main --hear`, class `Hearing`):**
+
+- The file is `GleamOfThePreeSize_Cover_3.mp3`, 3:04, tagged title "GleamOfThePreeSize (Cover)", artist
+  "hypnotizingmelody0426". Converted copy: `songs/gleam-of-the-prize.wav` (in the agent's workspace only;
+  if the workspace is lost, ask him to send it again).
+- **Its tempo is 92.10 to the minute, steady in every 20-second section.** The players' own natural tempo
+  is 92, chosen arbitrarily in step 1. That is luck, and it means they can play along with it as they are.
+- The ear noticed 805 hits, 679 of them bright. In a full mix nearly everything is bright to an ear built
+  for a pot and a pan: voices, keys, hats, snare.
+- Folded onto one bar it gave `p....n..n...nn..`, with a dark hit on the "one" in only 3 bars of 10. That
+  is not a believable drum part, and the one is probably not in the right place. **Do not teach the real
+  players from it.**
+- The same folding on a clean recording of the record alone recovers tempo, bar and feel exactly (there is
+  a test). The method is sound; the full mix is the problem.
+
 In order:
 
 1. **Let a player listen to a real recording.** A player that plays a WAV into the room (convert MP3 with
    ffmpeg outside the Java code; the players are still plain Java). The hard parts: the players' ear was
    built for a pot and a pan, not a full mix; a song has its own tempo and the players only know 92 to 96;
    and a listener needs to find the one. Start by reporting honestly what the ear can and cannot hear in
-   his song. A drum stem from him would make this far easier; ask if he has one.
+   his song. A drum stem from him would make this far easier; he has been asked. Without one, the
+   ear needs to separate low from high before it looks for hits (two ears: one on the bottom of the
+   sound, one on the top), and a way to find the one that does not depend on a kick landing there.
 2. **More than one influence, kept apart.** A player should hold what it took from each record separately
    and have its own mix, so an idea of its own is something borrowed from one influence and tried in
    another. This is what should finally let something original survive.

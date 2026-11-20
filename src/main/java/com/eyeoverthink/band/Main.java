@@ -7,7 +7,7 @@ import java.util.Locale;
 public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
-        Path with = null, teach = null, bass = null;
+        Path with = null, teach = null, bass = null, hear = null;
         boolean click = false;
         double tempo = 92;
         long seed = System.nanoTime();
@@ -24,11 +24,35 @@ public final class Main {
                 case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
                 case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (hear != null) {                                  // what does a player's ear make of a recording?
+            Hearing.Heard h = Hearing.listen(Hearing.read(hear));
+            System.out.printf(Locale.ROOT, "%s: %.0f seconds. The ear noticed %d hits: %d dark, %d bright. That is %.1f a second.%n",
+                hear.getFileName(), h.seconds(), h.hits(), h.dark(), h.bright(), h.hits() / h.seconds());
+            System.out.printf(Locale.ROOT, "The gap that comes up most often between hits is %.3f s, which is %.1f to the minute (%.0f%% of all gaps under two seconds).%n",
+                h.pulseSeconds(), h.bpm(), 100 * h.pulseStrength());
+            Hearing.Bar b = Hearing.oneBar(h);
+            System.out.printf(Locale.ROOT, "The hits line up best on a steady pulse of %.2f to the minute (%.2f, where 1 is perfectly and 0 is not at all), about %d bars.%n", b.bpm(), b.linesUp(), b.barsHeard());
+            System.out.println("Folded onto one bar, taking the place where the dark hits weigh most as the one:");
+            StringBuilder dark = new StringBuilder("  dark hits per bar:  "), bright = new StringBuilder("  bright hits per bar:"), push = new StringBuilder(), weight = new StringBuilder();
+            for (int i = 0; i < Musician.SLOTS; i++) {
+                dark.append(String.format(Locale.ROOT, " %.1f", b.darkPerBar()[i])); bright.append(String.format(Locale.ROOT, " %.1f", b.brightPerBar()[i]));
+                push.append(String.format(Locale.ROOT, "%s%.0f", i == 0 ? "" : " ", b.pushMs()[i])); weight.append(String.format(Locale.ROOT, "%s%.2f", i == 0 ? "" : " ", b.weight()[i]));
+            }
+            System.out.println(dark); System.out.println(bright);
+            System.out.println("  as a bar:           " + b.bar());
+            String stem = hear.getFileName().toString().replaceFirst("\\.[^.]+$", "");
+            Path lesson = hear.resolveSibling(stem + ".lesson");
+            java.nio.file.Files.write(lesson, java.util.List.of("name: " + stem.replace('-', ' '), String.format(Locale.ROOT, "tempo: %.2f", b.bpm()),
+                "bar:    " + b.bar(), "push:   " + push, "weight: " + weight));
+            System.out.println("Wrote that bar, with its feel, as a lesson: " + lesson);
+            return;
         }
         if (bass != null) {                                  // drummers and a bass player
             java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);

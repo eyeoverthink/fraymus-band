@@ -276,6 +276,33 @@ class StepFourteenTest {
         assertTrue(unsteady[0] < 13 && unsteady[1] < 13, "playing with feel is not playing unsteadily: " + unsteady[0] + ", " + unsteady[1]);
     }
 
+    /** The record alone, written to a file, then heard back the way a recording Vaughn sends would be. */
+    @Test
+    void theEarCanFoldACleanRecordingBackIntoItsBar(@TempDir Path dir) throws Exception {
+        Lesson laidBack = Lesson.read(Path.of("lessons", "laid-back.lesson"));
+        Teacher record = new Teacher(laidBack, 0, 24, 0.25);
+        Path wav = dir.resolve("record.wav");
+        float[] block = new float[Audio.BLOCK], none = new float[Audio.BLOCK];
+        try (WavWriter out = new WavWriter(wav)) {
+            for (long now = 0; now < Audio.RATE * 62L; now += Audio.BLOCK) {
+                java.util.Arrays.fill(block, 0f);
+                record.hear(none, none, none, Audio.BLOCK, now);
+                record.play(block, Audio.BLOCK, now);
+                out.write(block, Audio.BLOCK);
+            }
+        }
+        Hearing.Heard heard = Hearing.listen(Hearing.read(wav));
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        System.out.printf(Locale.ROOT, "HEARD a clean record: %d hits, %.2f to the minute, lines up %.2f, bar %s, pans %+.0f and %+.0f ms%n",
+            heard.hits(), bar.bpm(), bar.linesUp(), bar.bar(), bar.pushMs()[4], bar.pushMs()[12]);
+        assertEquals(24 * 7 + 1, heard.hits(), 3, "it notices nearly every hit");
+        assertEquals(96, bar.bpm(), 0.3, "it finds the tempo");
+        assertEquals(laidBack.bar(), bar.bar(), "and the bar, with the one in the right place");
+        assertEquals(22, bar.pushMs()[4], 6, "and that the pans are behind the tick");
+        assertEquals(22, bar.pushMs()[12], 6);
+        assertEquals(laidBack.bar(), bar.asLesson("heard").bar(), "and what it heard can be used as a lesson");
+    }
+
     @Test
     void aNewbornHasNoHabitsAndTheyAreWrittenIntoItsLife(@TempDir Path dir) throws Exception {
         Path life = dir.resolve("d.life");
