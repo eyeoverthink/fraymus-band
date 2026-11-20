@@ -121,7 +121,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.14.0.jar
+    java -jar target/fraymus-band-0.15.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -129,36 +129,43 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.14.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.15.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.14.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.15.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
-song.wav`) past the same ear the players use. It teaches nobody anything. It reports how many hits the
-ear noticed, how many were dark and bright, the steady pulse they line up on, and the whole recording
-folded onto one bar, which it also writes out as a lesson with its feel. On a clean recording of the
-record alone it recovers the tempo, the bar and the feel exactly. On a full mix it finds the tempo and
-little else, because the ear was built for a pot and a pan: almost everything in a song sounds bright to
-it. Recordings are kept in `songs/`, which is not committed.
+song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
+the steady pulse the hits line up on, and the whole recording folded onto one bar, which it writes out as
+a lesson with its feel. It also writes thirty seconds of the recording with a click where it thinks the
+pulse is and a higher click on the one, because it can be wrong about the one and somebody has to check
+by ear.
+
+One ear is not enough for a full mix: almost everything in a song sounds bright to an ear built for a pot
+and a pan. So it listens with two, one on the bottom of the sound (below about 150 Hz: kick, bass) and
+one on the top (above about 5,000 Hz: hats, the crack of a snare). What lies between, voices and keys,
+goes to neither. With a loud voice-like sound laid over the record, one ear makes the bar out as
+`p.p.....p..pn...`; two ears get `p..pn...p.p.n..n`, which is what the record plays.
+
+Recordings are kept in `songs/`, which is not committed.
 
 ## Write your own lesson
 

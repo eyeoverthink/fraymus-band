@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step fourteen: a player takes on the feel of the records it hears. */
-class StepFourteenTest {
+/** Step fifteen: two ears, one on the bottom of the sound and one on the top, for hearing a full recording. */
+class StepFifteenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -301,6 +301,35 @@ class StepFourteenTest {
         assertEquals(22, bar.pushMs()[4], 6, "and that the pans are behind the tick");
         assertEquals(22, bar.pushMs()[12], 6);
         assertEquals(laidBack.bar(), bar.asLesson("heard").bar(), "and what it heard can be used as a lesson");
+    }
+
+    /** The record, with something loud in the middle of the sound laid over it, the way a voice sits over the drums. */
+    @Test
+    void twoEarsHearTheRecordUnderAVoice() throws Exception {
+        Lesson lesson = Lesson.read(Path.of("lessons", "first.lesson"));
+        Teacher record = new Teacher(lesson, 0, 24, 0.25);
+        float[] mix = new float[Audio.RATE * 62], block = new float[Audio.BLOCK], none = new float[Audio.BLOCK];
+        for (int now = 0; now + Audio.BLOCK <= mix.length; now += Audio.BLOCK) {
+            java.util.Arrays.fill(block, 0f);
+            record.play(block, Audio.BLOCK, now);
+            System.arraycopy(block, 0, mix, now, Audio.BLOCK);
+        }
+        java.util.SplittableRandom chance = new java.util.SplittableRandom(5);
+        for (int note = 0; note < 150; note++) {             // a voice: notes between 300 and 1200 Hz, starting whenever they like
+            int at = chance.nextInt(mix.length - Audio.RATE), length = (int) Audio.samples(0.15 + 0.3 * chance.nextDouble());
+            double hz = 300 * Math.pow(4, chance.nextDouble());
+            for (int i = 0; i < length; i++)
+                mix[at + i] += (float) (0.35 * Math.sin(2 * Math.PI * hz * i / Audio.RATE) * Math.min(1, i / 200.0) * Math.min(1, (length - i) / 400.0));
+        }
+        Hearing.Heard whole = Hearing.listen(mix), split = Hearing.listenLowAndHigh(mix);
+        Hearing.Bar oneEar = Hearing.oneBar(whole), twoEars = Hearing.oneBar(split);
+        System.out.printf(Locale.ROOT, "VOICE over the record: one ear makes it %s (%d hits), two ears make it %s (%d low, %d high); the record plays %s%n",
+            oneEar.bar(), whole.hits(), twoEars.bar(), split.dark(), split.bright(), lesson.bar());
+        assertEquals(96, twoEars.bpm(), 0.3, "two ears still find the tempo");
+        assertTrue(lesson.matches(twoEars.bar()) >= 15, "and the bar, or all but one place of it: " + twoEars.bar());
+        assertTrue(lesson.matches(twoEars.bar()) >= lesson.matches(oneEar.bar()), "at least as well as one ear does");
+        float[] marked = Hearing.withThePulseMarked(mix, twoEars, 10, 5);
+        assertEquals(Audio.RATE * 5, marked.length, "and it can mark the pulse on a stretch for someone to check");
     }
 
     @Test

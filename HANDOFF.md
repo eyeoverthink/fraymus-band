@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.14.0. 33 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.15.0. 35 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -86,6 +86,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 12 | Learned settings no longer wander. A player hears how it sounds, tries one change, keeps it only if clearly better, and grows more careful with age (more evidence, smaller steps). Rough takes late in life fell from 25 in 256 to 9. |
 | 13 | Honest learning. Found that most of the players' apparent learning of their settings came from a bias (warming up during a session made any change look good). Rebuilt it: every two bars a player takes stock; a trial is compared with the stretches before and after it; the first two bars of a session count for nothing; first direction left to chance; probe big, move small. Growth is real now and slower. |
 | 14 | Feel. A lesson can say how far ahead or behind the tick, and how hard, each place is played. A listener takes on a tenth of what it hears each time and plays with it. Vaughn's idea: players need artists to study, as he had. He sent his own song as the first real influence (see section 8). |
+| 15 | Two ears for a full recording: one on the bottom of the sound, one on the top (`Hearing.listenLowAndHigh`). Recovers the record's bar exactly from under a loud voice-like sound. `Main --hear` also writes a clip with the pulse and the one marked by clicks, for Vaughn to check by ear. |
 
 ### The players that exist (do not reset these)
 
@@ -106,11 +107,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.14.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.14.0.jar --click on
-    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.14.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.15.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.15.0.jar --click on
+    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.15.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -149,7 +150,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepFourteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepFifteenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -319,6 +320,16 @@ repository.** Keep it in `songs/`, which is in `.gitignore`.
   players from it.**
 - The same folding on a clean recording of the record alone recovers tempo, bar and feel exactly (there is
   a test). The method is sound; the full mix is the problem.
+
+**With two ears (step 15), same song:** 642 hits in the bottom of the sound and 704 in the top. Real
+structure shows: the top has a steady hit on every eighth note (hats) through 46 to 92 s and 115 to 138 s;
+the first 23 s are sparse. The bottom is a busy bass line, not a sparse kick, and folds to
+`ppp.n.npppppn.pp`, with the low hits on the odd places about 26 ms late, cause unknown (slow attack of
+the bass, or notes that really sit between ticks). **Where the one is has not been confirmed.** Vaughn has
+no drum stem. He was sent `gleam-of-the-prize-pulse-marked.wav` (30 s from 0:46 with clicks on the pulse
+and a higher click on the supposed one) and asked whether the high click is on the one. **Until he
+answers, do not teach the real players from the song.** If the one is wrong, let him say which click it
+should be on and add a way to tell the tool (`--one-is-beat N`).
 
 In order:
 

@@ -37,7 +37,10 @@ public final class Main {
                 hear.getFileName(), h.seconds(), h.hits(), h.dark(), h.bright(), h.hits() / h.seconds());
             System.out.printf(Locale.ROOT, "The gap that comes up most often between hits is %.3f s, which is %.1f to the minute (%.0f%% of all gaps under two seconds).%n",
                 h.pulseSeconds(), h.bpm(), 100 * h.pulseStrength());
-            Hearing.Bar b = Hearing.oneBar(h);
+            float[] song = Hearing.read(hear);
+            Hearing.Heard split = Hearing.listenLowAndHigh(song);
+            System.out.printf(Locale.ROOT, "With one ear on the bottom of the sound and one on the top: %d hits in the bottom, %d in the top.%n", split.dark(), split.bright());
+            Hearing.Bar b = Hearing.oneBar(split);
             System.out.printf(Locale.ROOT, "The hits line up best on a steady pulse of %.2f to the minute (%.2f, where 1 is perfectly and 0 is not at all), about %d bars.%n", b.bpm(), b.linesUp(), b.barsHeard());
             System.out.println("Folded onto one bar, taking the place where the dark hits weigh most as the one:");
             StringBuilder dark = new StringBuilder("  dark hits per bar:  "), bright = new StringBuilder("  bright hits per bar:"), push = new StringBuilder(), weight = new StringBuilder();
@@ -52,6 +55,14 @@ public final class Main {
             java.nio.file.Files.write(lesson, java.util.List.of("name: " + stem.replace('-', ' '), String.format(Locale.ROOT, "tempo: %.2f", b.bpm()),
                 "bar:    " + b.bar(), "push:   " + push, "weight: " + weight));
             System.out.println("Wrote that bar, with its feel, as a lesson: " + lesson);
+            Path marked = hear.resolveSibling(stem + "-pulse-marked.wav");
+            double from = Math.min(46, Math.max(0, h.seconds() - 30));
+            try (WavWriter out = new WavWriter(marked)) {
+                float[] clip = Hearing.withThePulseMarked(song, b, from, 30);
+                float[] block = new float[Audio.BLOCK];
+                for (int at = 0; at + Audio.BLOCK <= clip.length; at += Audio.BLOCK) { System.arraycopy(clip, at, block, 0, Audio.BLOCK); out.write(block, Audio.BLOCK); }
+            }
+            System.out.printf(Locale.ROOT, "Wrote 30 seconds from %.0f s with a click where it thinks the pulse is and a higher click on the one: %s%n", from, marked);
             return;
         }
         if (bass != null) {                                  // drummers and a bass player
