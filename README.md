@@ -88,11 +88,13 @@ ahead if chance beats that place's habit: always at 0, one time in ten at 9. Cop
 never held back. So a young player is restless everywhere and an old one mostly leaves alone what has
 worked for a long time. Habits are written into its life.
 
-**How it learns its settings.** Listening and leaning are found by trial. A player hears how it sounds as
-it is, tries one change, and keeps the change only if things clearly got better; otherwise it puts the
-setting back and tries the other direction next time. A newborn weighs eight gaps before deciding and
-tries big changes. With experience it weighs up to three times as many and tries smaller ones. An old
-hand changes its ways slowly.
+**How it learns its settings.** Listening and leaning are found by trial, on honest evidence. Every two
+bars a player takes stock of how it has sounded. It hears how things are as it is, tries a change big
+enough to hear, then goes back and hears how things are again. It keeps a small step of the change only
+if the trial was clearly better than the stretches on both sides of it. Comparing with both sides matters:
+a player warms up during a session, so anything tried later would otherwise look better for that reason
+alone. The first two bars of a session count for nothing, and which direction it tries first is left to
+chance. A young player takes bigger steps than an old one.
 
 **The room.** Each player stands somewhere in it. A player's own sound reaches it in 3 ms and everyone
 else's in 9 ms, so it can tell its own hits from the others'. It learns how long after it hits it hears
@@ -111,7 +113,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.12.0.jar
+    java -jar target/fraymus-band-0.13.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -119,21 +121,21 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.12.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.12.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.13.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.12.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
@@ -149,15 +151,24 @@ nothing. Put the heaviest hit on the one; that is how the drummer finds it.
 
 ## What was measured
 
+**Read this first.** Until step 13 the way players learned their settings had a bias in it: a change was
+compared only with what came before it, and since a player warms up during a session, almost any change
+looked like an improvement and was kept. Players seemed to learn faster than they really could. The
+tables below marked *honest* were measured after that was fixed. The others are from before it and
+overstate how fast players grow; the comparisons inside them still hold.
+
 **With the record.** Forty drummers, each living twenty-four sessions with the first lesson: four answers,
 then eight bars together. "Apart" is how far each of the drummer's hits landed from the record's nearest.
 
-| Session | Apart, playing together (ms) | Last hits within 40 ms | Like the lesson (of 16) | Have two ticks | Have four ticks | Unsteadiness (ms) |
-|--------:|-----------------------------:|-----------------------:|------------------------:|---------------:|----------------:|------------------:|
-| 1  | 27.6 | 31 of 40 | 11.9 | 6  | 0  | 18.9 |
-| 8  | 24.5 | 30 | 12.5 | 32 | 3  | 13.2 |
-| 16 | 16.8 | 36 | 13.5 | 40 | 20 | 10.4 |
-| 24 | 13.3 | 36 | 14.5 | 40 | 34 | 9.0  |
+| Session | Apart, playing together (ms) | Last hits within 40 ms | Like the lesson (of 16) | Have two ticks | Have four ticks | Unsteadiness (ms) | Listening |
+|--------:|-----------------------------:|-----------------------:|------------------------:|---------------:|----------------:|------------------:|----------:|
+| 1  | 31.2 | 15 of 40 | 12.2 | 2  | 0  | 18.9 | 0.24 |
+| 6  | 31.1 | 19 | 13.0 | 17 | 0  | 16.6 | 0.27 |
+| 12 | 26.0 | 25 | 13.4 | 31 | 12 | 12.9 | 0.40 |
+| 24 | 20.7 | 23 | 14.3 | 37 | 27 | 9.9  | 0.46 |
+
+*Honest.* This is without a click. Before the fix the same study reported 13.3 ms apart and listening of
+0.61 at session 24.
 
 A drummer playing only the pot on every pulse already matches 11 of 16 places, because most places in
 this lesson are empty.
@@ -186,7 +197,7 @@ drummer playing the first lesson's pattern.
 That is slower than learning from the record, which never wavers. A teacher whose own time moves is
 harder to hear.
 
-**With and without a click.** The same measurements, with a click in every player's ears.
+**With and without a click** (from before step 13). The same measurements, with a click in every player's ears.
 
 | | Without a click | With a click |
 |---|---:|---:|
@@ -201,34 +212,27 @@ harder to hear.
 
 The click fixes the slowing and stops a newborn dragging a practised drummer. At first it costs
 something: two practised drummers land a little farther apart, because each follows the click and not
-the other. Then they learn to lean on each other as well. Eight pairs of practised drummers, eight
-sessions of 16 bars with a click:
-
-| Session | Apart (ms) | Leaning on each other (0 to 0.6) |
-|--------:|-----------:|---------------------------------:|
-| 1 | 11.1 | 0.01 |
-| 2 | 10.6 | 0.02 |
-| 4 | 9.1  | 0.05 |
-| 6 | 8.6  | 0.07 |
-| 8 | 8.1  | 0.08 |
+the other. Leaning on each other can win some of that back, but old hands take it up very slowly, because the gain
+is too small to hear clearly. *Honest:* eight pairs of practised drummers over eight sessions went from
+11.3 ms apart to 9.3, with leaning still at 0.01. Set by hand, leaning of 0.4 brings a practised trio from
+7.3 ms apart to 5.2 and costs almost nothing in steadiness; above 0.6 it only makes their time rougher.
 
 The tempo stayed within 2 bpm of the click in every one of those takes.
 
-**The bass player.** Twelve newborn bass players, each living twenty-four sessions of 16 bars with two
-practised drummers and a click. The drummers' pots fall on four places of the bar and their pans on three.
+**The bass player.** *Honest.* Twelve newborn bass players, each living twenty-four sessions of 16 bars
+with two practised drummers and a click. The drummers' pots fall on four places of the bar and their
+pans on three.
 
 | Session | Out of tune (hundredths of a semitone) | Have two notes | Low notes on a pot | High notes | High notes on a pan | From the drummer (ms) |
 |--------:|---------------------------------------:|---------------:|-------------------:|-----------:|--------------------:|----------------------:|
-| 1  | 23 | 2 of 12 | 1.6 | 0.0 | 0.0 | 30.4 |
-| 7  | 16 | 11 | 2.7 | 1.2 | 0.9 | 14.1 |
-| 13 | 10 | 12 | 2.7 | 2.0 | 1.8 | 10.6 |
-| 19 | 7  | 12 | 2.8 | 2.2 | 1.6 | 9.4  |
-| 22 | 7  | 12 | 2.9 | 2.0 | 2.0 | 8.7  |
+| 1  | 25 | 0 of 12 | 1.9 | 0.0 | 0.0 | 24.5 |
+| 13 | 10 | 12 | 2.9 | 2.0 | 1.9 | 10.9 |
+| 22 | 6  | 12 | 2.9 | 2.0 | 2.0 | 10.3 |
 
 Most of them settle on `p...n...p.p.n...`: the low note with the pots, the high note with the pans.
 Nobody told them to; it is what they listen for.
 
-**Settling.** The same lives measured before and after players had habits.
+**Settling** (from before step 13). The same lives measured before and after players had habits.
 
 | | Before | With habits |
 |---|---:|---:|
@@ -238,20 +242,19 @@ Nobody told them to; it is what they listen for.
 | Drummer with the record, sessions 21 to 30: plays the lesson exactly | 48 of 120 | 96 of 120 |
 | Taught by a drummer for 16 sessions: like the teacher (of 16) | 13.4 | 14.6 |
 
-**Wandering.** Eight bands of two practised drummers and a newborn bass player, 48 sessions each, before
-and after the way players learn their settings was changed.
+**Wandering and honest learning.** Eight bands of two practised drummers and a newborn bass player, 48
+sessions each, under the three ways players have learned their settings.
 
-| After session 16 | Before | After |
-|---|---:|---:|
-| How far a player's listening sits from its own average | 0.170 | 0.065 |
-| The same for its leaning | 0.124 | 0.055 |
-| Takes with someone unsteadier than 14 ms | 25 of 256 | 9 of 256 |
-| Takes with the bass more than 12 ms from the drummer | 21 of 256 | 5 of 256 |
-| Bass from the drummer at session 48 | 7.1 ms | 6.3 ms |
+| After session 16 | First rule (step 1) | Careful but biased (step 12) | Honest (step 13) |
+|---|---:|---:|---:|
+| Takes with someone unsteadier than 14 ms | 25 of 256 | 9 of 256 | 2 of 256 |
+| Takes with the bass more than 12 ms from the drummer | 21 of 256 | 5 of 256 | 18 of 256 |
+| Bass from the drummer at session 24 | 7.2 ms | 7.7 ms | 8.5 ms |
+| Bass player's listening at session 24 | 0.69 | 0.63 | 0.74 |
+| Drummers' leaning at session 48 | 0.44 and 0.48 | 0.27 and 0.37 | 0.00 and 0.05 |
 
-What is left of the movement is mostly a slow climb, not wandering. The cost is that an experienced
-player now learns slowly: two practised drummers took eight sessions to go from 11.1 ms apart to 8.1,
-where before they reached 6.3.
+Set by hand, more listening is simply better, steeply at first: a trio all listening at 0.05 has the bass
+31.6 ms from the drummer; at 0.4, 10.9 ms; at 0.8, 5.5 ms; at 0.95, 5.2 ms.
 
 Without a click a newborn bass player beside two drummers loses its place: in twelve takes it ended
 together with them in none.
@@ -286,9 +289,11 @@ drummer plays or hears a place its ticks cannot reach.
 - A bass player rarely earns four ticks to the pulse, so it seldom reaches the drummers' sixteenth notes.
 - Settling is not taste. A player settles on agreeing with what it hears. An idea of its own that nobody
   else plays never lasts, so nothing original survives.
-- An experienced player learns slowly, so it also recovers slowly from a bad setting.
-- Leaning on the others only ever seems to go up. Leaning toward someone makes them land closer by
-  construction, so the test a player uses is partly marking its own homework.
+- Honest learning is slower. Without a click, drummers reach four ticks to the pulse and tight time later
+  than the earlier tables claimed.
+- Players do not learn to lean on each other, though leaning of about 0.4 would help them. The gain is
+  real but too small for a player to hear clearly in two bars.
+- The real band's leaning (0.60 each) was learned under the biased rule and is higher than is good for them.
 - Without a click, three players do not hold together.
 - The drummers do not listen to the bass for anything but time.
 - Mono.
