@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step eleven: players settle. A place that has agreed with what they hear for a long time is left alone. */
-class StepElevenTest {
+/** Step twelve: what a player has learned no longer wanders. */
+class StepTwelveTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -188,7 +188,7 @@ class StepElevenTest {
             System.out.printf(Locale.ROOT, "LEAN session %d: %.1f ms apart, leaning on each other %.2f%n", s + 1, apart[s], leaning[s]);
         double late = (apart[sessions - 3] + apart[sessions - 2] + apart[sessions - 1]) / 3;
         assertTrue(late < apart[0] - 1.5, "they land closer: " + apart[0] + " ms at first, " + late + " ms later");
-        assertTrue(leaning[sessions - 1] > 0.1, "because they learned to lean: " + leaning[sessions - 1]);
+        assertTrue(leaning[sessions - 1] > 0.04, "because they learned to lean, slowly, being old hands: " + leaning[sessions - 1]);
     }
 
     @Test
@@ -201,6 +201,30 @@ class StepElevenTest {
         ear.listen(air, air.length, 0);
         assertEquals(1, ear.hitsEver(), "one note is one hit");
         assertFalse(ear.hitBright(), "a drummer or a bass player hears it as dark");
+    }
+
+    /** Four bands of two practised drummers and a newborn bass player, twenty-four sessions each, with a click. */
+    @Test
+    void whatAPlayerHasLearnedDoesNotWander(@TempDir Path dir) throws Exception {
+        int bands = 4, sessions = 24, from = 8, rough = 0, takes = 0;
+        double wander = 0;
+        for (int d = 0; d < bands; d++) {
+            Path a = practised(dir, "a" + d + ".life", 4, LESSON.bar()), b = practised(dir, "b" + d + ".life", 4, "p...n...p.p.n..."), bass = dir.resolve("bass" + d + ".life");
+            double[][] listening = new double[3][sessions];
+            for (int s = 0; s < sessions; s++) {
+                Session.Band band = Session.band(dir.resolve("t.wav"), List.of(a, b), bass, 16, 92, 1000L * d + s);
+                for (int i = 0; i < 3; i++) listening[i][s] = band.parts().get(i).listeningAfter();
+                if (s >= from) { takes++; if (band.parts().get(0).unsteadyMs() > 14 || band.parts().get(1).unsteadyMs() > 14) rough++; }
+            }
+            for (int i = 0; i < 3; i++) {                    // how far its listening strays from session to session, once it has grown up a little
+                double jumps = 0;
+                for (int s = from + 1; s < sessions; s++) jumps += Math.abs(listening[i][s] - listening[i][s - 1]);
+                wander += jumps / (sessions - from - 1) / (3 * bands);
+            }
+        }
+        System.out.printf(Locale.ROOT, "WANDER a player's listening changes by %.3f from one session to the next; a practised drummer was unsteadier than 14 ms in %d of %d takes%n", wander, rough, takes);
+        assertTrue(wander < 0.06, "its listening moves a little each session, not a lot: " + wander);
+        assertTrue(rough * 8 <= takes, "a practised drummer rarely has a rough take: " + rough + " of " + takes);
     }
 
     @Test

@@ -1,10 +1,10 @@
 name: the drummer
 age: 0
-listens to itself: 0.47
+listens to itself: 0.57
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: pn.pn...p.p.n..n
-leans on the others: 0.50
+leans on the others: 0.60
 habits: 0000000000000000
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
@@ -77,3 +77,19 @@ session 67: played 16 bars with the second drummer and the bass player, no recor
 session 68: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 12.8 ms, listening 0.41, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 8 ms apart
 session 69: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 13.9 ms, listening 0.23, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 10 ms apart
 session 70: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 14.7 ms, listening 0.47, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 71: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.1 ms, listening 0.49, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 72: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 12.8 ms, listening 0.48, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 73: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.0 ms, listening 0.48, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 74: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 12.1 ms, listening 0.48, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 75: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.2 ms, listening 0.48, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 7 ms apart
+session 76: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 10.8 ms, listening 0.48, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 77: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 11.1 ms, listening 0.49, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 78: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 11.4 ms, listening 0.50, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 8 ms apart
+session 79: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 10.5 ms, listening 0.51, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 80: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.1 ms, listening 0.53, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 81: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 11.7 ms, listening 0.52, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 82: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.8 ms, listening 0.54, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 83: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 13.0 ms, listening 0.54, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 6 ms apart
+session 84: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 9.8 ms, listening 0.56, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 85: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 8.6 ms, listening 0.58, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart
+session 86: played 16 bars with the second drummer and the bass player, no record, hits=129, unsteadiness 11.8 ms, listening 0.57, ticks to the pulse 4, pattern pn.pn...p.p.n..n, 5 ms apart

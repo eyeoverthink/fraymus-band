@@ -97,7 +97,12 @@ public final class Musician implements Player, Hits {
     static final double NEWBORN_LISTENING = 0.15;
     /** How big a change in listening it tries each time. */
     static final double TRY = 0.06;
-    /** How many heard gaps it plays before judging whether the last change in listening helped. */
+    /** A newborn keeps a change in how it listens or leans only if things got this much better (0.05 = 5%). An older player tries smaller changes and asks for a smaller gain. */
+    static final double CLEARLY = 0.05;
+    /** The most gaps or hits it ever weighs before deciding, and how many hits of experience it takes to double its care. */
+    static final int MOST_EVIDENCE = 24;
+    static final double HITS_TO_SLOW = 1500;
+    /** How many heard gaps a newborn plays before judging whether a change in listening helped. */
     static final int JUDGE_EVERY = Ear.MEMORY;
     /** How strongly it settles back toward the tempo its body likes. */
     static final double HOME = 0.02;
@@ -175,6 +180,8 @@ public final class Musician implements Player, Hits {
 
     private double listening;             // how strongly it follows what it hears
     private double trying = TRY;
+    private boolean tryingListening; private double listeningAsItWas, judgeSum; private int judgeN;
+    private boolean tryingLeaning; private double leaningAsItWas;
     private double roughBefore = -1;
     private long judgedAt, gapsJudged;
     private long experience;              // hits played in its whole life
@@ -487,12 +494,18 @@ public final class Musician implements Player, Hits {
         if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
         clock.nudge(leaning * off);
         farSum += Math.abs(off);
-        if (++farCount < LEAN_JUDGE_EVERY) return;
-        double farNow = farSum / farCount;                   // did the last change bring the others closer to its ticks?
+        if (++farCount < Math.min(MOST_EVIDENCE, LEAN_JUDGE_EVERY * (1 + experience / HITS_TO_SLOW))) return;
+        double farNow = farSum / farCount;
         farSum = 0; farCount = 0;
-        if (farBefore >= 0 && farNow > farBefore) { leaning -= tryingLean; tryingLean = -tryingLean; }
-        farBefore = farNow;
-        leaning = Math.max(0, Math.min(LEAN_MOST, leaning + tryingLean));
+        if (!tryingLeaning) {                                // it knows how far off the others land as it is; now try a change
+            farBefore = farNow;
+            leaningAsItWas = leaning;
+            leaning = Math.max(0, Math.min(LEAN_MOST, leaning + tryingLean * stepNow()));
+            tryingLeaning = true;
+        } else {                                             // keep the change only if the others clearly landed closer
+            if (!(farNow < farBefore * (1 - CLEARLY * stepNow()))) { leaning = leaningAsItWas; tryingLean = -tryingLean; }
+            tryingLeaning = false;
+        }
     }
 
     /** A gap between two of its own hits, come back through the room. */
@@ -517,9 +530,10 @@ public final class Musician implements Player, Hits {
         gapHead = (gapHead + 1) % Ear.MEMORY;
         if (gapCount < Ear.MEMORY) gapCount++;
         gapsJudged++;
+        if (gapCount > 1) { judgeSum += uneven[(unevenHead - 1 + Ear.MEMORY) % Ear.MEMORY]; judgeN++; }
 
         clock.pullToward(feltPulse(trust()), listening);
-        if (gapsJudged - judgedAt >= JUDGE_EVERY) judge();
+        if (gapsJudged - judgedAt >= evidenceNow()) judge();
     }
 
     /** The pulse it feels in its last few gaps, however many places each one spanned. */
@@ -554,11 +568,24 @@ public final class Musician implements Player, Hits {
     /** Did the last change in listening make it sound steadier? If not, undo it and try the other way. */
     private void judge() {
         judgedAt = gapsJudged;
-        double roughNow = unevenness();
-        if (roughBefore >= 0 && roughNow > roughBefore) { listening -= trying; trying = -trying; }
-        roughBefore = roughNow;
-        listening = Math.max(0.02, Math.min(0.95, listening + trying));
+        double roughNow = judgeN == 0 ? 0 : judgeSum / judgeN;
+        judgeSum = 0; judgeN = 0;
+        if (!tryingListening) {                              // it has heard how it sounds as it is; now try a change
+            roughBefore = roughNow;
+            listeningAsItWas = listening;
+            listening = Math.max(0.02, Math.min(0.95, listening + trying * stepNow()));
+            tryingListening = true;
+        } else {                                             // it has heard how the change sounds: keep it only if clearly better
+            if (!(roughNow < roughBefore * (1 - CLEARLY * stepNow()))) { listening = listeningAsItWas; trying = -trying; }
+            tryingListening = false;
+        }
     }
+
+    /** How many gaps it weighs before it decides anything about itself: more as it gets older. */
+    private int evidenceNow() { return (int) Math.min(MOST_EVIDENCE, JUDGE_EVERY * (1 + experience / HITS_TO_SLOW)); }
+
+    /** How big a change it tries, against what a newborn tries: smaller as it gets older. */
+    private double stepNow() { return 1.0 / (1 + experience / HITS_TO_SLOW); }
 
     /** The top of a bar in its answer: where it finds out what it has earned. */
     private void barLine() {
@@ -760,9 +787,10 @@ public final class Musician implements Player, Hits {
     public double tempoNow() { return Audio.bpmOf(clock.period()); }
     public double lastPulse() { return lastPulse; }
     public long experience() { return experience; }
-    public double listening() { return listening; }
+    /** How strongly it follows what it hears. A change it is only trying out does not count yet. */
+    public double listening() { return tryingListening ? listeningAsItWas : listening; }
     /** How far it shifts its tick toward the other players when it has a click, from 0 to 0.6. */
-    public double leaning() { return leaning; }
+    public double leaning() { return tryingLeaning ? leaningAsItWas : leaning; }
     /** Where its life says its leaning had got to. */
     public void leaning(double soFar) { leaning = Math.max(0, Math.min(LEAN_MOST, soFar)); }
     public int ticks() { return ticks; }

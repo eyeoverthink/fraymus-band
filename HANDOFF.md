@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.11.0. 30 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.12.0. 31 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -83,6 +83,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 9 | The first non-drummer: a bass player with one note. Same player class, different instrument. It listens for the pots and moves its notes onto them while it plays. The class `Drummer` was renamed `Musician`. This handoff was written. |
 | 10 | The bass earns a second note (the octave) by playing in tune, judged by its own ear on its own sound. With two notes it puts the low one on the pots and the high one on the pans. |
 | 11 | Settling. Every place in a player's bar has a habit (0 to 9) that grows while what it plays agrees with what it hears. Its own ideas are held back at settled places. Players now stay on a pattern they have found. |
+| 12 | Learned settings no longer wander. A player hears how it sounds, tries one change, keeps it only if clearly better, and grows more careful with age (more evidence, smaller steps). Rough takes late in life fell from 25 in 256 to 9. |
 
 ### The players that exist (do not reset these)
 
@@ -103,11 +104,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.11.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.11.0.jar --click on
-    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.11.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.11.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.12.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.12.0.jar --click on
+    java -jar target/fraymus-band-0.12.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.12.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.12.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -143,7 +144,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepElevenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwelveTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -156,6 +157,9 @@ through whole lives and print tables; `README.md` quotes those tables.
 Learned, by trial, and saved in its life:
 
 - **listening** (0 to 0.95): how strongly it pulls its pulse toward what it hears. A newborn has 0.15.
+  Found by trial: baseline window, then a trial window, keep only if clearly better (5% for a newborn, less
+  for an old hand whose steps are smaller). Evidence grows from 8 to 24 gaps and steps shrink with
+  experience (`HITS_TO_SLOW` = 1500 hits). Leaning is learned the same way.
 - **ticks to the pulse** (1, 2, 4): earned when gaps exactly one tick long have sounded even enough for
   two bars running.
 - **pattern**: sixteen places. One change per round; kept unless that round sounded clearly rougher than
@@ -206,6 +210,11 @@ Given, as fixed rules (be honest about these):
   45 ms after.
 - **Measuring pitch from the whole shape of the note was off by up to 13 hundredths of a semitone**, because
   the upper tones die away at different speeds. `PitchEar` follows only the bottom tone.
+- **Settings that wandered (fixed in step 12).** The first learning rule moved a setting after every look,
+  whether or not it helped, so on noisy evidence it random-walked across its whole range. In the real band
+  the bass player's listening fell from 0.81 to 0.29 over 18 sessions. Also learned the hard way: a decision
+  that needs more evidence than a session contains never gets made, because the trial is forgotten when
+  the session ends. Keep a decision's evidence well inside one session.
 - **Tried and taken back out (step 11):** making a player weigh its own steadiness when judging how hard to
   lean on the others. It sounded right and measured no better (36 rough takes in 256 against 25), so it
   was removed. Do not keep a change because it is plausible; measure it.
@@ -234,6 +243,17 @@ Given, as fixed rules (be honest about these):
 - A bass player rarely earns four ticks to the pulse.
 - Settling is not taste. Players settle on agreeing with what they hear; an idea nobody else plays never
   lasts. Nothing original survives yet.
+- **Old players learn slowly now**, so they recover slowly. After the fix the real bass player's listening
+  climbed from 0.29 to only 0.39 in 16 sessions (it had been 0.81 before it wandered off). It is improving,
+  not restored.
+- **Leaning only goes up.** In the real band all three players have reached the most allowed (0.60). The
+  test a player uses (do the others land closer to my ticks?) partly rewards leaning by construction. It
+  needs a fairer test or a cost.
+- Every session starts at 92 bpm, the tempo the players' bodies like.
+- The bass has two notes an octave apart. That is not yet a bass line.
+- A bass player rarely earns four ticks to the pulse.
+- Settling is not taste. Players settle on agreeing with what they hear; an idea nobody else plays never
+  lasts. Nothing original survives yet.
 - **Learned settings wander.** Listening and leaning are found by hill-climbing on noisy evidence. In the
   real band, over sessions 25 to 42, the bass player's listening fell from 0.81 to 0.29 and its unsteadiness
   rose from 6 to about 18 ms. Averaged over many simulated bands there is no decline, but any one player can
@@ -250,7 +270,7 @@ Given, as fixed rules (be honest about these):
 
 The bass player exists (step 9). Roughly in this order unless Vaughn says otherwise:
 
-0. Probably first: stop learned settings wandering (see section 7).
+0. A fairer test for leaning (see section 7).
 1. More notes for the bass (a fifth, then a scale), each earned by playing the ones it has in tune. A third
    note needs a third symbol in the pattern and a reason to choose it; pots and pans only give two.
 2. Lessons in other feels (a clave, a hip hop bar, a swing bar). "Genre lives in the ticks."
