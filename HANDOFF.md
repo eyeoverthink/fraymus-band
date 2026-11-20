@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.13.0. 31 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.14.0. 33 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -85,6 +85,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 11 | Settling. Every place in a player's bar has a habit (0 to 9) that grows while what it plays agrees with what it hears. Its own ideas are held back at settled places. Players now stay on a pattern they have found. |
 | 12 | Learned settings no longer wander. A player hears how it sounds, tries one change, keeps it only if clearly better, and grows more careful with age (more evidence, smaller steps). Rough takes late in life fell from 25 in 256 to 9. |
 | 13 | Honest learning. Found that most of the players' apparent learning of their settings came from a bias (warming up during a session made any change look good). Rebuilt it: every two bars a player takes stock; a trial is compared with the stretches before and after it; the first two bars of a session count for nothing; first direction left to chance; probe big, move small. Growth is real now and slower. |
+| 14 | Feel. A lesson can say how far ahead or behind the tick, and how hard, each place is played. A listener takes on a tenth of what it hears each time and plays with it. Vaughn's idea: players need artists to study, as he had. He sent his own song as the first real influence (see section 8). |
 
 ### The players that exist (do not reset these)
 
@@ -105,11 +106,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.13.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.13.0.jar --click on
-    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.13.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.14.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.14.0.jar --click on
+    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.14.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -133,7 +134,8 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `PitchEar`: measures the pitch of a player's own note from its own sound, by how far the bottom tone
   turns between two short listens. Accurate to about one hundredth of a semitone.
 - `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
-- `Lesson`: a bar of sixteen places (`p` pot, `n` pan, `.` nothing) and a tempo. Files in `lessons/`.
+- `Lesson`: a bar of sixteen places (`p` pot, `n` pan, `.` nothing), a tempo, and optionally its feel
+  (`push` in ms and `weight` per place). Files in `lessons/`: `first`, `laid-back`, `on-top`.
 - `Teacher`: the record. Plays the lesson for two bars, leaves two, repeats; then plays straight through.
 - `Metronome`: the click. One bar of count-in, then every pulse.
 - `Musician`: the player (called `Drummer` until step 9). This is where nearly all the behaviour is. Read
@@ -145,7 +147,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepThirteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepFourteenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -169,6 +171,8 @@ Learned, by trial, and saved in its life:
 - **pattern**: sixteen places. One change per round; kept unless that round sounded clearly rougher than
   its playing usually does.
 - **the lesson**: only what it heard, at the places its ticks reach.
+- **feel**: for each place, milliseconds after the tick, how hard, and how many times heard. Taken on from
+  records (and from a teaching drummer), a tenth each hearing; trusted fully after twenty hearings.
 - **habits**: sixteen digits, how settled each place of its bar is.
 - **notes** (bass: 1 or 2): the second is earned when its last eight notes were within 12 hundredths of a
   semitone on average, two bars running.
@@ -249,6 +253,8 @@ Given, as fixed rules (be honest about these):
 - Learning from another drummer is slower and less accurate than from the record.
 - The teacher does not listen to the answers.
 - A drummer's own ideas are picked by chance. There is no taste yet beyond copying what it hears.
+- Feel cannot hold swing (no triplet ticks), a player has only one feel (it cannot keep two records
+  apart), and it cannot play more than 10 ms ahead of its tick.
 - Every session starts at 92 bpm, the tempo the players' bodies like.
 - The bass has two notes an octave apart. That is not yet a bass line.
 - A bass player rarely earns four ticks to the pulse.
@@ -291,19 +297,30 @@ Given, as fixed rules (be honest about these):
 
 ## 8. What comes next
 
-The bass player exists (step 9). Roughly in this order unless Vaughn says otherwise:
+**Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people
+who inspired me and they need inspiration also."** He is to be their first influence. He sent his own song,
+"Gleam of the Prize" (on Spotify and Apple Music under Vaughn Scott), as an MP3. The agent cannot fetch
+audio from streaming services; he has to send files. **His audio must not be committed to this public
+repository.** Keep it in `songs/`, which is in `.gitignore`.
 
-0. A way for players to learn leaning that works (see section 7). An idea not yet tried: a direct signal
-   in place of trial and error. If another player's hits keep landing on the same side of its ticks, it is
-   not leaning enough; if they flip from side to side, it is leaning too much.
-1. More notes for the bass (a fifth, then a scale), each earned by playing the ones it has in tune. A third
-   note needs a third symbol in the pattern and a reason to choose it; pots and pans only give two.
-2. Lessons in other feels (a clave, a hip hop bar, a swing bar). "Genre lives in the ticks."
-3. Taste: a reason to prefer one pattern over another that is not just copying.
-4. Trading bars between players as soloists.
-5. The other instruments in his lineup, one at a time, each born new.
-6. Stereo, so players can be heard apart.
-7. Real devices (section 9).
+In order:
+
+1. **Let a player listen to a real recording.** A player that plays a WAV into the room (convert MP3 with
+   ffmpeg outside the Java code; the players are still plain Java). The hard parts: the players' ear was
+   built for a pot and a pan, not a full mix; a song has its own tempo and the players only know 92 to 96;
+   and a listener needs to find the one. Start by reporting honestly what the ear can and cannot hear in
+   his song. A drum stem from him would make this far easier; ask if he has one.
+2. **More than one influence, kept apart.** A player should hold what it took from each record separately
+   and have its own mix, so an idea of its own is something borrowed from one influence and tried in
+   another. This is what should finally let something original survive.
+3. A way for players to learn leaning that works (section 7). Untried idea: if another player's hits keep
+   landing on the same side of its ticks, lean more; if they flip from side to side, lean less.
+4. Triplet ticks, so swing can be heard and played. "Genre lives in the ticks."
+5. More notes for the bass (a fifth, then a scale), each earned by playing the ones it has in tune.
+6. Trading bars between players as soloists.
+7. The other instruments in his lineup, one at a time, each born new.
+8. Stereo, so players can be heard apart.
+9. Real devices (section 9).
 
 ---
 

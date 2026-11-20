@@ -28,6 +28,15 @@ public final class Kit implements Instrument {
         return place == 0 ? 1.0 : place % 4 == 0 ? 0.75 : place % 2 == 0 ? 0.62 : 0.52;
     }
 
+    /** How loud the pan is against the pot when both are hit equally hard. A player knows this of its own kit. */
+    public static final double PAN_AGAINST_POT = loudest(new Pan()) / loudest(new Thump());
+
+    private static double loudest(Sound sound) {
+        double top = 0;
+        for (int i = 0; i < sound.length(); i++) top = Math.max(top, Math.abs(sound.at(i)));
+        return top;
+    }
+
     public static byte read(char c) { return c == 'p' ? POT : c == 'n' ? PAN : REST; }
     public static char write(byte b) { return b == POT ? 'p' : b == PAN ? 'n' : '.'; }
 }

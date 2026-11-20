@@ -88,6 +88,14 @@ ahead if chance beats that place's habit: always at 0, one time in ten at 9. Cop
 never held back. So a young player is restless everywhere and an old one mostly leaves alone what has
 worked for a long time. Habits are written into its life.
 
+**Feel.** Where a hit falls against the tick, a little ahead or a little behind, and how hard it is hit,
+is the feel of a record. A lesson can say how it is played (`push` and `weight`, below). When a player
+listens to a record it notices both for every hit it can place, and each place in its bar slowly takes on
+what it has heard there, a tenth of the way each time. When it plays, it plays each place that far off
+its tick and that hard, as far as it has heard that place often enough to trust it. Its feel goes with
+it wherever it plays and is written into its life. A player raised on a different record plays the same
+places differently.
+
 **How it learns its settings.** Listening and leaning are found by trial, on honest evidence. Every two
 bars a player takes stock of how it has sounded. It hears how things are as it is, tries a change big
 enough to hear, then goes back and hears how things are again. It keeps a small step of the change only
@@ -113,7 +121,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.13.0.jar
+    java -jar target/fraymus-band-0.14.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -121,33 +129,40 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.13.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.14.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.13.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.14.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Write your own lesson
 
-A lesson is a text file: one bar of sixteen places and a tempo. `p` is the pot, `n` is the pan, a dot is
-nothing. Put the heaviest hit on the one; that is how the drummer finds it.
+A lesson is a text file: one bar of sixteen places, a tempo, and optionally how it is played. `p` is the
+pot, `n` is the pan, a dot is nothing.
 
-    name: first lesson
+    name: laid back
     tempo: 96
-    bar: p..pn...p.p.n..n
+    bar:    p..pn...p.p.n..n
+    push:   0 0 0 -8 22 0 0 0 0 0 0 0 22 0 0 12
+    weight: 1.0 0 0 0.45 0.85 0 0 0 0.7 0 0.5 0 0.85 0 0 0.4
+
+`push` is how many milliseconds after its tick each place is played; a minus sign means ahead of it. It
+cannot be more than 30 either way. `weight` is how hard each place is hit, from 0 to 1. Keep the one the
+heaviest hit of the bar; that is how a listener finds it. Three lessons come with the project:
+`first` (on the tick), `laid-back` (pans behind) and `on-top` (pans ahead). They use the same places.
 
 ## What was measured
 
@@ -219,6 +234,14 @@ is too small to hear clearly. *Honest:* eight pairs of practised drummers over e
 
 The tempo stayed within 2 bpm of the click in every one of those takes.
 
+**Feel.** *Honest.* Six practised drummers raised for six sessions on each of two records that use the
+same places and opposite feels, with a click.
+
+| Raised on | Its pans | The record's pans | Its pickup | The record's pickup | How hard it hits its pans | The record | Unsteadiness |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| laid back | +21.6 ms | +22 | -8.0 ms | -8 | 0.82 | 0.85 | 9.6 ms |
+| on top    | -6.9 ms  | -9  | 0.0 ms  | 0  | 0.70 | 0.70 | 9.8 ms |
+
 **The bass player.** *Honest.* Twelve newborn bass players, each living twenty-four sessions of 16 bars
 with two practised drummers and a click. The drummers' pots fall on four places of the bar and their
 pans on three.
@@ -289,6 +312,11 @@ drummer plays or hears a place its ticks cannot reach.
 - A bass player rarely earns four ticks to the pulse, so it seldom reaches the drummers' sixteenth notes.
 - Settling is not taste. A player settles on agreeing with what it hears. An idea of its own that nobody
   else plays never lasts, so nothing original survives.
+- Feel is one number for timing and one for weight at each place. It cannot hold swing: a swung note is
+  about 100 ms off the straight tick, which is a different place, and the players have no triplet ticks.
+- A player has one feel, an average of everything it has heard. It cannot yet keep two records apart.
+- A player cannot play more than 10 ms ahead of its tick.
+- Feel has only been measured with a click.
 - Honest learning is slower. Without a click, drummers reach four ticks to the pulse and tight time later
   than the earlier tables claimed.
 - Players do not learn to lean on each other, though leaning of about 0.4 would help them. The gain is

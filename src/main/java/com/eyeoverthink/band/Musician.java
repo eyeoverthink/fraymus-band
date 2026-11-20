@@ -79,6 +79,13 @@ import java.util.SplittableRandom;
  * always. Copying what it hears is never held back. So a young player is restless everywhere, and an old
  * one mostly leaves alone what has worked for a long time. Its habits are written into its life.
  *
+ * Feel. Where a hit falls against the tick, a little ahead or a little behind, and how hard it is hit, is
+ * the feel of a record. When it listens to a record it notices both for every hit it can place, and each
+ * place in its bar slowly takes on what it has heard there: a tenth of the way each time. When it plays,
+ * it plays each place that far off its tick and that hard, as far as it has heard that place often enough
+ * to trust it (twenty hearings for full trust). Its feel goes with it wherever it plays and is written
+ * into its life. When it judges how even its own playing is, it allows for the feel it meant.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -135,6 +142,10 @@ public final class Musician implements Player, Hits {
     static final double TUNE_SLIP = 30, TUNE_SUREST = 6, NOTES_TO_LEARN = 600;
     /** It earns its next note when its last eight notes were this close to in tune on average. */
     static final double TUNE_EARN = 12;
+    /** How much of what it hears of a record's feel it takes on each time, how many hearings make it sure, and how far ahead of a tick it can play. */
+    static final double ABSORB = 0.1;
+    static final int HEARINGS_TO_TRUST = 20;
+    static final double MOST_AHEAD = 0.010;
     /** While playing together, a hit this heavy next to the heaviest it has heard is the one. */
     static final double NEARLY_THE_HEAVIEST = 0.84;
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
@@ -231,6 +242,11 @@ public final class Musician implements Player, Hits {
 
     private final long[] hits;
     private final int[] hitSlots;
+    private final double[] hitPushes;     // how far off its tick it meant each hit to be
+    private final double[] feelPush = new double[SLOTS];    // the feel it has taken on: samples after the tick, for each place
+    private final double[] feelWeight = new double[SLOTS];  // and how hard
+    private final int[] feelHeard = new int[SLOTS];         // how many times it has heard that place on a record
+    private double strikePush, struckPush, struckPushBefore;
     private int hitCount;
 
     /** A drummer for a session with the record: so many answers, then so many bars together. */
@@ -287,6 +303,8 @@ public final class Musician implements Player, Hits {
         this.experience = experienceSoFar;
         this.hits = new long[allBars * SLOTS + 8];
         this.hitSlots = new int[hits.length];
+        this.hitPushes = new double[hits.length];
+        for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i);
     }
 
     @Override public String name() { return name; }
@@ -314,7 +332,8 @@ public final class Musician implements Player, Hits {
             if (oneNote) pitchEar.noteBegan(at);
             if (lastStrike >= 0 && at >= lastStrike && at - lastStrike < Audio.samples(0.05))   // how long after it hits does it hear the hit?
                 ownDelay += 0.2 * (at - lastStrike - ownDelay);
-            if (mineBefore >= 0 && (mode == ANSWERING || mode == TOGETHER)) ownGap(at - mineBefore);
+            // Its own hit, come back. If it meant this one late and the last one early, that is feel, not unsteadiness.
+            if (mineBefore >= 0 && (mode == ANSWERING || mode == TOGETHER)) ownGap(at - mineBefore - (struckPush - struckPushBefore));
             mineBefore = at;
         }
     }
@@ -411,6 +430,13 @@ public final class Musician implements Player, Hits {
         int place = (best % (PULSES * ticks)) * (SLOTS / PULSES / ticks);
         hearing[place] = kind;
         if (loud > weight[place]) weight[place] = loud;
+        if (withARecord && feelHeard[place] < 1_000_000) {    // take on a little of how the record played that place
+            feelPush[place] += ABSORB * (off - feelPush[place]);
+            // How hard was it hit? A pan is a quieter thing than a pot, so the same loudness means a harder hit.
+            double hard = loud / heaviest / (kind == PAN ? Kit.PAN_AGAINST_POT : 1.0);
+            if (heaviest > 0) feelWeight[place] += ABSORB * (Math.min(1.0, hard) - feelWeight[place]);
+            feelHeard[place]++;
+        }
         if (onAClick()) return;                              // it has heard what was played; its time comes from the click
         clock.nudge(TAP * off);
         if (best > placedTick) {                             // quiet and only listening, it leans on every hit it can place
@@ -762,7 +788,8 @@ public final class Musician implements Player, Hits {
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
             if (sound != REST) {
-                long meant = Math.round(clock.nextBeat() + chance.nextGaussian() * Audio.samples(slip()));
+                strikePush = last ? 0 : feelOf(slot);
+                long meant = Math.round(clock.nextBeat() + strikePush + chance.nextGaussian() * Audio.samples(slip()));
                 strikeAt = Math.max(meant, blockStart);
                 strikeSound = sound;
                 strikeSlot = last ? allBars * SLOTS : bar * SLOTS + slot;
@@ -776,8 +803,9 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
                 if (oneNote) { bass.detune(chance.nextGaussian() * tuneSlip()); struck = strikeSound; }
-                hands.strike(strikeSound, (float) (Kit.weight(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
-                if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitSlots[hitCount++] = strikeSlot; }
+                hands.strike(strikeSound, (float) (weightOf(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
+                if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitPushes[hitCount] = strikePush; hitSlots[hitCount++] = strikeSlot; }
+                struckPushBefore = struckPush; struckPush = strikePush;
                 experience++;
                 lastStrike = blockStart + i;
                 strikeAt = -1;
@@ -785,6 +813,19 @@ public final class Musician implements Player, Hits {
             }
             out[i] += hands.next();
         }
+    }
+
+    /** How sure it is of the feel of a place: nothing until it has heard it, everything after twenty hearings. */
+    private double trustIn(int place) { return Math.min(1.0, feelHeard[place] / (double) HEARINGS_TO_TRUST); }
+
+    /** How far after its tick it means to play a place, in samples. It cannot get more than a moment ahead. */
+    private double feelOf(int place) { return Math.max(-Audio.samples(MOST_AHEAD), feelPush[place] * trustIn(place)); }
+
+    /** How hard it means to hit a place: the usual accent, bent toward what it has heard. The one stays the heaviest. */
+    private double weightOf(int place) {
+        if (place == 0) return 1.0;
+        double t = trustIn(place);
+        return Math.min(0.9, Kit.weight(place) * (1 - t) + feelWeight[place] * t);
     }
 
     /** On to its next tick, with the wander of its hand and the pull of the tempo its body likes. */
@@ -810,6 +851,8 @@ public final class Musician implements Player, Hits {
     @Override public int hitCount() { return hitCount; }
     @Override public long hitAt(int i) { return hits[i]; }
     public int hitSlot(int i) { return hitSlots[i]; }
+    /** How far off its tick it meant that hit to be, in samples. */
+    public double hitPush(int i) { return hitPushes[i]; }
     /** The first place, counted from the start, that belongs to the bars played together with the record. */
     public int togetherFrom() { return Math.max(bars, teachBars) * SLOTS; }
     public double tempoNow() { return Audio.bpmOf(clock.period()); }
@@ -830,6 +873,31 @@ public final class Musician implements Player, Hits {
     public int refoundTheOne() { return refoundTheOne; }
     public int cameInAlone() { return cameInAlone; }
     public String plays() { return hands.describe(); }
+
+    /** Its feel, for its life: for each place, milliseconds after the tick, how hard, and how often heard. */
+    public String feel() {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < SLOTS; i++)
+            b.append(i == 0 ? "" : " ").append(String.format(java.util.Locale.ROOT, "%.1f/%.2f/%d", feelPush[i] * 1000.0 / Audio.RATE, feelWeight[i], feelHeard[i]));
+        return b.toString();
+    }
+
+    /** Where its life says its feel had got to. */
+    public void feel(String soFar) {
+        String[] parts = soFar.trim().split("\\s+");
+        for (int i = 0; i < SLOTS && i < parts.length; i++) {
+            String[] f = parts[i].split("/");
+            if (f.length != 3) continue;
+            feelPush[i] = Audio.samples(Double.parseDouble(f[0]) / 1000.0);
+            feelWeight[i] = Double.parseDouble(f[1]);
+            feelHeard[i] = Integer.parseInt(f[2]);
+        }
+    }
+
+    /** How far after the tick, in milliseconds, it means to play a place now. */
+    public double feelMs(int place) { return feelOf(place) * 1000.0 / Audio.RATE; }
+    /** How hard it means to hit a place now, from 0 to 1. */
+    public double feelWeight(int place) { return weightOf(place); }
     /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
     public String habits() {
         char[] c = new char[SLOTS];

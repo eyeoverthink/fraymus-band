@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step thirteen: players learn their settings from honest evidence. */
-class StepThirteenTest {
+/** Step fourteen: a player takes on the feel of the records it hears. */
+class StepFourteenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -225,6 +225,55 @@ class StepThirteenTest {
         System.out.printf(Locale.ROOT, "WANDER a practised drummer's listening changes by %.3f from one session to the next; a practised drummer was unsteadier than 14 ms in %d of %d takes%n", wander, rough, takes);
         assertTrue(wander < 0.06, "its listening moves a little each session, not a lot: " + wander);
         assertTrue(rough * 8 <= takes, "a practised drummer rarely has a rough take: " + rough + " of " + takes);
+    }
+
+    @Test
+    void aLessonCanSayHowItIsPlayed(@TempDir Path dir) throws Exception {
+        Path file = dir.resolve("feel.lesson");
+        Files.write(file, List.of("name: feel", "tempo: 96", "bar:    p...n...p...n...",
+            "push:   0 0 0 0 18 0 0 0 0 0 0 0 18 0 0 0", "weight: 1 0 0 0 0.8 0 0 0 0.7 0 0 0 0.8 0 0 0"));
+        Lesson l = Lesson.read(file);
+        assertEquals(18, l.pushMs()[4]);
+        assertEquals(0.8, l.weight()[12]);
+        assertEquals(0, new Lesson("plain", 96, "p...n...p...n...").pushMs()[4], "a lesson that says nothing about feel is played on the tick");
+        Files.write(file, List.of("bar: p...n...p...n...", "push: 0 0 0 0 80 0 0 0 0 0 0 0 0 0 0 0"));
+        assertThrows(IllegalArgumentException.class, () -> Lesson.read(file), "80 ms late is a different place in the bar, not a feel");
+        for (String name : new String[] {"first", "laid-back", "on-top"}) {
+            Lesson shipped = Lesson.read(Path.of("lessons", name + ".lesson"));
+            for (int i = 1; i < 16; i++) assertTrue(shipped.weight()[i] < shipped.weight()[0] - 0.1, name + ": the one must be the heaviest hit");
+        }
+    }
+
+    /** Six practised drummers raised for six sessions on each of two records with the same places and opposite feels. */
+    @Test
+    void aDrummerTakesOnTheFeelOfTheRecordItHears(@TempDir Path dir) throws Exception {
+        Lesson laidBack = Lesson.read(Path.of("lessons", "laid-back.lesson")), onTop = Lesson.read(Path.of("lessons", "on-top.lesson"));
+        double[] pans = new double[2], pickup = new double[2], panWeight = new double[2], unsteady = new double[2];
+        for (int c = 0; c < 2; c++)
+            for (int d = 0; d < 6; d++) {
+                Path life = dir.resolve(c + "-" + d + ".life");
+                Files.write(life, List.of("name: the drummer", "age: 0", "listens to itself: 0.80", "ticks to the pulse: 4", "habits: 9999999999999999",
+                    "pattern: " + laidBack.bar(), "", "session 1: bars=400, hits=6000, made up for a test"));
+                Session.Report r = null;
+                for (int s = 0; s < 6; s++) {
+                    r = Session.run(dir.resolve("t.wav"), life, c == 0 ? laidBack : onTop, 4, 8, true, 1000L * d + s);
+                    if (s == 0) assertTrue(Math.abs(r.feelMs()[4]) < 8, "after one session it only half trusts what it heard: " + r.feelMs()[4]);
+                }
+                pans[c] += (r.feelMs()[4] + r.feelMs()[12]) / 2 / 6;
+                pickup[c] += r.feelMs()[3] / 6;
+                panWeight[c] += (r.feelWeight()[4] + r.feelWeight()[12]) / 2 / 6;
+                unsteady[c] += r.lateUnsteadyMs() / 6;
+                assertEquals(1.0, r.feelWeight()[0], 1e-9, "the one stays the heaviest");
+                assertTrue(Files.readAllLines(life).stream().anyMatch(l -> l.startsWith("feel: ")), "its feel is in its life");
+            }
+        System.out.printf(Locale.ROOT, "FEEL raised on \"laid back\": pans %+.1f ms (record +22), pickup %+.1f ms (record -8), pans hit %.2f hard (record 0.85), unsteadiness %.1f ms%n", pans[0], pickup[0], panWeight[0], unsteady[0]);
+        System.out.printf(Locale.ROOT, "FEEL raised on \"on top\":    pans %+.1f ms (record -9), pickup %+.1f ms (record 0), pans hit %.2f hard (record 0.70), unsteadiness %.1f ms%n", pans[1], pickup[1], panWeight[1], unsteady[1]);
+        assertEquals(22, pans[0], 5, "raised on the laid-back record it plays its pans behind the tick");
+        assertEquals(-8, pickup[0], 4, "and its pickup ahead");
+        assertTrue(pans[1] < -3, "raised on the other record it plays its pans ahead: " + pans[1]);
+        assertEquals(0.85, panWeight[0], 0.1, "and hits them as hard as the record did");
+        assertEquals(0.70, panWeight[1], 0.1);
+        assertTrue(unsteady[0] < 13 && unsteady[1] < 13, "playing with feel is not playing unsteadily: " + unsteady[0] + ", " + unsteady[1]);
     }
 
     @Test

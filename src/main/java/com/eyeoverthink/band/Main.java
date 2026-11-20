@@ -93,6 +93,10 @@ public final class Main {
                 r.barsTogether(), r.hitsTogether(), r.apartMs(), r.leanMs(), r.alone());
             System.out.printf(Locale.ROOT, "Their last hits were %.0f ms apart.%n", Math.abs(r.landedApartMs()));
         }
+        StringBuilder feel = new StringBuilder();
+        for (int i = 0; i < Musician.SLOTS; i++) if (r.patternAfter().charAt(i) != '.')
+            feel.append(String.format(Locale.ROOT, " %d:%+.0fms/%.2f", i + 1, r.feelMs()[i], r.feelWeight()[i]));
+        System.out.println("Its feel now, for each place it plays (place: after the tick / how hard):" + feel);
         System.out.printf(Locale.ROOT, "It landed on the one and let it ring %.2f s; its pulse was %.2f s.%n", r.ringSeconds(), r.lastPulseSeconds());
         System.out.println("Wrote " + r.wav() + " and added the session to " + life);
     }
