@@ -96,15 +96,20 @@ its tick and that hard, as far as it has heard that place often enough to trust 
 it wherever it plays and is written into its life. A player raised on a different record plays the same
 places differently.
 
-**Playing along with a recording.** A real song plays in the room. The drummer has a click in its ears
-at the song's tempo, lined up with the song's one, and plays its own pattern from the first bar. A song
-is a full mix and to one ear nearly all of it sounds bright, so it listens with two: one on the bottom
-of the sound (kick and bass), one on the top (hats, the crack of a snare). It takes notice only of the
-heavy hits in each: the kick stands above the bass line and the snare above the hats. Every two bars it
-moves one place toward what it has been hearing, and it takes on the feel of what it hears. It stays on
-the click and does not lean on the recording, which will not lean back. The drummer is told nothing
-about what is in the song. The tool that sets the click finds the tempo and the one beforehand, and a
-person should check the one by ear (`--hear` writes a clip for that).
+**Playing along with a recording.** The track is in the players' headphones with a click at the song's
+tempo, lined up with the song's one, the way a band practises to a record. They still hear each other
+across the room. Everyone starts together after the count-in and plays their own pattern from the first
+bar. A song is a full mix and to one ear nearly all of it sounds bright, so to the track each player
+listens with two: one on the bottom of the sound (kick and bass), one on the top (hats, the crack of a
+snare). A drummer takes notice only of the heavy hits in each: the kick stands above the bass line and
+the snare above the hats. A bass player takes the whole of the bottom: that is the bass line. Every two
+bars each moves one place toward what it has been hearing, and takes on the feel of it. A drummer with
+a track on learns its part from the track, not from the bass player beside it. Nobody is told what is
+in the song. The tool that sets the click finds the tempo and the one beforehand, and a person should
+check the one by ear (`--hear` writes a clip for that).
+
+Players judge each other's timing against where they themselves would play a place, feel included. Someone
+who plays a place late on purpose is not behind.
 
 **How it learns its settings.** Listening and leaning are found by trial, on honest evidence. Every two
 bars a player takes stock of how it has sounded. It hears how things are as it is, tries a change big
@@ -131,7 +136,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.16.0.jar
+    java -jar target/fraymus-band-0.17.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -139,36 +144,37 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.16.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.17.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.16.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.17.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
-after 46 seconds in (`--from SECONDS`). The take is the song and the drummer together. Check the one
+after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer and `--bass LIFE` for the
+bass player. The take is the song and the players together. Check the one
 first with `--hear`, below.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.16.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.17.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
@@ -277,6 +283,11 @@ every pulse play along three times each. In at least five of the six lives the p
 song's drum part and most hits land with a hit in the song; the first one ends on `p...n...p.ppn...`, the
 drum part plus one bass note it took for a kick, with 120 of 131 hits landing with the song, 6 ms apart.
 
+The whole band on the same made-up song: two drummers starting with the pot on every pulse and a bass
+player starting with one note on the one, three takes. The drummers end on `p...n...p.ppn...` and
+`p...n...p.ppnp..` (the song's drums are `p...n...p.p.n...`), the bass player on `p...n.p.p.p.n.p.`, and
+everyone keeps their time in at least three bands of four.
+
 **Feel.** *Honest.* Six practised drummers raised for six sessions on each of two records that use the
 same places and opposite feels, with a click.
 
@@ -358,7 +369,9 @@ drummer plays or hears a place its ticks cannot reach.
 - Playing along has only been tried on one real song. How heavy a hit must be to count (0.6 in the bottom,
   0.5 in the top) was chosen on that song and may not suit another.
 - In the bottom of a song a drummer cannot tell a loud bass note from a kick.
-- Only a drummer can play along with a recording so far, not the bass player.
+- Playing along, everyone ends up on much the same line. The drummers hear the same heavy hits, and the
+  bass player follows the bottom of the track at the eighth notes it can reach.
+- A player's feel can pick up the lateness of a slow bass note as if it were a late kick.
 - Feel is one number for timing and one for weight at each place. It cannot hold swing: a swung note is
   about 100 ms off the straight tick, which is a different place, and the players have no triplet ticks.
 - A player has one feel, an average of everything it has heard. It cannot yet keep two records apart.

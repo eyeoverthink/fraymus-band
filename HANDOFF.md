@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.16.0. 36 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.17.0. 37 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -88,6 +88,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 14 | Feel. A lesson can say how far ahead or behind the tick, and how hard, each place is played. A listener takes on a tenth of what it hears each time and plays with it. Vaughn's idea: players need artists to study, as he had. He sent his own song as the first real influence (see section 8). |
 | 15 | Two ears for a full recording: one on the bottom of the sound, one on the top (`Hearing.listenLowAndHigh`). Recovers the record's bar exactly from under a loud voice-like sound. `Main --hear` also writes a clip with the pulse and the one marked by clicks, for Vaughn to check by ear. |
 | 16 | Playing along with a real recording (`Main --along`, `Session.playAlong`, `Recording`). The song plays in the room, a click at its tempo is lined up with its one, and the drummer plays along with two ears, noticing only heavy hits, learning two bars at a time. Vaughn confirmed by ear that the clicks were on the beat and the one was right. The real first drummer has played along with his song five times. |
+| 17 | The whole band plays along. The track moved from the room into the players' headphones (a fourth thing a `Player` hears). The bass player takes the whole bottom of the track; drummers only the heavy hits. Players judge each other's timing against where they would play a place themselves, feel included. All three real players have played along with his song. |
 
 ### The players that exist (do not reset these)
 
@@ -111,11 +112,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.16.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.16.0.jar --click on
-    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.16.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.17.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.17.0.jar --click on
+    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.17.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -131,7 +132,8 @@ per step, and commit the lives with the step.
 All in `src/main/java/com/eyeoverthink/band/`.
 
 - `Audio`: sample rate 44,100 and block size 64 samples. Everything is sized from these.
-- `Player`: the interface. Once per block a player `hear`s (others, itself, the click) and then `play`s.
+- `Player`: the interface. Once per block a player `hear`s (others in the room, itself, and in its headphones
+  the click and a track) and then `play`s.
 - `Clock`: one player's pulse. `period`, `nextBeat`, `advance`, `drift`, `pullToward`, `nudge`.
 - `Ear`: finds hits in a stream of sound: when, how loud, bright or dark. One ear per stream.
 - `Room`: one ring buffer per player. A player's own sound reaches it in 3 ms, others' in 9 ms.
@@ -154,7 +156,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepSixteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepSeventeenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -334,6 +336,14 @@ no drum stem. He was sent `gleam-of-the-prize-pulse-marked.wav` (30 s from 0:46 
 and a higher click on the supposed one) and asked whether the high click is on the one. **He answered: the clicks are on the beat and it is on
 the one** ("That song was a challenge. It's on the 1.").
 
+**Playing along with the whole band (step 17), what was learned:**
+- With feel, leaning on another player's hits went wrong: each dragged the others toward notes that were late
+  on purpose (unsteadiness 18 to 25 ms). Fixed by measuring another player against where it would play that
+  place itself, feel included. Back to 6 to 9 ms.
+- The first try put the track in the room. Then a drummer heard the bass player through the same two ears
+  as the song. Headphones are both cleaner and what a real band does.
+- A feel cannot be more than 30 ms behind or 10 ms ahead. The bottom of his song put some places 35 ms late.
+
 **Playing along (step 16), what was learned:**
 - Copying every hit the two ears notice makes a drummer mirror the whole mix (15 of 16 places filled). The
   drum part only appears when it notices the heavy hits alone: at least 0.6 in the bottom and 0.5 in the top,
@@ -347,9 +357,9 @@ the one** ("That song was a challenge. It's on the 1.").
 
 In order:
 
-0. Done in step 16 for the drummer. Still to do under this heading: line the click up on the heavy hits only;
-   let the bass player play along too (it should follow the bottom ear, all of it, not just the heavy hits);
-   a second song, to see whether the thresholds hold.
+0. Done for the whole band in steps 16 and 17. Still to do under this heading: line the click up on the heavy
+   hits only; a second song, to see whether the thresholds hold; and the players all ending up on much the
+   same line, which is the next thing to fix (item 2).
 1. **Let a player listen to a real recording.** A player that plays a WAV into the room (convert MP3 with
    ffmpeg outside the Java code; the players are still plain Java). The hard parts: the players' ear was
    built for a pot and a pan, not a full mix; a song has its own tempo and the players only know 92 to 96;

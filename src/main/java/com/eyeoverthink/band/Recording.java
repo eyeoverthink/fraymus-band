@@ -1,7 +1,8 @@
 package com.eyeoverthink.band;
 
 /**
- * A recording playing in the room: a real song, from a file. It does not listen and it does not wait.
+ * A recording: a real song, from a file. The players hear it in their headphones, as a band does when it
+ * practises to a record, and it goes onto the take. It does not listen and it does not wait.
  * The sound was read into memory before the session; while playing it only copies samples.
  */
 public final class Recording implements Player {
@@ -17,13 +18,13 @@ public final class Recording implements Player {
     }
 
     @Override public String name() { return "the recording"; }
-    @Override public void hear(float[] others, float[] own, float[] click, int n, long blockStart) { }
+    @Override public void hear(float[] others, float[] own, float[] click, float[] track, int n, long blockStart) { }
 
     @Override
     public void play(float[] out, int n, long blockStart) {
         for (int i = 0; i < n; i++) {
             long at = startsAt + blockStart + i;
-            if (at >= 0 && at < sound.length) out[i] += sound[(int) at] * level;
+            out[i] = at >= 0 && at < sound.length ? sound[(int) at] * level : 0f;
         }
     }
 }

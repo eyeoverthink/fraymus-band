@@ -20,6 +20,8 @@ public final class Session {
 
     /** How long a player's own sound takes to reach it, and how long everyone else's does. */
     public static final double NEAR = 0.003, ACROSS = 0.009;
+    /** What is in a player's headphones when there is no track: nothing. Never written to. */
+    private static final float[] quiet = new float[Audio.BLOCK];
 
     public static Report run(Path wav, Path lifeFile, Lesson lesson, int answers, int barsTogether, long seed) throws IOException {
         return run(wav, lifeFile, lesson, answers, barsTogether, false, seed);
@@ -46,7 +48,7 @@ public final class Session {
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");                     // no objects are made inside this loop
                 if (click) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                drummer.hear(others, own, clicks, Audio.BLOCK, now);
+                drummer.hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromRecord, 0f);
                 java.util.Arrays.fill(fromDrummer, 0f);
                 teacher.play(fromRecord, Audio.BLOCK, now);
@@ -139,9 +141,9 @@ public final class Session {
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
                 if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(0, others, own, Audio.BLOCK, now);
-                a.hear(others, own, clicks, Audio.BLOCK, now);
+                a.hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                b.hear(others, own, clicks, Audio.BLOCK, now);
+                b.hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromA, 0f);
                 java.util.Arrays.fill(fromB, 0f);
                 a.play(fromA, Audio.BLOCK, now);
@@ -200,9 +202,9 @@ public final class Session {
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
                 if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
                 room.carry(0, others, own, Audio.BLOCK, now);
-                t.hear(others, own, clicks, Audio.BLOCK, now);
+                t.hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 room.carry(1, others, own, Audio.BLOCK, now);
-                l.hear(others, own, clicks, Audio.BLOCK, now);
+                l.hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 java.util.Arrays.fill(fromT, 0f);
                 java.util.Arrays.fill(fromL, 0f);
                 t.play(fromT, Audio.BLOCK, now);
@@ -229,69 +231,99 @@ public final class Session {
         }
     }
 
-    /** What happened when a drummer played along with a recording. */
-    public record Along(String recording, double tempo, double fromSeconds, int bars, double seconds, int hits, int landedWithIt, double apartMs,
-                        int heard, String believes, String patternBefore, String patternAfter, int copied, int ownIdeas, int kept, int takenBack,
-                        double unsteadyMs, double listeningBefore, double listeningAfter, int ticksBefore, int ticksAfter,
-                        double[] feelMs, double[] feelWeight, float peak, Path wav) {}
+    /** What happened when players played along with a recording. */
+    public record Along(String recording, double tempo, double fromSeconds, int bars, double seconds, java.util.List<AlongPart> parts, float peak, Path wav) {}
 
-    /**
-     * A drummer plays along with a real recording. The recording plays in the room; the drummer has a click
-     * in its ears at the recording's tempo, lined up with the recording's one, and plays from the first bar
-     * after the count-in. {@code heard} is what the ear made of the whole recording beforehand: only its
-     * tempo and where a one falls are used to set the click, and its hits to measure the take afterwards.
-     * The drummer itself is told nothing about what is in the recording.
-     */
+    /** One player's side of it. */
+    public record AlongPart(String name, String plays, int hits, int landedWithIt, double apartMs, int heard, String believes,
+                            String patternBefore, String patternAfter, int copied, int ownIdeas, int kept, int takenBack,
+                            double unsteadyMs, double listeningBefore, double listeningAfter, int ticksBefore, int ticksAfter, int notes) {}
+
+    /** One drummer plays along. */
     public static Along playAlong(Path wav, Path lifeFile, String recordingName, float[] sound, Hearing.Heard heard, Hearing.Bar bar,
                                   double fromSeconds, int bars, long seed) throws IOException {
-        Life life = Life.open(lifeFile, "the drummer");
+        return playAlong(wav, java.util.List.of(lifeFile), null, recordingName, sound, heard, bar, fromSeconds, bars, seed);
+    }
+
+    /**
+     * Players play along with a real recording: one or more drummers and, if a life is given for one, a bass
+     * player. The track is in their headphones with a click at its tempo, lined up with its one, and they all
+     * start together after the count-in. They hear each other across the room. {@code heard} is what the
+     * ear made of the whole recording beforehand: only its tempo and where a one falls are used to set the
+     * click, and its hits to measure the take afterwards. The players are told nothing about what is in it.
+     */
+    public static Along playAlong(Path wav, java.util.List<Path> drummerLives, Path bassLife, String recordingName, float[] sound,
+                                  Hearing.Heard heard, Hearing.Bar bar, double fromSeconds, int bars, long seed) throws IOException {
         Metronome metronome = new Metronome(bar.bpm(), 0.25);
         double start = metronome.firstBarSeconds(), barSeconds = Musician.PULSES * 60.0 / bar.bpm();
         double one = bar.aOneAtSeconds() + Math.ceil((fromSeconds - bar.aOneAtSeconds()) / barSeconds) * barSeconds;   // the first one at or after there
-        float loudest = 1e-9f;                              // found once, before anything plays
+        float loudest = 1e-9f;                               // found once, before anything plays
         for (float v : sound) loudest = Math.max(loudest, Math.abs(v));
-        Recording recording = new Recording(sound, one - start, 0.55f / loudest);   // leaves room for the drummer on top without clipping
-        Musician d = Musician.alongARecording(life.name(), 92.0, life.hitsPlayed(), life.listening(), life.ticks(), life.pattern(), bars, start, seed);
-        d.leaning(life.leaning()); d.habits(life.habits()); d.feel(life.feel());
-        Room room = new Room(2, NEAR, ACROSS);
+        int n = drummerLives.size() + (bassLife == null ? 0 : 1), bassAt = bassLife == null ? -1 : n - 1;
+        float trackLevel = (n == 1 ? 0.55f : 0.45f) / loudest, playerLevel = n == 1 ? 1f : 0.55f;   // room for everyone on top without clipping
+        Recording recording = new Recording(sound, one - start, 1f / loudest);
+        Life[] lives = new Life[n];
+        Musician[] players = new Musician[n];
+        String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
+        for (int i = 0; i < n; i++) {
+            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            long chance = seed + 0x9E3779B97F4A7C15L * i;
+            players[i] = i == bassAt
+                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)
+                : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, start, chance);
+            players[i].alongATrackFrom(start);
+            players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feel());
+            lives[i].plays(players[i].plays());
+        }
+        Room room = new Room(n, NEAR, ACROSS);
         float[] others = new float[Audio.BLOCK], own = new float[Audio.BLOCK], clicks = new float[Audio.BLOCK];
-        float[] fromRecording = new float[Audio.BLOCK], fromDrummer = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
+        float[] track = new float[Audio.BLOCK], mix = new float[Audio.BLOCK];
+        float[][] from = new float[n][Audio.BLOCK];
 
         long now = 0, tooLong = (long) Audio.samples(30.0 + 8.0 * bars);
         try (WavWriter out = new WavWriter(wav)) {
-            while (!d.done(now)) {                           // no objects are made inside this loop
+            while (true) {                                   // no objects are made inside this loop
+                boolean allDone = true;
+                for (int i = 0; i < n; i++) allDone &= players[i].done(now);
+                if (allDone) break;
                 if (now > tooLong) throw new IllegalStateException("The take never ended. That is a bug.");
                 metronome.play(clicks, Audio.BLOCK, now);
-                room.carry(1, others, own, Audio.BLOCK, now);
-                d.hear(others, own, clicks, Audio.BLOCK, now);
-                java.util.Arrays.fill(fromRecording, 0f);
-                java.util.Arrays.fill(fromDrummer, 0f);
-                recording.play(fromRecording, Audio.BLOCK, now);
-                d.play(fromDrummer, Audio.BLOCK, now);
-                room.fill(0, fromRecording, Audio.BLOCK, now);
-                room.fill(1, fromDrummer, Audio.BLOCK, now);
-                for (int i = 0; i < Audio.BLOCK; i++) mix[i] = fromRecording[i] + fromDrummer[i];
+                recording.play(track, Audio.BLOCK, now);     // into their headphones, and onto the take
+                for (int i = 0; i < n; i++) {
+                    room.carry(i, others, own, Audio.BLOCK, now);
+                    players[i].hear(others, own, clicks, track, Audio.BLOCK, now);
+                }
+                for (int k = 0; k < Audio.BLOCK; k++) mix[k] = track[k] * trackLevel * loudest;
+                for (int i = 0; i < n; i++) {
+                    java.util.Arrays.fill(from[i], 0f);
+                    players[i].play(from[i], Audio.BLOCK, now);
+                    room.fill(i, from[i], Audio.BLOCK, now);
+                    for (int k = 0; k < Audio.BLOCK; k++) mix[k] += from[i][k] * playerLevel;
+                }
                 out.write(mix, Audio.BLOCK);
                 now += Audio.BLOCK;
             }
-            int n = d.hitCount(), landed = 0, t = 0;
-            double apart = 0;
+            java.util.List<AlongPart> parts = new java.util.ArrayList<>();
             double[] times = heard.hitTimes();
-            for (int i = 0; i < n && times.length > 0; i++) {   // each of its hits against the nearest hit the ear found in the recording
-                double at = Audio.seconds(d.hitAt(i)) - start + one;
-                while (t + 1 < times.length && Math.abs(times[t + 1] - at) <= Math.abs(times[t] - at)) t++;
-                double ms = Math.abs(times[t] - at) * 1000;
-                if (ms <= 25) { landed++; apart += ms; }
+            for (int i = 0; i < n; i++) {
+                Musician d = players[i];
+                int hits = d.hitCount(), landed = 0, t = 0;
+                double apart = 0;
+                for (int k = 0; k < hits && times.length > 0; k++) {   // each of its hits against the nearest hit the ear found in the recording
+                    double at = Audio.seconds(d.hitAt(k)) - start + one;
+                    while (t + 1 < times.length && Math.abs(times[t + 1] - at) <= Math.abs(times[t] - at)) t++;
+                    double ms = Math.abs(times[t] - at) * 1000;
+                    if (ms <= 25) { landed++; apart += ms; }
+                }
+                double unsteady = unsteadiness(d, 0, hits);
+                parts.add(new AlongPart(lives[i].name(), d.plays(), hits, landed, landed == 0 ? 0 : apart / landed, d.heardWhilePlaying(), d.believes(),
+                    lives[i].pattern(), d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
+                    unsteady, lives[i].listening(), d.listening(), lives[i].ticks(), d.ticks(), d.notes()));
+                lives[i].leaning(d.leaning()); lives[i].habits(d.habits()); lives[i].feel(d.feel());
+                if (i == bassAt) lives[i].notes(d.notes());
+                lives[i].rememberAlong(recordingName, bars, hits, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);
             }
-            double unsteady = unsteadiness(d, 0, n);
-            double[] feelMs = new double[Musician.SLOTS], feelWeight = new double[Musician.SLOTS];
-            for (int i = 0; i < Musician.SLOTS; i++) { feelMs[i] = d.feelMs(i); feelWeight[i] = d.feelWeight(i); }
-            Along along = new Along(recordingName, bar.bpm(), one, bars, Audio.seconds(out.samples()), n, landed, landed == 0 ? 0 : apart / landed,
-                d.heardWhilePlaying(), d.believes(), life.pattern(), d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
-                unsteady, life.listening(), d.listening(), life.ticks(), d.ticks(), feelMs, feelWeight, out.peak(), wav);
-            life.leaning(d.leaning()); life.habits(d.habits()); life.feel(d.feel());
-            life.rememberAlong(recordingName, bars, n, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);
-            return along;
+            return new Along(recordingName, bar.bpm(), one, bars, Audio.seconds(out.samples()), parts, out.peak(), wav);
         }
     }
 
@@ -336,7 +368,7 @@ public final class Session {
                 if (metronome != null) metronome.play(clicks, Audio.BLOCK, now);
                 for (int i = 0; i < n; i++) {
                     room.carry(i, others, own, Audio.BLOCK, now);
-                    players[i].hear(others, own, clicks, Audio.BLOCK, now);
+                    players[i].hear(others, own, clicks, quiet, Audio.BLOCK, now);
                 }
                 java.util.Arrays.fill(mix, 0f);
                 for (int i = 0; i < n; i++) {

@@ -39,14 +39,15 @@ public final class Main {
             Hearing.Heard h = Hearing.listenLowAndHigh(song);
             Hearing.Bar b = Hearing.oneBar(h);
             String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
-            Session.Along a = Session.playAlong(wav, life, title, song, h, b, from, together < 0 ? 24 : together, seed);
+            java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
+            Session.Along a = Session.playAlong(wav, drummers, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
-            System.out.printf(Locale.ROOT, "It put %d hits of the recording at one of its places. What it believes it heard: %s%n", a.heard(), a.believes());
-            System.out.printf(Locale.ROOT, "Its pattern before: %s%nIts pattern after:  %s%n", a.patternBefore(), a.patternAfter());
-            System.out.printf(Locale.ROOT, "%d changes taken from the recording, %d its own idea; %d kept, %d taken back.%n", a.copied(), a.ownIdeas(), a.kept(), a.takenBack());
-            System.out.printf(Locale.ROOT, "%d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart on average.%n", a.landedWithIt(), a.hits(), a.apartMs());
-            System.out.printf(Locale.ROOT, "Unsteadiness %.1f ms. Listening %.2f to %.2f. Ticks to the pulse %d to %d.%n", a.unsteadyMs(), a.listeningBefore(), a.listeningAfter(), a.ticksBefore(), a.ticksAfter());
-            System.out.println("Wrote " + a.wav() + " (the recording and the drummer together; the click is not on it) and added the session to " + life);
+            for (Session.AlongPart p : a.parts()) {
+                System.out.printf(Locale.ROOT, "%s: went from %s to %s. It believes it heard %s.%n", p.name(), p.patternBefore(), p.patternAfter(), p.believes());
+                System.out.printf(Locale.ROOT, "   %d changes taken from what it heard, %d its own idea; %d kept, %d taken back. %d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart. Unsteadiness %.1f ms. Listening %.2f to %.2f.%n",
+                    p.copied(), p.ownIdeas(), p.kept(), p.takenBack(), p.landedWithIt(), p.hits(), p.apartMs(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter());
+            }
+            System.out.println("Wrote " + a.wav() + " (the recording and the players together; the click is not on it) and added the session to every life.");
             return;
         }
         if (hear != null) {                                  // what does a player's ear make of a recording?

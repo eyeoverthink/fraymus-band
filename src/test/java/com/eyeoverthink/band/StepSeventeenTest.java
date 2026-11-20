@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step sixteen: a drummer plays along with a real recording. */
-class StepSixteenTest {
+/** Step seventeen: the whole band plays along with a recording, the track in their headphones. */
+class StepSeventeenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -286,7 +286,7 @@ class StepSixteenTest {
         try (WavWriter out = new WavWriter(wav)) {
             for (long now = 0; now < Audio.RATE * 62L; now += Audio.BLOCK) {
                 java.util.Arrays.fill(block, 0f);
-                record.hear(none, none, none, Audio.BLOCK, now);
+                record.hear(none, none, none, none, Audio.BLOCK, now);
                 record.play(block, Audio.BLOCK, now);
                 out.write(block, Audio.BLOCK);
             }
@@ -343,9 +343,10 @@ class StepSixteenTest {
             Path life = dir.resolve(d + ".life");
             Files.write(life, List.of("name: the drummer", "age: 0", "listens to itself: 0.60", "ticks to the pulse: 4",
                 "pattern: p...p...p...p...", "", "session 1: bars=400, hits=3000, made up for a test"));
-            Session.Along a = null;
-            for (int s = 0; s < 3; s++) a = Session.playAlong(dir.resolve("t.wav"), life, "made up", song, heard, bar, 5, 24, 100L * d + s);
-            assertTrue(a.peak() > 0.2f && a.peak() < 1.0f, "loud enough to hear, never clipped: " + a.peak());
+            Session.Along take = null;
+            for (int s = 0; s < 3; s++) take = Session.playAlong(dir.resolve("t.wav"), life, "made up", song, heard, bar, 5, 24, 100L * d + s);
+            Session.AlongPart a = take.parts().get(0);
+            assertTrue(take.peak() > 0.2f && take.peak() < 1.0f, "loud enough to hear, never clipped: " + take.peak());
             assertEquals(24 * Musician.SLOTS, Math.round(a.hits() == 0 ? 0 : 24 * Musician.SLOTS), "it counts its bars");
             if (drums.matches(a.patternAfter()) > drums.matches("p...p...p...p...")) moved++;
             if (a.landedWithIt() * 10 >= a.hits() * 6) landedWell++;
@@ -358,6 +359,39 @@ class StepSixteenTest {
         assertTrue(moved >= 5, "its pattern moved toward the song's drum part in " + moved + " of 6 lives");
         assertTrue(landedWell >= 5, "most of its hits landed with a hit in the song in " + landedWell + " of 6 lives");
         assertTrue(unsteady < 14, "and it kept its time: " + unsteady + " ms");
+    }
+
+    @Test
+    void theWholeBandPlaysAlongWithARecording(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = madeUpSong(drums, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        int steady = 0, moved = 0;
+        for (int d = 0; d < 4; d++) {
+            Path first = dir.resolve(d + "a.life"), second = dir.resolve(d + "b.life"), bass = dir.resolve(d + "c.life");
+            for (Path life : new Path[] {first, second})
+                Files.write(life, List.of("name: " + (life == first ? "the drummer" : "the second drummer"), "age: 0", "listens to itself: 0.60", "ticks to the pulse: 4",
+                    "pattern: p...p...p...p...", "", "session 1: bars=400, hits=3000, made up for a test"));
+            Files.write(bass, List.of("name: the bass player", "age: 0", "listens to itself: 0.60", "ticks to the pulse: 2", "notes: 2",
+                "pattern: p...............", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+            Session.Along take = null;
+            for (int s = 0; s < 3; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(first, second), bass, "made up", song, heard, bar, 5, 24, 100L * d + s);
+            assertEquals(3, take.parts().size());
+            assertTrue(take.peak() > 0.2f && take.peak() < 1.0f, "loud enough to hear, never clipped: " + take.peak());
+            boolean allSteady = true;
+            for (Session.AlongPart p : take.parts()) if (p.unsteadyMs() > 14) allSteady = false;
+            if (allSteady) steady++;
+            Session.AlongPart a = take.parts().get(0), b = take.parts().get(1), c = take.parts().get(2);
+            if (drums.matches(a.patternAfter()) > 12 && drums.matches(b.patternAfter()) > 12) moved++;
+            assertEquals("the bass player", c.name());
+            for (int i = 0; i < 16; i++) if (i % 2 != 0) assertEquals('.', c.patternAfter().charAt(i), "the bass player has two ticks to the pulse and plays only what they reach");
+            assertTrue(c.hits() > 24, "the bass player found more to play than its one note on the one: " + c.patternAfter());
+            assertTrue(Files.readAllLines(bass).get(Files.readAllLines(bass).size() - 1).contains("played along with \"made up\""));
+            if (d == 0) System.out.printf(Locale.ROOT, "BAND ALONG the song's drums are %s; the drummers play %s and %s, the bass player %s%n", drums.bar(), a.patternAfter(), b.patternAfter(), c.patternAfter());
+        }
+        assertTrue(steady >= 3, "everyone kept their time in " + steady + " of 4 bands");
+        assertTrue(moved >= 3, "both drummers moved toward the song's drum part in " + moved + " of 4 bands");
     }
 
     /** The record, with something loud in the middle of the sound laid over it, the way a voice sits over the drums. */

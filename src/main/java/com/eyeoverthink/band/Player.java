@@ -7,8 +7,11 @@ package com.eyeoverthink.band;
 public interface Player {
     String name();
 
-    /** What reached this player during this block: everyone else, its own sound, and the click in its ears (silence if there is none). */
-    void hear(float[] others, float[] own, float[] click, int n, long blockStart);
+    /**
+     * What reached this player during this block: everyone else in the room, its own sound, and what is in its
+     * headphones: the click, and a track it is playing along with (silence where there is none).
+     */
+    void hear(float[] others, float[] own, float[] click, float[] track, int n, long blockStart);
 
     /** Put this player's sound for this block into {@code out}. */
     void play(float[] out, int n, long blockStart);
