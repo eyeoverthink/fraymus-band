@@ -106,6 +106,22 @@ public final class Life {
         lines.add(blank < 0 ? lines.size() : blank, line);
     }
 
+    /** A session playing along with a recording. */
+    public void rememberAlong(String recording, int bars, int hits, double unsteadyMs, double listeningNow, int ticksNow,
+                              String patternNow, int landedWithIt, double apartMs) throws IOException {
+        sessions++;
+        hitsPlayed += hits;
+        listening = listeningNow; ticks = ticksNow; pattern = patternNow;
+        set("listens to itself", String.format(Locale.ROOT, "%.2f", listeningNow));
+        set("ticks to the pulse", Integer.toString(ticksNow));
+        set("pattern", patternNow);
+        lines.add(String.format(Locale.ROOT,
+            "session %d: played along with \"%s\" for %d bars, hits=%d, unsteadiness %.1f ms, listening %.2f, ticks to the pulse %d, pattern %s, %d of its hits landed with a hit in the recording, %.0f ms apart",
+            sessions, recording, bars, hits, unsteadyMs, listeningNow, ticksNow, patternNow, landedWithIt, apartMs));
+        if (file.getParent() != null) Files.createDirectories(file.getParent());
+        Files.write(file, lines, StandardCharsets.UTF_8);
+    }
+
     /** A session in which this player gave the lesson. */
     public void rememberTaught(String other, int calls, int barsTogether, int hits, double unsteadyMs, double listeningNow, int ticksNow,
                                String patternNow, int otherMatches) throws IOException {

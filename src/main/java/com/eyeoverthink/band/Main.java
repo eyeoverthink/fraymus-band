@@ -7,7 +7,8 @@ import java.util.Locale;
 public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
-        Path with = null, teach = null, bass = null, hear = null;
+        Path with = null, teach = null, bass = null, hear = null, along = null;
+        double from = 46;
         boolean click = false;
         double tempo = 92;
         long seed = System.nanoTime();
@@ -24,12 +25,29 @@ public final class Main {
                 case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
                 case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--along" -> along = Path.of(args[i + 1]);
+                case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (along != null) {                                 // the drummer plays along with a recording
+            float[] song = Hearing.read(along);
+            Hearing.Heard h = Hearing.listenLowAndHigh(song);
+            Hearing.Bar b = Hearing.oneBar(h);
+            String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
+            Session.Along a = Session.playAlong(wav, life, title, song, h, b, from, together < 0 ? 24 : together, seed);
+            System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
+            System.out.printf(Locale.ROOT, "It put %d hits of the recording at one of its places. What it believes it heard: %s%n", a.heard(), a.believes());
+            System.out.printf(Locale.ROOT, "Its pattern before: %s%nIts pattern after:  %s%n", a.patternBefore(), a.patternAfter());
+            System.out.printf(Locale.ROOT, "%d changes taken from the recording, %d its own idea; %d kept, %d taken back.%n", a.copied(), a.ownIdeas(), a.kept(), a.takenBack());
+            System.out.printf(Locale.ROOT, "%d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart on average.%n", a.landedWithIt(), a.hits(), a.apartMs());
+            System.out.printf(Locale.ROOT, "Unsteadiness %.1f ms. Listening %.2f to %.2f. Ticks to the pulse %d to %d.%n", a.unsteadyMs(), a.listeningBefore(), a.listeningAfter(), a.ticksBefore(), a.ticksAfter());
+            System.out.println("Wrote " + a.wav() + " (the recording and the drummer together; the click is not on it) and added the session to " + life);
+            return;
         }
         if (hear != null) {                                  // what does a player's ear make of a recording?
             Hearing.Heard h = Hearing.listen(Hearing.read(hear));
@@ -56,13 +74,13 @@ public final class Main {
                 "bar:    " + b.bar(), "push:   " + push, "weight: " + weight));
             System.out.println("Wrote that bar, with its feel, as a lesson: " + lesson);
             Path marked = hear.resolveSibling(stem + "-pulse-marked.wav");
-            double from = Math.min(46, Math.max(0, h.seconds() - 30));
+            double clipFrom = Math.min(from, Math.max(0, h.seconds() - 30));
             try (WavWriter out = new WavWriter(marked)) {
-                float[] clip = Hearing.withThePulseMarked(song, b, from, 30);
+                float[] clip = Hearing.withThePulseMarked(song, b, clipFrom, 30);
                 float[] block = new float[Audio.BLOCK];
                 for (int at = 0; at + Audio.BLOCK <= clip.length; at += Audio.BLOCK) { System.arraycopy(clip, at, block, 0, Audio.BLOCK); out.write(block, Audio.BLOCK); }
             }
-            System.out.printf(Locale.ROOT, "Wrote 30 seconds from %.0f s with a click where it thinks the pulse is and a higher click on the one: %s%n", from, marked);
+            System.out.printf(Locale.ROOT, "Wrote 30 seconds from %.0f s with a click where it thinks the pulse is and a higher click on the one: %s%n", clipFrom, marked);
             return;
         }
         if (bass != null) {                                  // drummers and a bass player

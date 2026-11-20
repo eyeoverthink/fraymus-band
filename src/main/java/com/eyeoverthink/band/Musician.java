@@ -86,6 +86,16 @@ import java.util.SplittableRandom;
  * to trust it (twenty hearings for full trust). Its feel goes with it wherever it plays and is written
  * into its life. When it judges how even its own playing is, it allows for the feel it meant.
  *
+ * Playing along with a recording. A real song is a full mix, and to one ear nearly all of it sounds
+ * bright. So with a recording it listens with two ears: one on the bottom of the sound (below about 150
+ * Hz: kick and bass), which it takes for dark hits, and one on the top (above about 5,000 Hz: hats, the
+ * crack of a snare), which it takes for bright ones. What lies between goes to neither. Each ear keeps
+ * turning itself up or down so that quiet and loud passages are heard alike. It takes notice only of the
+ * heavy hits: in the bottom of a song the kick stands above the bass line, and in the top the snare stands
+ * above the hats. It plays its own pattern from
+ * the first bar, takes its time from the click, and every two bars moves one place toward what it has been
+ * hearing, the way the bass player does with the drummers. It takes on the feel of what it hears as well.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -173,6 +183,16 @@ public final class Musician implements Player, Hits {
     private double heaviest;                  // the heaviest hit it has heard from the record
     private long ticksTogether; private long placedTogether = -1; private long placedTogetherAt;
     private final Instrument hands;
+    private boolean learnsWhilePlaying;   // it changes its pattern while it plays, from what it hears
+    private boolean fullMix;              // what it hears is a real recording: listen with two ears
+    private final Ear lowEar = new Ear(), highEar = new Ear();
+    private final float[] lowPart = new float[Audio.BLOCK], highPart = new float[Audio.BLOCK];
+    private double l1, l2, l3, h1, h2, h3, lowLevel = 1e-3, highLevel = 1e-3;
+    private long lowUsed, highUsed;
+    private static final double LOW_PASS = 1 - Math.exp(-2 * Math.PI * 150.0 / Audio.RATE), HIGH_PASS = 1 - Math.exp(-2 * Math.PI * 5000.0 / Audio.RATE);
+    /** How loud a hit in the bottom, or in the top, of a recording must be for a drummer to take notice (the loudest lately is 0.8). */
+    static final double HEAVY_LOW = 0.6, HEAVY_HIGH = 0.5;
+    private static final double LEVEL_FALLS = Math.exp(-1.0 / Audio.samples(4.0));   // an ear forgets how loud things were over a few seconds
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player
     private final PitchEar pitchEar = new PitchEar();
@@ -203,7 +223,7 @@ public final class Musician implements Player, Hits {
     private int evenBars;
     private final byte[] pattern = new byte[SLOTS];
     private final int[] habit = new int[SLOTS];   // how settled each place is, 0 to 9
-    private int ideasHeldBack;
+    private int ideasHeldBack, heardWhilePlaying;
     private int triedSlot = -1;
     private byte triedWas;
     private int changesKept, changesTakenBack, copied, ownIdeas, cutShort;
@@ -256,6 +276,16 @@ public final class Musician implements Player, Hits {
     }
 
     /** A drummer for a session with another drummer. The one who starts plays from the top; the other comes in after a bar. */
+    /** A drummer playing along with a recording, from its first bar, with a click. */
+    public static Musician alongARecording(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                                           int ticksSoFar, String patternSoFar, int bars, double startSeconds, long seed) {
+        Musician d = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, true, 0, new Kit());
+        d.clock.startAt(Audio.samples(startSeconds));
+        d.fullMix = true;
+        d.learnsWhilePlaying = true;
+        return d;
+    }
+
     /** A bass player joining others who are already playing. It comes in after a bar. */
     public static Musician onBass(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                   int ticksSoFar, String patternSoFar, int notesSoFar, int bars, long seed) {
@@ -283,6 +313,7 @@ public final class Musician implements Player, Hits {
                     int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars, Instrument hands) {
         this.hands = hands;
         this.oneNote = hands instanceof Bass;
+        this.learnsWhilePlaying = oneNote;
         this.bass = oneNote ? (Bass) hands : null;
         this.withARecord = withARecord;
         this.teachBars = teachBars;
@@ -319,10 +350,13 @@ public final class Musician implements Player, Hits {
             clicksUsed = clickEar.hitsEver();
             onClick(Math.round(clickEar.hitTime() - (ownDelay - Audio.samples(Session.NEAR))));   // less the moment its ear takes
         }
-        ear.listen(others, n, blockStart);
-        if (ear.hitsEver() != hitsUsed) {
-            hitsUsed = ear.hitsEver();
-            someoneElse(Math.round(ear.hitTime() - FARTHER - ownDelay), ear.hitBright(), ear.hitLoud());   // when it was played, not when it arrived
+        if (fullMix) hearARecording(others, n, blockStart);
+        else {
+            ear.listen(others, n, blockStart);
+            if (ear.hitsEver() != hitsUsed) {
+                hitsUsed = ear.hitsEver();
+                someoneElse(Math.round(ear.hitTime() - FARTHER - ownDelay), ear.hitBright(), ear.hitLoud());   // when it was played, not when it arrived
+            }
         }
         if (oneNote) hearItsOwnPitch(own, n, blockStart);
         ownEar.listen(own, n, blockStart);
@@ -353,6 +387,27 @@ public final class Musician implements Player, Hits {
     /** How far off its hand lands a note now, in hundredths of a semitone. */
     double tuneSlip() { return TUNE_SUREST + (TUNE_SLIP - TUNE_SUREST) * Math.exp(-experience / NOTES_TO_LEARN); }
 
+    /** Two ears on a full mix: the bottom of the sound to one, the top to the other, each kept at a steady level. */
+    private void hearARecording(float[] others, int n, long blockStart) {
+        for (int i = 0; i < n; i++) {
+            double x = others[i];
+            l1 += LOW_PASS * (x - l1); l2 += LOW_PASS * (l1 - l2); l3 += LOW_PASS * (l2 - l3);
+            h1 += HIGH_PASS * (x - h1); double x1 = x - h1;
+            h2 += HIGH_PASS * (x1 - h2); double x2 = x1 - h2;
+            h3 += HIGH_PASS * (x2 - h3); double top = x2 - h3;
+            lowLevel = Math.max(lowLevel * LEVEL_FALLS, Math.abs(l3));
+            highLevel = Math.max(highLevel * LEVEL_FALLS, Math.abs(top));
+            lowPart[i] = (float) (0.8 * l3 / lowLevel);
+            highPart[i] = (float) (0.8 * top / highLevel);
+        }
+        lowEar.listen(lowPart, n, blockStart);
+        // Only the heavy hits. In the bottom of a song the kick stands above the bass line; in the top the snare
+        // stands above the hats. A drummer follows the drums, so it lets the lighter hits go by.
+        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (lowEar.hitLoud() >= HEAVY_LOW) someoneElse(Math.round(lowEar.hitTime() - FARTHER - ownDelay), false, lowEar.hitLoud()); }
+        highEar.listen(highPart, n, blockStart);
+        if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if (highEar.hitLoud() >= HEAVY_HIGH) someoneElse(Math.round(highEar.hitTime() - FARTHER - ownDelay), true, highEar.hitLoud()); }
+    }
+
     /** A click in its ears. */
     private void onClick(long at) {
         clicksHeard++;
@@ -379,7 +434,7 @@ public final class Musician implements Player, Hits {
         byte kind = bright ? PAN : POT;
         double tick = clock.period() / ticks;
         if (loud > heaviest) heaviest = loud;
-        if (mode == TOGETHER) { if (oneNote) noteWhatItHears(at, kind, loud, tick); alongside(at, loud, tick); return; }
+        if (mode == TOGETHER) { if (learnsWhilePlaying) noteWhatItHears(at, kind, loud, tick); alongside(at, loud, tick); return; }
         if (mode == ANSWERING) {
             boolean firstBar = bar % TURN == 0 && tickInBar > 0;
             if (firstBar) return;                            // too soon to be the record coming back; let it go
@@ -447,7 +502,7 @@ public final class Musician implements Player, Hits {
 
     /** While it plays: which of its places was that hit nearest to? A bass player only notes the dark ones. */
     private void noteWhatItHears(long at, byte kind, double loud, double tick) {
-        if (kind != POT && notes < 2) return;                // with one note it has no use for the bright hits
+        if (oneNote && kind != POT && notes < 2) return;     // a bass player with one note has no use for the bright hits
         int barTicks = PULSES * ticks, back = 0;
         double off = Double.MAX_VALUE;
         for (int b = 0; b <= 2; b++) {
@@ -457,12 +512,19 @@ public final class Musician implements Player, Hits {
         if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
         int place = (((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks);
         hearing[place] = kind;
+        heardWhilePlaying++;
+        if (fullMix) {                                       // a recording has a feel worth taking on; another learner's unsteady hand does not
+            feelPush[place] += ABSORB * (off - feelPush[place]);
+            feelWeight[place] += ABSORB * (Math.min(1.0, loud / 0.8) - feelWeight[place]);
+            if (feelHeard[place] < 1_000_000) feelHeard[place]++;
+        }
     }
 
     /** A hit of the record's while it is playing too. */
     private void alongside(long at, double loud, double tick) {
         if (landing) return;                                 // its last hit is already on its way
         if (bar < teachBars) return;                         // while it is giving the lesson it holds its own time
+        if (onAClick() && fullMix) return;                   // a recording will not lean back, and its hits have a feel of their own: stay on the click
         if (onAClick()) { leanOnTheOthers(at, tick); return; }   // its pulse comes from the click; only its tick leans on the others
         int barTicks = PULSES * ticks;
         int back = 0; double off = Double.MAX_VALUE;
@@ -651,7 +713,7 @@ public final class Musician implements Player, Hits {
             for (int j = 0; j < Ear.MEMORY; j++) off += outOfTune[j] / Ear.MEMORY;
             if (off < TUNE_EARN) { if (++inTuneBars >= 2) notes = 2; } else inTuneBars = 0;
         }
-        if (mode == TOGETHER && oneNote && bar % TURN == 0 && bar < allBars) {   // it learns while it plays, two bars at a time
+        if (mode == TOGETHER && learnsWhilePlaying && bar % TURN == 0 && bar < allBars) {   // it learns while it plays, two bars at a time
             endOfAnswer();
             believe();
             java.util.Arrays.fill(hearing, REST);
@@ -819,7 +881,11 @@ public final class Musician implements Player, Hits {
     private double trustIn(int place) { return Math.min(1.0, feelHeard[place] / (double) HEARINGS_TO_TRUST); }
 
     /** How far after its tick it means to play a place, in samples. It cannot get more than a moment ahead. */
-    private double feelOf(int place) { return Math.max(-Audio.samples(MOST_AHEAD), feelPush[place] * trustIn(place)); }
+    private double feelOf(int place) {
+        // Feel is where a place sits against the one. If everything it heard was early or late by the same amount,
+        // that was the click and the record being a little apart, not a feel.
+        return Math.max(-Audio.samples(MOST_AHEAD), (feelPush[place] - feelPush[0]) * trustIn(place));
+    }
 
     /** How hard it means to hit a place: the usual accent, bent toward what it has heard. The one stays the heaviest. */
     private double weightOf(int place) {
@@ -909,6 +975,10 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < SLOTS && i < soFar.length(); i++) habit[i] = Math.max(0, Math.min(9, soFar.charAt(i) - '0'));
     }
     public int ideasHeldBack() { return ideasHeldBack; }
+    /** How many hits of what it was playing along with it managed to put at one of its places. */
+    public int heardWhilePlaying() { return heardWhilePlaying; }
+    /** What it believes it has been hearing, from every two bars so far this session. */
+    public String believes() { return write(lesson); }
     /** How many notes a bass player has earned. */
     public int notes() { return notes; }
     /** How far out of tune its notes were this session on average, by its own ear, in hundredths of a semitone. */

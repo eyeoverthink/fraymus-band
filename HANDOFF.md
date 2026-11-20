@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.15.0. 35 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.16.0. 36 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -87,11 +87,15 @@ with a real life file. There is a record that plays lessons and a click track.
 | 13 | Honest learning. Found that most of the players' apparent learning of their settings came from a bias (warming up during a session made any change look good). Rebuilt it: every two bars a player takes stock; a trial is compared with the stretches before and after it; the first two bars of a session count for nothing; first direction left to chance; probe big, move small. Growth is real now and slower. |
 | 14 | Feel. A lesson can say how far ahead or behind the tick, and how hard, each place is played. A listener takes on a tenth of what it hears each time and plays with it. Vaughn's idea: players need artists to study, as he had. He sent his own song as the first real influence (see section 8). |
 | 15 | Two ears for a full recording: one on the bottom of the sound, one on the top (`Hearing.listenLowAndHigh`). Recovers the record's bar exactly from under a loud voice-like sound. `Main --hear` also writes a clip with the pulse and the one marked by clicks, for Vaughn to check by ear. |
+| 16 | Playing along with a real recording (`Main --along`, `Session.playAlong`, `Recording`). The song plays in the room, a click at its tempo is lined up with its one, and the drummer plays along with two ears, noticing only heavy hits, learning two bars at a time. Vaughn confirmed by ear that the clicks were on the beat and the one was right. The real first drummer has played along with his song five times. |
 
 ### The players that exist (do not reset these)
 
 - `lives/drummer.life`: "the drummer". Born in step 1. Four ticks to the pulse. Learned the first lesson
-  from the record, then drifted a little with its own ideas.
+  from the record. In step 16 it played along with Vaughn's song "Gleam of the Prize" five times and its
+  pattern went from `pn.pn...p.p.n..n` to `p.n.n.n.n.n.n.np` (it believes the song is `p.n.n.n.ppn.n.np`:
+  kick on one and three, something bright on every off eighth). This is the first real influence on a
+  real player. If Vaughn dislikes what it became, the earlier life is in git history (commit `c8a07a0`).
 - `lives/second.life`: "the second drummer". Born in step 5. Taught by the first.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
   pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own.
@@ -107,11 +111,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.15.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.15.0.jar --click on
-    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.15.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.15.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.16.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.16.0.jar --click on
+    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.16.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.16.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -150,7 +154,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepFifteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepSixteenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -327,12 +331,25 @@ the first 23 s are sparse. The bottom is a busy bass line, not a sparse kick, an
 `ppp.n.npppppn.pp`, with the low hits on the odd places about 26 ms late, cause unknown (slow attack of
 the bass, or notes that really sit between ticks). **Where the one is has not been confirmed.** Vaughn has
 no drum stem. He was sent `gleam-of-the-prize-pulse-marked.wav` (30 s from 0:46 with clicks on the pulse
-and a higher click on the supposed one) and asked whether the high click is on the one. **Until he
-answers, do not teach the real players from the song.** If the one is wrong, let him say which click it
-should be on and add a way to tell the tool (`--one-is-beat N`).
+and a higher click on the supposed one) and asked whether the high click is on the one. **He answered: the clicks are on the beat and it is on
+the one** ("That song was a challenge. It's on the 1.").
+
+**Playing along (step 16), what was learned:**
+- Copying every hit the two ears notice makes a drummer mirror the whole mix (15 of 16 places filled). The
+  drum part only appears when it notices the heavy hits alone: at least 0.6 in the bottom and 0.5 in the top,
+  where each ear keeps the loudest-lately at 0.8. Offline, heavy low hits in his song fall on places 1, 9 and
+  11 (kick on one, three and the "and" of three) and heavy high hits on 3, 5 and 13.
+- Leaning on the recording made the drummer's time rough (20 to 29 ms). A recording does not lean back and
+  its hits carry their own feel. With a click it now stays on the click; unsteadiness is back to 8 to 10 ms.
+- Everything it heard in the song was about 9 ms early against the click, the same at every place. That is
+  the click sitting slightly late on the song (the tool lines it up on all hits, and the bass is late), not
+  a feel. Feel is now measured against the one, so a constant offset is not carried into other sessions.
 
 In order:
 
+0. Done in step 16 for the drummer. Still to do under this heading: line the click up on the heavy hits only;
+   let the bass player play along too (it should follow the bottom ear, all of it, not just the heavy hits);
+   a second song, to see whether the thresholds hold.
 1. **Let a player listen to a real recording.** A player that plays a WAV into the room (convert MP3 with
    ffmpeg outside the Java code; the players are still plain Java). The hard parts: the players' ear was
    built for a pot and a pan, not a full mix; a song has its own tempo and the players only know 92 to 96;
