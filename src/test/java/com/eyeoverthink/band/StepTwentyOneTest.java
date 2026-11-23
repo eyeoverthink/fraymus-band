@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyTest {
+class StepTwentyOneTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -877,5 +877,87 @@ class StepTwentyTest {
         assertThrows(IllegalArgumentException.class, () -> life.ask("......n.", ""));
         assertThrows(IllegalArgumentException.class, () -> life.ask("......x.......n.", ""));
         assertEquals(before, Files.readAllLines(bass), "a bad ask leaves its life alone");
+    }
+
+    /** A made-up song with a bass line: the record's drums, a quiet hat, and a four-bar line of eighth notes under them. */
+    private static float[] songWithALine(Lesson drums, int bars, int[] line) {
+        Teacher record = new Teacher(drums, 0, bars, 0.25);
+        float[] mix = new float[(int) (Audio.RATE * (bars * 4 * 60.0 / drums.tempo() + 3))], block = new float[Audio.BLOCK];
+        for (int now = 0; now + Audio.BLOCK <= mix.length; now += Audio.BLOCK) {
+            java.util.Arrays.fill(block, 0f);
+            record.play(block, Audio.BLOCK, now);
+            System.arraycopy(block, 0, mix, now, Audio.BLOCK);
+        }
+        java.util.SplittableRandom chance = new java.util.SplittableRandom(8);
+        double eighth = 60.0 / drums.tempo() / 2;
+        for (int e = 0; e < bars * 8; e++) {
+            int at = (int) Audio.samples(0.25 + e * eighth);
+            for (int i = 0; i < 900; i++) mix[at + i] += (float) (0.05 * (chance.nextDouble() * 2 - 1) * Math.exp(-i / 200.0));
+            double hz = LineEar.hzOf(line[e % line.length]);
+            for (int i = 0; i < 13000; i++) {
+                double t = i / (double) Audio.RATE, fade = Math.min(1, i / 300.0) * Math.min(1, (13000 - i) / 600.0);
+                mix[at + i] += (float) (0.22 * fade * Math.exp(-t / 0.4) * (Math.sin(2 * Math.PI * hz * t) + 0.6 * Math.sin(4 * Math.PI * hz * t) + 0.3 * Math.sin(6 * Math.PI * hz * t)));
+            }
+        }
+        return mix;
+    }
+
+    static final int[] LINE = {33, 33, 33, 33, 33, 33, 33, 33,  36, 36, 36, 36, 36, 36, 36, 36,  38, 38, 38, 38, 40, 40, 40, 40,  31, 31, 31, 31, 31, 31, 35, 35};
+
+    @Test
+    void aBassPlayerLearnsTheNotesOfASongsBassLine(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = songWithALine(drums, 40, LINE);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        java.util.Set<String> inTheLine = new java.util.HashSet<>(List.of("A1", "C2", "D2", "E2", "G1", "B1", "."));
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2), oneNote = dir.resolve("newborn.life");
+        Session.AlongPart first = null, last = null;
+        for (int s = 0; s < 3; s++) {
+            last = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5, 24, 60 + s).parts().get(1);
+            if (s == 0) first = last;
+        }
+        System.out.printf(Locale.ROOT, "LINE first take %d on the song's note, %d not; third take %d and %d. It believes %s (%d of %d places), out of tune by %.0f cents%n",
+            first.withTheSong(), first.againstTheSong(), last.withTheSong(), last.againstTheSong(), last.line(), last.linePlaces(), last.linePlacesInReach(), last.outOfTuneCents());
+        assertTrue(last.linePlacesInReach() == 32 || last.linePlacesInReach() == 64, "eight places in each of four bars, or sixteen once it has earned four ticks");
+        assertTrue(last.linePlaces() >= 24, "it believes it knows the note at most places: " + last.line());
+        for (String note : last.line().replace("|", " ").trim().split("\\s+")) assertTrue(inTheLine.contains(note), note + " is not in the song's line: " + last.line());
+        assertTrue(last.withTheSong() >= 40, "it played plenty of notes while it could hear the song's note: " + last.withTheSong());
+        assertTrue(last.withTheSong() >= 9 * last.againstTheSong(), "and nine in ten were the song's note: " + last.withTheSong() + " to " + last.againstTheSong());
+        assertTrue(last.outOfTuneCents() < 15, "and it still plays in tune, by its own ear, wherever its hand has gone: " + last.outOfTuneCents());
+        assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("line: ")), "the line is written into its life");
+
+        Session.AlongPart again = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5 + 2 * 4 * 60.0 / 92, 24, 99).parts().get(1);
+        assertTrue(again.withTheSong() >= 9 * again.againstTheSong(), "starting two bars further into the song it still knows where it is in the phrase: " + again.withTheSong() + " to " + again.againstTheSong());
+
+        Session.AlongPart young = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), oneNote, "made up", song, heard, bar, 5, 24, 61).parts().get(1);
+        assertEquals(0, young.linePlaces(), "a newborn bass player has not earned its second note and is not listening for a line yet");
+        assertEquals(1, young.notes());
+        assertEquals(0, young.withTheSong() + young.againstTheSong());
+        assertTrue(Files.readAllLines(oneNote).stream().noneMatch(l -> l.startsWith("line: ")));
+    }
+
+    @Test
+    void theEarOnTheLineNamesANoteUnderADrum() {
+        LineEar ear = new LineEar();
+        float[] block = new float[Audio.BLOCK];
+        Kit kick = new Kit();
+        int right = 0, clear = 0;
+        for (int note = LineEar.LOWEST + 2; note <= LineEar.HIGHEST - 2; note++) {
+            double hz = LineEar.hzOf(note);
+            long start = (long) (note - LineEar.LOWEST) * Audio.RATE, tick = start + 4096;
+            kick.strike(Kit.POT, 1f);
+            ear.noteAt(tick);
+            for (long now = start; !ear.ready(now); now += Audio.BLOCK) {
+                for (int i = 0; i < Audio.BLOCK; i++) {
+                    double t = (now + i - tick) / (double) Audio.RATE;
+                    block[i] = (now + i >= tick ? 0.5f * kick.next() : 0f) + (float) (t < 0 ? 0 : 0.2 * Math.exp(-t / 0.4) * (Math.sin(2 * Math.PI * hz * t) + 0.6 * Math.sin(4 * Math.PI * hz * t)));
+                }
+                ear.listen(block, Audio.BLOCK, now);
+            }
+            if (ear.hear()) clear++;
+            if (Math.round(ear.midi()) == note) right++;
+        }
+        assertTrue(right >= 19, "it named " + right + " of 21 notes, " + clear + " of them clearly");
     }
 }

@@ -1,7 +1,8 @@
 package com.eyeoverthink.band;
 
 /**
- * A plucked bass. Its low note is an E; its high note is the E above. It has no frets: the player's hand
+ * A plucked bass. Its low note is an E unless the player moves its hand ({@link #tune}); its high note is
+ * the octave above the low one. It has no frets: the player's hand
  * decides how far off the note lands, and {@link #detune} is how the hand tells it. The sound is worked
  * out as it rings, from a few numbers claimed once; nothing is made while playing. The upper partials are
  * kept strong on purpose, so a note can still be heard on a small speaker that cannot move enough air for
@@ -14,6 +15,7 @@ public final class Bass implements Instrument {
     private static final double LEVEL = 0.8 / 1.9;      // so its loudest moment matches the old one-note bass
 
     private double cents;
+    private double low = LOW;
     private double hz;
     private int at = -1;
     private float loud;
@@ -21,11 +23,14 @@ public final class Bass implements Instrument {
     /** How far off, in hundredths of a semitone, the next note will land. */
     public void detune(double cents) { this.cents = cents; }
 
+    /** Where the hand is on the neck: the pitch of its low note for the next strike. The high note is the octave above it. */
+    public void tune(double lowHz) { low = lowHz; }
+
     public static double pitchOf(byte sound) { return sound == Kit.PAN ? HIGH : LOW; }
 
     @Override
     public void strike(byte sound, float loudness) {
-        hz = pitchOf(sound) * Math.pow(2, cents / 1200.0);
+        hz = (sound == Kit.PAN ? 2 * low : low) * Math.pow(2, cents / 1200.0);
         at = 0;
         loud = loudness;
     }

@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.20.0. 42 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.21.0. 44 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -92,6 +92,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 18 | Roles. A hi-hat (`Hats`) and a hat player: takes the top of a track, plays only `n`. Bass takes only the bottom. Kit drummer takes only heavy hits, and the snare threshold went up to 0.7. With a track on, everyone learns from the track alone. The second drummer moved to the hats. |
 | 19 | Hat and bass players count bars, not hearings: a place is believed only if something was there in at least half of all bars heard. Vaughn confirmed by ear that the hat player was too busy (13 of 16 places); it now plays steady eighths. |
 | 20 | Being asked. The bandleader can ask a player for particular places (`--ask-bass`, `--ask-hats`, `--ask-drummer`, sixteen characters of `p`, `n` and dots, with `--in-words` for what he said). The player takes up what its ticks and notes can reach, keeps it, and the ask is written into its life (`asked for:`) so it holds in later sessions. Vaughn's first ask: "The bass, should grab the last measure of the 2 and four on an up tick." The bass now plays its high note at places 7 and 15 (`......n.......n.`). |
+| 21 | The line. A bass player with both notes hears which note the bottom of a track is on after each tick (`LineEar`), keeps a four-bar phrase of notes counted from the song's first bar, and moves its hand to the note it believes for each place (`Bass.tune`). The high note is the octave above. Found on the way: **the bass had been playing E under Vaughn's song, whose bass line is C, D, Eb, G, Bb**. After four takes the real bass plays the song's note for 84 of 89 notes (first take: 26 of 86). |
 
 ### The players that exist (do not reset these)
 
@@ -106,7 +107,9 @@ with a real life file. There is a record that plays lessons and a click track.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
   pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own. **In step 20
   Vaughn asked it for the up tick at the end of two and of four**; its life has `asked for: ......n.......n.`
-  and it plays `p.p.p.n...p...n.` (the low note at place 11 comes and goes from take to take).
+  and it plays `p.p.p.n...p...n.` (the low note at place 11 comes and goes from take to take). **In step 21
+  it learned the line of "Gleam of the Prize"**: `C2 C2 C2 C2 D2 Eb2 . D2 | D2 D2 . . Eb2 . . Eb2 |
+  Eb2 Eb2 D2 C2 C2 C2 . C2 | C2 C2 G1 Bb1 C2 . . C2` (24 of 32 places; its life has a `line:` header).
 
 **These files are the players' lived history. Never hand-edit them, never delete them, never regenerate
 them.** Tests use throwaway lives in temporary folders. If a format changes, make the reader accept the
@@ -119,11 +122,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.20.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.20.0.jar --click on
-    java -jar target/fraymus-band-0.20.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.20.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.20.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.21.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.21.0.jar --click on
+    java -jar target/fraymus-band-0.21.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.21.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.21.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -146,6 +149,9 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `Room`: one ring buffer per player. A player's own sound reaches it in 3 ms, others' in 9 ms.
 - `Instrument`: what a player's hands are on. `Kit` (pot and pan), `Hats` (one closed hi-hat) and `Bass`
   (fretless, low E and high E). In `Musician`, `hatsOnly` and `oneNote` mark a hat player and a bass player.
+- `LineEar`: a bass player's ear on the notes in the bottom of a track. Keeps one sample in sixteen, and
+  0.04 s after a tick listens for 0.2 s: of every pitch from B0 to B2 in quarter semitones, which has the
+  most of its bottom tone and the two tones above it. "Clear" if at least 0.35 of the clearest lately.
 - `PitchEar`: measures the pitch of a player's own note from its own sound, by how far the bottom tone
   turns between two short listens. Accurate to about one hundredth of a semitone.
 - `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
@@ -164,7 +170,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentyOneTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -262,6 +268,12 @@ Given, as fixed rules (be honest about these):
 - **Shell quoting in a loop split `--in-words "several words"` into separate options** and the first real
   take of step 20 stopped with "Unknown option". Nothing was written, but check the output of the take in
   which you ask before running more.
+- **The bass played a low E under a song in C minor from step 17 to step 20 and nobody measured it.** The
+  agent cannot hear; the reports only counted timing. Since step 21 the report says how many of the bass's
+  notes were on the note the song was on. When a new kind of thing is played, add a measure for whether it
+  is right before sending Vaughn the take.
+- A test that wanted a bass player without its second note used a practised one-note life; it earned the
+  note during the take. Use a newborn for that.
 
 ---
 
@@ -318,6 +330,13 @@ Given, as fixed rules (be honest about these):
   16), which the bass cannot reach until it earns four ticks.
 - The bass plays the asked place at the end of two about 20 ms behind the tick, because that is the feel it
   had already learned for that place from the song. Nobody chose that.
+- **The line (step 21):** the phrase length, four bars, is given, not found. One line per player: a second
+  song, or a second section of this one, would overwrite it place by place. "On the note the song was on" is
+  judged by the same ear that learned the line, so if the ear is wrong (a kick drum's own pitch, the wrong
+  octave) both are wrong together; only Vaughn's ear can check it. It listens for 0.2 s after each tick,
+  which is too long for eighths faster than about 125 to the minute. It learns which note, not how long it
+  is held or how it slides. Without a track (click only) the bass goes back to E. The G1 and Bb1 it
+  believes in the last bar could be the kick.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -327,10 +346,11 @@ Given, as fixed rules (be honest about these):
 
 ## 8. What comes next
 
-**Step 20 is waiting on Vaughn's ear (2026-11-22):** is the bass's up tick at the end of two and four what
-he meant? If he says low note, run `--ask-bass ......p.......p.`; if he says the last sixteenth, the bass
-needs four ticks first. After that, the proposed next step is the bass learning the actual notes of his
-bass line (pitch from the bottom of the track, more than two notes).
+**Steps 20 and 21 are waiting on Vaughn's ear (2026-11-22).** Step 20: is the bass's up tick at the end of
+two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
+ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
+work. Continue" after step 20 without correcting the reading. Possible next steps: find the phrase length
+by ear; a line per song or per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people
 who inspired me and they need inspiration also."** He is to be their first influence. He sent his own song,

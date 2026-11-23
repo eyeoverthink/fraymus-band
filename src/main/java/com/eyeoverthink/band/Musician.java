@@ -115,6 +115,15 @@ import java.util.SplittableRandom;
  * does not drop it for not hearing it in a track, and it does not try ideas of its own there. The asking
  * is written into its life, so it is still asked next session.
  *
+ * The line. A bass player that has earned both its notes listens, while it plays along with a track, for
+ * which note the bottom of the song is on just after each tick it can reach. A song's bass line is longer
+ * than a bar, so it keeps a phrase of four bars, counted from the song's own first bar. For each place in
+ * the phrase it remembers the note it has heard there, how often it heard that note and how often it
+ * listened. It believes a place once it has listened four times and heard the same note at least half of
+ * them. When it plays a place it believes, its hand goes to that note; at a place it does not yet believe
+ * it holds the last note it does. Its high note is the octave above. It counts how many of its notes were
+ * the note the song was on at that moment. The line is written into its life.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -220,6 +229,15 @@ public final class Musician implements Player, Hits {
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player
     private final PitchEar pitchEar = new PitchEar();
+    /** How many bars a bass line's phrase has. This is given. */
+    public static final int PHRASE = 4;
+    private static final int CELLS = PHRASE * SLOTS;
+    private static final int LINE_BELIEVE = 4, LINE_DOUBT = 6, LINE_REMEMBERS = 40;
+    private LineEar lineEar;              // a bass player's ear on the notes in the bottom of a track
+    private final int[] lineNote = new int[CELLS], lineSame = new int[CELLS], lineHeard = new int[CELLS];
+    private int phraseFrom;               // which bar of the song's phrase its first bar is
+    private int hearingAt = -1, struckAt = -1, strikeCell, withTheSong, againstTheSong;
+    private double struckHz = Bass.LOW;
     private int notes = 1;                // how many notes it has earned: 1 (low) or 2 (low and high)
     private byte struck;                  // the note it last played, so it knows what it meant
     private final double[] outOfTune = new double[Ear.MEMORY];
@@ -313,6 +331,7 @@ public final class Musician implements Player, Hits {
 
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
+        if (oneNote) lineEar = new LineEar();
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
         fullMix = true;
@@ -415,7 +434,7 @@ public final class Musician implements Player, Hits {
     private void hearItsOwnPitch(float[] own, int n, long blockStart) {
         pitchEar.listen(own, n, blockStart);
         if (!pitchEar.ready(blockStart + n)) return;
-        double meant = Bass.pitchOf(struck);
+        double meant = struck == PAN ? 2 * struckHz : struckHz;
         double off = Math.abs(PitchEar.cents(pitchEar.hz(meant), meant));
         outOfTune[tuneHead] = off;
         tuneHead = (tuneHead + 1) % Ear.MEMORY;
@@ -445,8 +464,41 @@ public final class Musician implements Player, Hits {
         // line; in the top the snare stands above the hats. A bass player wants the whole of the bottom: that
         // is the bass line it has come to learn. A hat player wants the whole of the top and none of the bottom.
         if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (!hatsOnly && lowEar.hitLoud() >= (oneNote ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        if (lineEar != null && notes >= 2) hearTheLine(track, n, blockStart);
         highEar.listen(highPart, n, blockStart);
         if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if (!oneNote && highEar.hitLoud() >= (hatsOnly ? HAT_NOTICE : HEAVY_HIGH)) someoneElse(Math.round(highEar.hitTime() - earTakes), true, highEar.hitLoud(), true); }
+    }
+
+    /** Which note is the bottom of the track on, at the place that just went by? */
+    private void hearTheLine(float[] track, int n, long blockStart) {
+        lineEar.listen(track, n, blockStart);
+        if (!lineEar.ready(blockStart + n)) return;
+        int at = hearingAt;
+        hearingAt = -1;
+        if (!lineEar.hear() || at < 0) return;
+        double heard = lineEar.midi();
+        if (at == struckAt) {                                // it played here: was it on the note the song was on?
+            double apart = heard - LineEar.midiOf(struckHz);
+            apart -= 12 * Math.rint(apart / 12);             // the same note an octave away is the same note
+            if (Math.abs(apart) <= 0.5) withTheSong++; else againstTheSong++;
+        }
+        int cell = (at + phraseFrom * SLOTS) % CELLS, note = (int) Math.round(heard);
+        if (lineHeard[cell] == 0) { lineNote[cell] = note; lineSame[cell] = 1; lineHeard[cell] = 1; return; }
+        lineHeard[cell]++;
+        if (note == lineNote[cell]) lineSame[cell]++;
+        else if (lineHeard[cell] >= LINE_DOUBT && lineSame[cell] * 2 < lineHeard[cell]) { lineNote[cell] = note; lineSame[cell] = 1; lineHeard[cell] = 1; }
+        if (lineHeard[cell] > LINE_REMEMBERS) { lineHeard[cell] /= 2; lineSame[cell] /= 2; }
+    }
+
+    private boolean believesTheNoteAt(int cell) { return lineHeard[cell] >= LINE_BELIEVE && lineSame[cell] * 2 >= lineHeard[cell]; }
+
+    /** Where its hand goes for this place in the phrase: the note it believes is there, or the last one before it that it believes. */
+    private double lineHz(int cell) {
+        for (int back = 0; back < CELLS; back++) {
+            int c = (cell - back + CELLS) % CELLS;
+            if (believesTheNoteAt(c)) return LineEar.hzOf(lineNote[c]);
+        }
+        return Bass.LOW;                                     // it knows no line yet: its open string
     }
 
     /** A click in its ears. */
@@ -920,6 +972,7 @@ public final class Musician implements Player, Hits {
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
+            if (lineEar != null && notes >= 2 && fullMix && mode == TOGETHER && !last) { lineEar.noteAt(Math.round(clock.nextBeat())); hearingAt = bar * SLOTS + slot; }
             if (sound != REST) {
                 strikePush = last ? 0 : feelOf(slot);
                 long meant = Math.round(clock.nextBeat() + strikePush + chance.nextGaussian() * Audio.samples(slip()));
@@ -935,7 +988,12 @@ public final class Musician implements Player, Hits {
         }
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
-                if (oneNote) { bass.detune(chance.nextGaussian() * tuneSlip()); struck = strikeSound; }
+                if (oneNote) {
+                    struckHz = fullMix && notes >= 2 ? lineHz((strikeSlot + phraseFrom * SLOTS) % CELLS) : Bass.LOW;
+                    bass.tune(struckHz);
+                    bass.detune(chance.nextGaussian() * tuneSlip());
+                    struck = strikeSound; struckAt = strikeSlot;
+                }
                 hands.strike(strikeSound, (float) (weightOf(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitPushes[hitCount] = strikePush; hitSlots[hitCount++] = strikeSlot; }
                 struckPushBefore = struckPush; struckPush = strikePush;
@@ -1010,6 +1068,46 @@ public final class Musician implements Player, Hits {
     public int refoundTheOne() { return refoundTheOne; }
     public int cameInAlone() { return cameInAlone; }
     public String plays() { return hands.describe(); }
+
+    /** Which bar of the song's four-bar phrase its first bar is, counted from the song's own first bar. */
+    public void phraseFrom(int barOfTheSong) { phraseFrom = Math.floorMod(barOfTheSong, PHRASE); }
+
+    private static final String[] NOTE_NAMES = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
+    static String nameOf(int midi) { return NOTE_NAMES[Math.floorMod(midi, 12)] + (midi / 12 - 1); }
+
+    /** The line it has learned, for its life: for each place in the phrase, the note, how often it heard that note, how often it listened. */
+    public String line() {
+        StringBuilder b = new StringBuilder();
+        for (int c = 0; c < CELLS; c++) b.append(c == 0 ? "" : " ").append(lineHeard[c] == 0 ? "-" : lineNote[c] + "/" + lineSame[c] + "/" + lineHeard[c]);
+        return b.toString();
+    }
+
+    /** Where its life says its line had got to. */
+    public void line(String soFar) {
+        String[] parts = soFar.trim().split("\\s+");
+        for (int c = 0; c < CELLS && c < parts.length; c++) {
+            String[] f = parts[c].split("/");
+            if (f.length != 3) continue;
+            lineNote[c] = Integer.parseInt(f[0]); lineSame[c] = Integer.parseInt(f[1]); lineHeard[c] = Integer.parseInt(f[2]);
+        }
+    }
+
+    /** The line as it believes it, bar by bar, at the places its ticks reach: a note name, or a dot where it is not sure. */
+    public String lineInWords() {
+        StringBuilder b = new StringBuilder();
+        int step = SLOTS / PULSES / ticks;
+        for (int c = 0; c < CELLS; c += step) {
+            if (c > 0) b.append(c % SLOTS == 0 ? " | " : " ");
+            b.append(believesTheNoteAt(c) ? nameOf(lineNote[c]) : ".");
+        }
+        return b.toString();
+    }
+    /** How many places in the phrase it believes it knows the note for, of how many its ticks reach. */
+    public int linePlaces() { int k = 0; for (int c = 0; c < CELLS; c += SLOTS / PULSES / ticks) if (believesTheNoteAt(c)) k++; return k; }
+    public int linePlacesInReach() { return CELLS / (SLOTS / PULSES / ticks); }
+    /** Of the notes it played while the song's note was clear: how many were that note, and how many were not. */
+    public int withTheSong() { return withTheSong; }
+    public int againstTheSong() { return againstTheSong; }
 
     /** Its feel, for its life: for each place, milliseconds after the tick, how hard, and how often heard. */
     public String feel() {

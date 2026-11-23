@@ -55,6 +55,7 @@ public final class Main {
             for (Session.AlongPart p : a.parts()) {
                 System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
                 if (p.askedAndPlaying() + p.askedAndWaiting() > 0) System.out.printf(Locale.ROOT, "   It is playing %d of the places it was asked for; %d are waiting until it can reach them.%n", p.askedAndPlaying(), p.askedAndWaiting());
+                if (p.withTheSong() + p.againstTheSong() > 0) System.out.printf(Locale.ROOT, "   The line it believes, four bars: %s (%d of %d places). %d of its notes were on the note the song was on, %d were not. Out of tune by %.0f cents.%n", p.line(), p.linePlaces(), p.linePlacesInReach(), p.withTheSong(), p.againstTheSong(), p.outOfTuneCents());
                 System.out.printf(Locale.ROOT, "   %d changes taken from what it heard, %d its own idea; %d kept, %d taken back. %d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart. Unsteadiness %.1f ms. Listening %.2f to %.2f.%n",
                     p.copied(), p.ownIdeas(), p.kept(), p.takenBack(), p.landedWithIt(), p.hits(), p.apartMs(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter());
             }
