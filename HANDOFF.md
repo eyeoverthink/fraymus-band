@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.18.0. 39 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.19.0. 39 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -90,6 +90,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 16 | Playing along with a real recording (`Main --along`, `Session.playAlong`, `Recording`). The song plays in the room, a click at its tempo is lined up with its one, and the drummer plays along with two ears, noticing only heavy hits, learning two bars at a time. Vaughn confirmed by ear that the clicks were on the beat and the one was right. The real first drummer has played along with his song five times. |
 | 17 | The whole band plays along. The track moved from the room into the players' headphones (a fourth thing a `Player` hears). The bass player takes the whole bottom of the track; drummers only the heavy hits. Players judge each other's timing against where they would play a place themselves, feel included. All three real players have played along with his song. |
 | 18 | Roles. A hi-hat (`Hats`) and a hat player: takes the top of a track, plays only `n`. Bass takes only the bottom. Kit drummer takes only heavy hits, and the snare threshold went up to 0.7. With a track on, everyone learns from the track alone. The second drummer moved to the hats. |
+| 19 | Hat and bass players count bars, not hearings: a place is believed only if something was there in at least half of all bars heard. Vaughn confirmed by ear that the hat player was too busy (13 of 16 places); it now plays steady eighths. |
 
 ### The players that exist (do not reset these)
 
@@ -115,11 +116,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.18.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.18.0.jar --click on
-    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.18.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.19.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.19.0.jar --click on
+    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.19.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -160,7 +161,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepEighteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepNineteenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -339,6 +340,12 @@ the bass, or notes that really sit between ticks). **Where the one is has not be
 no drum stem. He was sent `gleam-of-the-prize-pulse-marked.wav` (30 s from 0:46 with clicks on the pulse
 and a higher click on the supposed one) and asked whether the high click is on the one. **He answered: the clicks are on the beat and it is on
 the one** ("That song was a challenge. It's on the 1.").
+
+**Counting bars (step 19):** the hat player believed a place if a top hit fell there once in a two-bar
+stretch. The edge of a voice does that at almost every place, so it played 13 of 16. Counting how many
+*bars* had something there, and asking for half of them, leaves exactly the eighth-note hats
+(`n.n.n.n.n.n.n.n.`) and thins the bass player to the places his bass line really repeats
+(`p.p.p.....p...p.`). The kit drummer keeps the older rule: heavy hits are rare enough already.
 
 **Roles (step 18), what was learned:**
 - On his song, with each ear keeping its loudest-lately at 0.8: top hits of at least 0.7 fall on places 3, 5

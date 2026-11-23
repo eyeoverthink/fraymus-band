@@ -104,7 +104,9 @@ import java.util.SplittableRandom;
  * hits from a track: the kick and the snare. A bass player takes the whole bottom of it. A hat player takes
  * the top of it, light hits and all but the faintest, and nothing from the bottom; with no track it listens for the
  * bright hits of the players around it and ignores the dark ones. A hat player has one sound, so its
- * pattern is written with n alone, and its one is a hat. A drummer who moves to the hats brings its old
+ * pattern is written with n alone, and its one is a hat. A hat player or a bass player believes a place is
+ * part of what it follows only if something was there in at least half of all the bars it has heard; a
+ * voice or a stray note comes and goes, but a part comes round every bar. A drummer who moves to the hats brings its old
  * pattern with it: every place it used to hit, it now hits the hat.
  *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
@@ -240,6 +242,7 @@ public final class Musician implements Player, Hits {
     private final byte[] pattern = new byte[SLOTS];
     private final int[] habit = new int[SLOTS];   // how settled each place is, 0 to 9
     private int ideasHeldBack, heardWhilePlaying;
+    private final int[] barsHeard = new int[SLOTS], barsHeardIn = new int[SLOTS];
     private int triedSlot = -1;
     private byte triedWas;
     private int changesKept, changesTakenBack, copied, ownIdeas, cutShort;
@@ -549,6 +552,7 @@ public final class Musician implements Player, Hits {
         if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
         int place = (((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks);
         hearing[place] = kind;
+        if (barsHeardIn[place] != bar) { barsHeardIn[place] = bar; barsHeard[place]++; }   // in how many of these bars was something there?
         heardWhilePlaying++;
         if (fromTrack) {                                     // a recording has a feel worth taking on; another learner's unsteady hand does not
             feelPush[place] += ABSORB * (off - feelPush[place]);
@@ -755,8 +759,9 @@ public final class Musician implements Player, Hits {
         }
         if (mode == TOGETHER && learnsWhilePlaying && bar % TURN == 0 && bar < allBars) {   // it learns while it plays, two bars at a time
             endOfAnswer();
-            believe();
+            if (oneNote || hatsOnly) believeByTheBar(); else believe();
             java.util.Arrays.fill(hearing, REST);
+            java.util.Arrays.fill(barsHeard, 0);
             if (chance.nextInt(OWN_IDEA_ONE_IN) != 0 && copyOnePlace()) copied++;
             else if (ownIdea()) ownIdeas++;
         }
@@ -808,6 +813,22 @@ public final class Musician implements Player, Hits {
         callsHeard++;
         for (int s = 0; s < SLOTS; s++) {
             if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s]++;   // a bass player with one note has no use for the bright hits
+            byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
+            lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
+        }
+        hasLesson = true;
+    }
+
+    /**
+     * A hat player or a bass player takes in everything in its part of the sound, and a real song is full of
+     * things there that are not hats or bass: the edge of a voice, a stray note. What belongs to the part
+     * comes round every bar; the rest comes and goes. So these players count bars, not hearings: they
+     * believe a place only if something was there in at least half of all the bars they have listened to.
+     */
+    private void believeByTheBar() {
+        callsHeard += TURN;
+        for (int s = 0; s < SLOTS; s++) {
+            if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s] += Math.min(TURN, barsHeard[s]);
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
         }

@@ -114,8 +114,13 @@ heavy hits from a track: the kick in the bottom, the snare in the top. A bass pl
 bottom and none of the top. A hat player takes the top, light hits and all but the faintest, and none of
 the bottom. A hat player has one sound, a closed hi-hat, so its pattern is written with `n` alone and its
 one is a hat. A drummer who moves to the hats brings its old pattern with it. With a track on, everyone
-learns their part from the track and not from the players beside them. Hat and bass players drop a
-place they have listened to four times and heard something at less than one time in four.
+learns their part from the track and not from the players beside them.
+
+A hat player or a bass player takes in everything in its part of the sound, and a real song is full of
+things there that are not hats or bass: the edge of a voice, a stray note. What belongs to the part
+comes round every bar; the rest comes and goes. So these players count bars: they believe a place only
+if something was there in at least half of all the bars they have heard, and drop a place where it was
+there in fewer than a quarter.
 
 Players judge each other's timing against where they themselves would play a place, feel included. Someone
 who plays a place late on purpose is not behind.
@@ -145,7 +150,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.18.0.jar
+    java -jar target/fraymus-band-0.19.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -153,28 +158,28 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.18.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.19.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.18.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.19.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
 after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
@@ -183,7 +188,7 @@ first with `--hear`, below.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.18.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.19.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
@@ -384,7 +389,6 @@ drummer plays or hears a place its ticks cannot reach.
   0.5 in the top) was chosen on that song and may not suit another.
 - In the bottom of a song a drummer cannot tell a loud bass note from a kick.
 - Roles are given with the instrument, not found. Nobody decides for itself what the band is missing.
-- The hat player is busy. In a real song the top of the sound is full of things that are not hats.
 - The bass player follows where the bass line's notes fall, not which notes they are.
 - A player's feel can pick up the lateness of a slow bass note as if it were a late kick.
 - Feel is one number for timing and one for weight at each place. It cannot hold swing: a swung note is

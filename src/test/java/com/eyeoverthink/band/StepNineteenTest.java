@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step eighteen: roles. A drummer on kick and snare, a hat player, a bass player. */
-class StepEighteenTest {
+/** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
+class StepNineteenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
