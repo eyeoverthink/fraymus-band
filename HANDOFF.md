@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.23.0. 47 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.24.0. 49 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -95,6 +95,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 21 | The line. A bass player with both notes hears which note the bottom of a track is on after each tick (`LineEar`), keeps a four-bar phrase of notes counted from the song's first bar, and moves its hand to the note it believes for each place (`Bass.tune`). The high note is the octave above. Found on the way: **the bass had been playing E under Vaughn's song, whose bass line is C, D, Eb, G, Bb**. After four takes the real bass plays the song's note for 84 of 89 notes (first take: 26 of 86). |
 | 22 | The phrase length is found by ear, not given. The bass compares each note it hears with the note at the same place 1, 2, 4 and 8 bars before; the phrase is the shortest length that comes round at least 0.85 as well as the best. Until it can say, a phrase is one bar. It keeps eight bars of places and pools those that fall together. Its life has a `phrase:` header. On Vaughn's song: 4 bars (came round 86% of the time after four bars, 13% after one, 9% after two). Made-up lines of 1, 2, 4 and 8 bars are each found. |
 | 23 | Influences kept apart, first part (item 2 of section 8). A bass player's line and phrase are kept in its life under the song's name (`line from "song":`, `phrase from "song":`); a new song starts with no line and cannot overwrite another's. A line written by steps 21 and 22 with no name is taken to belong to the last song the player played along with. Also fixed: a bass with four ticks to the pulse never finished listening for a note (each tick cut off the one before). |
+| 24 | Borrowed ideas (the rest of item 2 of section 8). Every player keeps what it believes each record or song plays under its name (`heard from "name":`). An idea of its own is now borrowed: a place another record had that the present one has not. If it can hold it, the place becomes its own (`its own:` in its life), kept like an asked place, two at most. The real drummer sat with its first lesson again, then borrowed places 4 (pot) and 16 (pan) from it into Vaughn's song and held them for four takes: `p.npn...ppp.n..n`. |
 
 ### The players that exist (do not reset these)
 
@@ -126,11 +127,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.23.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.23.0.jar --click on
-    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.23.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.24.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.24.0.jar --click on
+    java -jar target/fraymus-band-0.24.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.24.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.24.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -174,7 +175,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyThreeTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentyFourTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -283,6 +284,8 @@ Given, as fixed rules (be honest about these):
   that assumed the bass stayed on two ticks broke for that reason. Tests should ask the player what it has.
 - A test that wanted a bass player without its second note used a practised one-note life; it earned the
   note during the take. Use a newborn for that.
+- All three lesson files have the same bar (`p..pn...p.p.n..n`); they differ only in feel. As influences
+  for borrowing places they are one record, not three.
 
 ---
 
@@ -349,6 +352,12 @@ Given, as fixed rules (be honest about these):
   which is too long for eighths faster than about 125 to the minute. It learns which note, not how long it
   is held or how it slides. Without a track (click only) the bass goes back to E. The G1 and Bb1 it
   believes in the last bar could be the kick.
+- **Borrowed ideas (step 24):** only the kit drummer has a second record. The hat and bass players have
+  heard one song and nothing else, so they borrow nothing; there is no way yet to sit them with a record
+  alone. What is borrowed is a place and a sound, not a feel or a line. Holding two, and the oldest giving
+  way to a third, is a rule that was given; nothing weighs whether a borrowed place is good, only whether
+  the player could hold its time while playing it. In the real drummer three candidates take turns pushing
+  each other out. Sitting with a record again also pulls a player's pattern toward that record.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -361,8 +370,8 @@ Given, as fixed rules (be honest about these):
 **Steps 20 and 21 are waiting on Vaughn's ear (2026-11-22).** Step 20: is the bass's up tick at the end of
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
-work. Continue" after step 20 without correcting the reading. Possible next steps: the rest of item 2 below (a player's pattern and feel are still one mix of everything
-it has heard, not kept by song, and its own ideas are not yet borrowed from one influence into another);
+work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
+item 4 (triplet ticks), a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people

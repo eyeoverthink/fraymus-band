@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyThreeTest {
+class StepTwentyFourTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1025,5 +1025,49 @@ class StepTwentyThreeTest {
         assertEquals("1/10 2/10 9/10 8/9", life.phrase("an old song"));
         assertEquals("", life.line("a new song"));
         assertEquals(java.util.Set.of("an old song"), life.songs());
+    }
+
+    @Test
+    void aPlayerBorrowsFromOneRecordWhileItIsWithAnotherAndKeepsWhatItCanHold(@TempDir Path dir) throws Exception {
+        String a = "p..pn.p...ppn..n", b = "p.p.n...p.p.n...";
+        Lesson first = new Lesson("record a", 92, a), second = new Lesson("record b", 92, b);
+        Path drummer = practised(dir, "d.life", 4);
+        for (int s = 0; s < 3; s++) Session.run(dir.resolve("t.wav"), drummer, first, 6, 8, 300 + s);
+        Life life = Life.open(drummer, "the drummer");
+        assertEquals(a, life.heard().get("record a"), "what it believes the first record plays is in its life, under its name");
+        assertEquals("................", life.own(), "with one record there is nothing to borrow");
+        int sessions = 0;
+        while (sessions < 16 && Life.open(drummer, "the drummer").own().matches("\\.*")) Session.run(dir.resolve("t.wav"), drummer, second, 6, 8, 400 + sessions++);
+        life = Life.open(drummer, "the drummer");
+        System.out.printf(Locale.ROOT, "BORROW after %d sessions with a second record: its own %s, it plays %s (first record %s, second %s)%n", sessions, life.own(), life.pattern(), a, b);
+        assertFalse(life.own().matches("\\.*"), "within sixteen sessions with the second record it holds something borrowed from the first");
+        assertEquals(b, life.heard().get("record b"));
+        for (int more = 0; more < 4; more++) {
+            Session.run(dir.resolve("t.wav"), drummer, second, 6, 8, 500 + more);
+            life = Life.open(drummer, "the drummer");
+            int held = 0;
+            for (int p = 0; p < 16; p++) {
+                if (life.own().charAt(p) == '.') continue;
+                held++;
+                assertEquals(a.charAt(p), life.own().charAt(p), "place " + (p + 1) + " came from the first record");
+                assertEquals('.', b.charAt(p), "and the second record has nothing there");
+                assertEquals(life.own().charAt(p), life.pattern().charAt(p), "and it still plays it, session after session, though the record beside it does not: " + life.pattern());
+            }
+            assertTrue(held >= 1 && held <= 2, "it holds one or two places as its own: " + life.own());
+        }
+    }
+
+    @Test
+    void aPlayerWithNoOtherRecordHasNothingToBorrow(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = madeUpSong(drums, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4);
+        Session.AlongPart part = null;
+        for (int s = 0; s < 3; s++) part = Session.playAlong(dir.resolve("t.wav"), drummer, "made up", song, heard, bar, 5, 24, 600 + s).parts().get(0);
+        assertEquals(0, part.borrowed());
+        assertEquals("................", part.own());
+        assertEquals(java.util.Set.of("made up"), Life.open(drummer, "the drummer").heard().keySet(), "but what it heard in the song is kept under the song's name");
     }
 }

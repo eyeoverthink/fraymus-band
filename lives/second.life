@@ -1,12 +1,13 @@
 name: the second drummer
 age: 0
 sounds: a hi-hat (n)
-listens to itself: 0.84
+listens to itself: 0.80
 ticks to the pulse: 4
-pattern: n.n.n.n.n.n.n.n.
-leans on the others: 0.31
-habits: 0999499999899999
-feel: -21.4/0.74/294 -0.2/0.64/233 -11.8/0.94/677 11.1/0.63/195 -13.3/0.94/688 2.7/0.98/161 -6.4/0.69/641 14.2/0.62/321 -12.6/0.70/472 -1.6/0.83/272 -15.6/0.80/505 5.9/0.68/229 -16.0/0.99/562 3.8/0.64/211 -11.1/0.76/648 5.9/0.64/202
+pattern: n.n.n.n.n...n.n.
+leans on the others: 0.27
+habits: 0999999979599999
+feel: -22.1/0.75/317 -1.3/0.64/259 -8.7/0.95/745 12.8/0.63/217 -9.9/0.94/760 3.6/0.98/178 -6.3/0.69/709 9.7/0.64/351 -10.0/0.70/520 -0.1/0.83/296 -14.1/0.81/555 8.1/0.66/253 -13.9/0.99/621 4.2/0.64/234 -8.5/0.76/716 4.5/0.64/215
+heard from "gleam of the prize": ..n.n.n.n.n.n.n.
 
 session 1: played 16 bars with the drummer, no record, hits=61, unsteadiness 14.8 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 15 ms apart
 session 2: played 16 bars with the drummer, no record, hits=61, unsteadiness 15.1 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 14 ms apart
@@ -127,3 +128,7 @@ session 116: played along with "gleam of the prize" for 24 bars, hits=179, unste
 session 117: played along with "gleam of the prize" for 24 bars, hits=187, unsteadiness 8.9 ms, listening 0.85, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 123 of its hits landed with a hit in the recording, 14 ms apart
 session 118: played along with "gleam of the prize" for 24 bars, hits=173, unsteadiness 10.9 ms, listening 0.84, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 121 of its hits landed with a hit in the recording, 14 ms apart
 session 119: played along with "gleam of the prize" for 24 bars, hits=187, unsteadiness 9.8 ms, listening 0.84, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 120 of its hits landed with a hit in the recording, 13 ms apart
+session 120: played along with "gleam of the prize" for 24 bars, hits=185, unsteadiness 7.2 ms, listening 0.85, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 123 of its hits landed with a hit in the recording, 14 ms apart
+session 121: played along with "gleam of the prize" for 24 bars, hits=167, unsteadiness 8.5 ms, listening 0.84, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 110 of its hits landed with a hit in the recording, 13 ms apart
+session 122: played along with "gleam of the prize" for 24 bars, hits=203, unsteadiness 6.8 ms, listening 0.83, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 124 of its hits landed with a hit in the recording, 14 ms apart
+session 123: played along with "gleam of the prize" for 24 bars, hits=181, unsteadiness 7.9 ms, listening 0.80, ticks to the pulse 4, pattern n.n.n.n.n...n.n., 125 of its hits landed with a hit in the recording, 14 ms apart

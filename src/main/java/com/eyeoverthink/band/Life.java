@@ -26,6 +26,8 @@ public final class Life {
     private String habits = "0000000000000000";
     private String feel = "";
     private final java.util.Map<String, String> lineFrom = new java.util.LinkedHashMap<>(), phraseFrom = new java.util.LinkedHashMap<>();
+    private final java.util.Map<String, String> heardFrom = new java.util.LinkedHashMap<>();
+    private String own = "................";
     private String lineFromSomewhere = "", phraseFromSomewhere = "", lastSong;
     private String asked = "................";
     private String sounds = "a pot (p) and a pan (n)";
@@ -47,6 +49,8 @@ public final class Life {
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
                 else if (s.startsWith("asked for:")) life.asked = s.substring(10).trim();
+                else if (s.startsWith("heard from \"") && s.indexOf("\":") > 0) life.heardFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("its own:")) life.own = s.substring(8).trim();
                 else if (s.startsWith("phrase from \"") && s.indexOf("\":") > 0) life.phraseFrom.put(s.substring(13, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("line from \"") && s.indexOf("\":") > 0) life.lineFrom.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("phrase:")) life.phraseFromSomewhere = s.substring(7).trim();     // how steps 21 and 22 wrote it, with no song named
@@ -117,6 +121,15 @@ public final class Life {
         }
         lineFromSomewhere = ""; phraseFromSomewhere = "";
     }
+
+    /** What it believes each record it has lived with plays, by the record's name. */
+    public java.util.Map<String, String> heard() { return java.util.Collections.unmodifiableMap(heardFrom); }
+    /** Note what it now believes this record plays. It is written with the next session. */
+    public void heard(String record, String bar) { if (bar.matches("\\.*")) return; heardFrom.put(record, bar); set("heard from \"" + record + "\"", bar); }
+
+    /** The places it holds as its own: p or n at each, a dot elsewhere. */
+    public String own() { return own; }
+    public void own(String places) { if (places.equals(own)) return; own = places; set("its own", places); }
 
     /** What the bandleader has asked it for: p or n at each place asked, a dot elsewhere. */
     public String asked() { return asked; }

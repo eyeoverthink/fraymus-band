@@ -109,6 +109,13 @@ import java.util.SplittableRandom;
  * voice or a stray note comes and goes, but a part comes round every bar. A drummer who moves to the hats brings its old
  * pattern with it: every place it used to hit, it now hits the hat.
  *
+ * Influences, and ideas of its own. What a player comes to believe a record plays, it keeps under that
+ * record's name. When it is with one record and tries an idea of its own, the idea is borrowed: a place where
+ * some other record it has lived with had something that this record has not, and that it does not play. If
+ * it can hold it, the place becomes its own. It keeps a place of its own the way it keeps one it was asked
+ * for: it does not give it back to what it hears. It can hold two at once; a third pushes out the oldest.
+ * With nothing to borrow it tries a place by chance, as before, and that is not kept as its own.
+ *
  * Being asked. The bandleader can ask a player for particular places: "the and of two and the and of four,
  * on your high note." A player plays what it is asked, as far as it can: a place its ticks cannot reach
  * yet, or a note it has not earned yet, has to wait until it can. What it has been asked for it keeps. It
@@ -276,6 +283,13 @@ public final class Musician implements Player, Hits {
     private int ticks;                    // ticks to the pulse it can hold: 1, 2 or 4
     private int evenBars;
     private final byte[] pattern = new byte[SLOTS];
+    private static final int MOST_INFLUENCES = 8, MOST_OWN = 2;
+    private final byte[][] influence = new byte[MOST_INFLUENCES][SLOTS];   // what it believes each other record plays
+    private final String[] influenceName = new String[MOST_INFLUENCES];
+    private final byte[] own = new byte[SLOTS];                           // places it holds as its own, and since when
+    private final int[] ownSince = new int[SLOTS];
+    private int influences, triedFrom = -1, borrowed, borrowedKept, ownClock;
+    private String borrowedFrom = "";
     private final byte[] askedFor = new byte[SLOTS];  // what the bandleader asked for at each place, or nothing
     private int askedAndPlaying, askedAndWaiting;
     private final int[] habit = new int[SLOTS];   // how settled each place is, 0 to 9
@@ -883,8 +897,8 @@ public final class Musician implements Player, Hits {
         }
         if (triedSlot >= 0) {
             if (roundGaps > 0 && rough > HOLD && usual >= 0 && rough > ROUGHER * usual) { pattern[triedSlot] = triedWas; changesTakenBack++; }
-            else changesKept++;
-            triedSlot = -1;
+            else { changesKept++; if (triedFrom >= 0) makeItsOwn(triedSlot); }
+            triedSlot = -1; triedFrom = -1;
         }
         if (roundGaps > 0) usual = usual < 0 ? rough : usual + 0.3 * (rough - usual);
         roundUneven = 0; roundGaps = 0;
@@ -943,7 +957,7 @@ public final class Musician implements Player, Hits {
         int pick = chance.nextInt(differ);
         for (int s = step; s < SLOTS; s += step) {
             if (!wants(s) || pick-- != 0) continue;
-            triedSlot = s; triedWas = pattern[s];
+            triedSlot = s; triedWas = pattern[s]; triedFrom = -1;
             pattern[s] = lesson[s];
         }
         return true;
@@ -952,6 +966,7 @@ public final class Musician implements Player, Hits {
     /** A place where it heard something other than what it plays. A pulse is never left empty. */
     private boolean wants(int s) {
         if (askedFor[s] != REST && pattern[s] == askedFor[s]) return false;   // it was asked for this; it stays
+        if (own[s] != REST && pattern[s] == own[s]) return false;             // this is its own; it stays
         if (lesson[s] == pattern[s]) return false;
         if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
         // A bass player or a hat player adds a note where it believes there is one to follow, and takes one away
@@ -962,8 +977,24 @@ public final class Musician implements Player, Hits {
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
     private boolean ownIdea() {
         int step = SLOTS / PULSES / ticks;
+        int found = 0, at = -1, from = -1;                   // first, something to borrow from another record it has lived with
+        for (int k = 0; k < influences; k++)
+            for (int s = step; s < SLOTS; s += step) {
+                byte want = influence[k][s];
+                if (want == REST || want == pattern[s] || (hasLesson && want == lesson[s]) || askedFor[s] != REST || own[s] != REST) continue;
+                if ((hatsOnly && want != PAN) || (oneNote && want == PAN && notes < 2)) continue;
+                if (chance.nextInt(++found) == 0) { at = s; from = k; }
+            }
+        if (at >= 0) {
+            if (chance.nextInt(10) < habit[at]) { ideasHeldBack++; return false; }
+            triedSlot = at; triedWas = pattern[at]; triedFrom = from;
+            pattern[at] = influence[from][at];
+            borrowed++;
+            return true;
+        }
         int slot = step * chance.nextInt(SLOTS / step);
-        if (slot == 0) return false;
+        if (slot == 0 || own[slot] != REST) return false;
+        triedFrom = -1;
         if (askedFor[slot] != REST && pattern[slot] == askedFor[slot]) return false;   // not where it has been asked for something
         if (chance.nextInt(10) < habit[slot]) { ideasHeldBack++; return false; }   // too settled there to bother
         byte was = pattern[slot];
@@ -1213,6 +1244,38 @@ public final class Musician implements Player, Hits {
     /** How many of the places it was asked for it is playing, and how many are waiting until it can. */
     public int askedAndPlaying() { return askedAndPlaying; }
     public int askedAndWaiting() { return askedAndWaiting; }
+
+    /** It held a borrowed place: now it is its own. It can hold only so many; the oldest gives way. */
+    private void makeItsOwn(int s) {
+        own[s] = pattern[s]; ownSince[s] = ++ownClock;
+        borrowedKept++;
+        borrowedFrom = influenceName[triedFrom];
+        int held = 0, oldest = -1;
+        for (int i = 0; i < SLOTS; i++) if (own[i] != REST) { held++; if (oldest < 0 || ownSince[i] < ownSince[oldest]) oldest = i; }
+        if (held > MOST_OWN) own[oldest] = REST;
+    }
+
+    /** What it believes another record plays, by that record's name. Not the record it is with now. */
+    public void influence(String name, String bar) {
+        if (influences == MOST_INFLUENCES) return;
+        influenceName[influences] = name;
+        for (int i = 0; i < SLOTS && i < bar.length(); i++) influence[influences][i] = Kit.read(bar.charAt(i));
+        influences++;
+    }
+
+    /** The places it holds as its own, for its life: p or n at each, a dot elsewhere. */
+    public String own() { return write(own); }
+    /** Where its life says they were. Only those it still plays count. */
+    public void own(String places) {
+        for (int i = 0; i < SLOTS && i < places.length(); i++) {
+            byte was = Kit.read(places.charAt(i));
+            if (was != REST && pattern[i] == was) { own[i] = was; ownSince[i] = ++ownClock; }
+        }
+    }
+    /** How many ideas it borrowed this session, how many of them it held, and which record the last one it held came from. */
+    public int borrowed() { return borrowed; }
+    public int borrowedKept() { return borrowedKept; }
+    public String borrowedFrom() { return borrowedFrom; }
 
     /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
     public String habits() {

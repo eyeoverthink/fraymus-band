@@ -1,16 +1,17 @@
 name: the bass player
 age: 0
-leans on the others: 0.17
+leans on the others: 0.15
 sounds: a low note (p) and, once it has earned it, the same note an octave up (n)
-listens to itself: 0.89
+listens to itself: 0.85
 ticks to the pulse: 2
-pattern: p.p.p.n...p...n.
+pattern: p.p...n...p...n.
 notes: 2
-habits: 9090909000905090
-feel: -4.8/1.00/813 0.0/0.52/0 23.8/0.41/671 0.0/0.52/0 -8.6/0.27/1055 0.0/0.52/0 25.3/0.35/266 0.0/0.52/0 -6.6/0.79/502 0.0/0.52/0 -1.9/0.79/519 0.0/0.52/0 -13.5/0.60/200 0.0/0.52/0 22.6/0.49/694 0.0/0.52/0
+habits: 9060109090909090
+feel: -5.6/1.00/892 0.0/0.52/0 22.9/0.41/720 0.0/0.52/0 -5.7/0.27/1143 0.0/0.52/0 22.2/0.35/289 0.0/0.52/0 -4.3/0.79/550 0.0/0.52/0 -1.0/0.79/563 0.0/0.52/0 -13.9/0.60/204 0.0/0.52/0 24.7/0.49/755 0.0/0.52/0
 asked for: ......n.......n.
-line from "gleam of the prize": 36/20/22 - 36/21/21 - 36/30/30 - 36/26/26 - 38/4/4 - 39/10/17 - - - 38/30/30 - 38/39/39 - 38/39/39 - - - - - 39/35/35 - - - - - 39/30/30 - 39/23/29 - 39/35/35 - 38/35/35 - 36/26/35 - 36/9/9 - 36/9/9 - - - 36/31/31 - 36/11/20 - 36/31/31 - 31/35/35 - 34/35/35 - 36/35/39 - - - - - 36/32/35 - 36/14/15 - 36/15/15 - 36/15/15 - 36/10/10 - 38/5/5 - 39/5/10 - - - 38/15/15 - 38/15/15 - 38/15/15 - - - - - 39/10/10 - - - - - 39/10/10 - 39/10/10 - 39/10/10 - 38/10/10 - 36/10/10 - - - - - - - 36/5/5 - 35/3/5 - 36/5/5 - 31/10/10 - 34/10/10 - 36/10/15 - - - - - 36/10/10 -
-phrase from "gleam of the prize": 51/372 35/387 338/394 255/310
+line from "gleam of the prize": 36/24/27 - 36/25/25 - 36/38/38 - 36/34/34 - 38/4/4 - 39/13/21 - - - 38/38/38 - 38/30/30 - 38/30/30 - - - 45/1/1 - 39/26/26 - - - - - 39/21/21 - 39/15/20 - 39/26/26 - 38/26/26 - 36/19/26 - 36/13/13 - 36/13/13 - - - 36/22/22 - 36/15/28 - 36/22/22 - 31/26/26 - 34/26/26 - 36/28/30 - - - - - 36/24/26 - 36/25/27 - 36/27/27 - 36/27/27 - 36/18/18 - 38/9/9 - 39/9/18 - - - 38/27/27 - 38/27/27 - 38/27/27 - - - - - 39/18/18 - - - - - 39/18/18 - 39/18/18 - 39/18/18 - 38/18/18 - 36/18/18 - - - - - - - 36/9/9 - 35/7/9 - 36/9/9 - 31/18/18 - 34/18/18 - 36/18/27 - - - - - 36/18/18 -
+phrase from "gleam of the prize": 91/670 63/696 605/711 459/558
+heard from "gleam of the prize": p...p.........p.
 
 session 1: played 16 bars with the drummer and the second drummer, no record, hits=34, unsteadiness 22.5 ms, listening 0.21, ticks to the pulse 1, pattern p.......p...p..., 17 ms apart
 session 2: played 16 bars with the drummer and the second drummer, no record, hits=46, unsteadiness 15.2 ms, listening 0.33, ticks to the pulse 2, pattern p.......p......., 20 ms apart
@@ -112,3 +113,7 @@ session 96: played along with "gleam of the prize" for 24 bars, hits=145, unstea
 session 97: played along with "gleam of the prize" for 24 bars, hits=145, unsteadiness 7.3 ms, listening 0.89, ticks to the pulse 2, pattern p.p.p.n...p...n., 102 of its hits landed with a hit in the recording, 9 ms apart
 session 98: played along with "gleam of the prize" for 24 bars, hits=145, unsteadiness 7.9 ms, listening 0.85, ticks to the pulse 2, pattern p.p.p.n...p...n., 101 of its hits landed with a hit in the recording, 8 ms apart
 session 99: played along with "gleam of the prize" for 24 bars, hits=163, unsteadiness 5.6 ms, listening 0.89, ticks to the pulse 2, pattern p.p.p.n...p...n., 116 of its hits landed with a hit in the recording, 8 ms apart
+session 100: played along with "gleam of the prize" for 24 bars, hits=147, unsteadiness 7.1 ms, listening 0.89, ticks to the pulse 2, pattern p...p.n.n.p...n., 102 of its hits landed with a hit in the recording, 9 ms apart
+session 101: played along with "gleam of the prize" for 24 bars, hits=135, unsteadiness 8.0 ms, listening 0.85, ticks to the pulse 2, pattern p.p.p.n...p...n., 92 of its hits landed with a hit in the recording, 9 ms apart
+session 102: played along with "gleam of the prize" for 24 bars, hits=141, unsteadiness 9.5 ms, listening 0.83, ticks to the pulse 2, pattern p.p.p.n...p...n., 101 of its hits landed with a hit in the recording, 9 ms apart
+session 103: played along with "gleam of the prize" for 24 bars, hits=139, unsteadiness 7.8 ms, listening 0.85, ticks to the pulse 2, pattern p.p...n...p...n., 96 of its hits landed with a hit in the recording, 9 ms apart
