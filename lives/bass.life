@@ -1,15 +1,16 @@
 name: the bass player
 age: 0
-leans on the others: 0.22
+leans on the others: 0.19
 sounds: a low note (p) and, once it has earned it, the same note an octave up (n)
-listens to itself: 0.91
+listens to itself: 0.89
 ticks to the pulse: 2
 pattern: p.p.p.n...p...n.
 notes: 2
-habits: 9090909090904090
-feel: -4.6/1.00/713 0.0/0.52/0 26.8/0.41/609 0.0/0.52/0 -1.6/0.27/945 0.0/0.52/0 20.2/0.36/233 0.0/0.52/0 -5.2/0.79/443 0.0/0.52/0 -2.6/0.79/464 0.0/0.52/0 -13.4/0.60/195 0.0/0.52/0 25.1/0.47/615 0.0/0.52/0
+habits: 9090909090909090
+feel: -4.3/1.00/773 0.0/0.52/0 19.8/0.41/646 0.0/0.52/0 -2.5/0.27/1011 0.0/0.52/0 26.1/0.35/253 0.0/0.52/0 -7.8/0.79/478 0.0/0.52/0 -1.7/0.79/497 0.0/0.52/0 -13.0/0.60/198 0.0/0.52/0 26.1/0.50/661 0.0/0.52/0
 asked for: ......n.......n.
-line: 36/15/16 - 36/16/16 - 36/20/20 - 36/16/16 - 38/4/4 - 39/6/12 - - - 38/20/20 - 38/24/24 - 38/24/24 - - - - - 39/20/20 - - - - - 39/15/15 - 39/12/15 - 39/20/20 - 38/20/20 - 36/16/20 - 36/4/4 - 36/4/4 - - - 36/16/16 - 36/6/8 - 36/16/16 - 31/20/20 - 34/20/20 - 36/20/24 - - - - - 36/18/20 -
+line: 36/18/20 - 36/19/19 - 36/26/26 - 36/22/22 - 38/4/4 - 39/8/15 - - - 38/26/26 - 38/33/33 - 38/33/33 - - - - - 39/29/29 - - - - - 39/24/24 - 39/19/23 - 39/29/29 - 38/29/29 - 36/22/29 - 36/7/7 - 36/7/7 - - - 36/25/25 - 36/9/15 - 36/25/25 - 31/29/29 - 34/29/29 - 36/29/33 - - - - - 36/26/29 - 36/8/9 - 36/9/9 - 36/9/9 - 36/6/6 - 38/3/3 - 39/3/6 - - - 38/9/9 - 38/9/9 - 38/9/9 - - - - - 39/6/6 - - - - - 39/6/6 - 39/6/6 - 39/6/6 - 38/6/6 - 36/6/6 - - - - - - - 36/3/3 - 35/2/3 - 36/3/3 - 31/6/6 - 34/6/6 - 36/6/9 - - - - - 36/6/6 -
+phrase: 28/222 21/231 203/236 153/185
 
 session 1: played 16 bars with the drummer and the second drummer, no record, hits=34, unsteadiness 22.5 ms, listening 0.21, ticks to the pulse 1, pattern p.......p...p..., 17 ms apart
 session 2: played 16 bars with the drummer and the second drummer, no record, hits=46, unsteadiness 15.2 ms, listening 0.33, ticks to the pulse 2, pattern p.......p......., 20 ms apart
@@ -106,3 +107,6 @@ session 91: played along with "gleam of the prize" for 24 bars, hits=129, unstea
 session 92: played along with "gleam of the prize" for 24 bars, hits=119, unsteadiness 10.1 ms, listening 0.93, ticks to the pulse 2, pattern p.p.p.n.......n., 85 of its hits landed with a hit in the recording, 10 ms apart
 session 93: played along with "gleam of the prize" for 24 bars, hits=125, unsteadiness 10.6 ms, listening 0.95, ticks to the pulse 2, pattern p.p.p.n...p...n., 89 of its hits landed with a hit in the recording, 9 ms apart
 session 94: played along with "gleam of the prize" for 24 bars, hits=149, unsteadiness 7.5 ms, listening 0.91, ticks to the pulse 2, pattern p.p.p.n...p...n., 109 of its hits landed with a hit in the recording, 9 ms apart
+session 95: played along with "gleam of the prize" for 24 bars, hits=145, unsteadiness 7.7 ms, listening 0.85, ticks to the pulse 2, pattern p.p.p.n...p...n., 105 of its hits landed with a hit in the recording, 9 ms apart
+session 96: played along with "gleam of the prize" for 24 bars, hits=145, unsteadiness 9.8 ms, listening 0.91, ticks to the pulse 2, pattern p.p.p.n...p...n., 103 of its hits landed with a hit in the recording, 8 ms apart
+session 97: played along with "gleam of the prize" for 24 bars, hits=145, unsteadiness 7.3 ms, listening 0.89, ticks to the pulse 2, pattern p.p.p.n...p...n., 102 of its hits landed with a hit in the recording, 9 ms apart

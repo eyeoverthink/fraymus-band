@@ -26,6 +26,7 @@ public final class Life {
     private String habits = "0000000000000000";
     private String feel = "";
     private String line = "";
+    private String phrase = "";
     private String asked = "................";
     private String sounds = "a pot (p) and a pan (n)";
     private String pattern = Musician.FIRST_PATTERN;
@@ -46,6 +47,7 @@ public final class Life {
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
                 else if (s.startsWith("asked for:")) life.asked = s.substring(10).trim();
+                else if (s.startsWith("phrase:")) life.phrase = s.substring(7).trim();
                 else if (s.startsWith("line:")) life.line = s.substring(5).trim();
                 else if (s.startsWith("feel:")) life.feel = s.substring(5).trim();
                 else if (s.startsWith("habits:")) life.habits = s.substring(7).trim();
@@ -81,7 +83,11 @@ public final class Life {
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
 
-    /** A bass player's line: for each place in a four-bar phrase, the note, how often it heard that note, how often it listened. */
+    /** What a bass player has heard about how long a phrase is: for one, two, four and eight bars, how often the line came round of how often it compared. */
+    public String phrase() { return phrase; }
+    public void phrase(String now) { phrase = now; set("phrase", now); }
+
+    /** A bass player's line: for each place in eight bars, the note, how often it heard that note, how often it listened. */
     public String line() { return line; }
     /** Note where its line has got to. It is written with the next session. */
     public void line(String now) { line = now; set("line", now); }

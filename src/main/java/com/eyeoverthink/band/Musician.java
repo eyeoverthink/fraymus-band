@@ -116,9 +116,13 @@ import java.util.SplittableRandom;
  * is written into its life, so it is still asked next session.
  *
  * The line. A bass player that has earned both its notes listens, while it plays along with a track, for
- * which note the bottom of the song is on just after each tick it can reach. A song's bass line is longer
- * than a bar, so it keeps a phrase of four bars, counted from the song's own first bar. For each place in
- * the phrase it remembers the note it has heard there, how often it heard that note and how often it
+ * which note the bottom of the song is on just after each tick it can reach. A song's bass line can be
+ * longer than a bar. How long, it finds by ear: each note it hears, it compares with the note it heard at
+ * the same place one bar, two bars, four bars and eight bars before, and counts how often they were the
+ * same. The phrase is the shortest of those that comes round nearly as well as the best of them. Until it
+ * has heard enough to say, a phrase is one bar, which is all a player knows of to begin with. It remembers
+ * eight bars of places, counted from the song's own first bar; with a shorter phrase, the places that fall
+ * together are heard as one. For each place in the phrase it remembers the note it has heard there, how often it heard that note and how often it
  * listened. It believes a place once it has listened four times and heard the same note at least half of
  * them. When it plays a place it believes, its hand goes to that note; at a place it does not yet believe
  * it holds the last note it does. Its high note is the octave above. It counts how many of its notes were
@@ -229,9 +233,17 @@ public final class Musician implements Player, Hits {
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player
     private final PitchEar pitchEar = new PitchEar();
-    /** How many bars a bass line's phrase has. This is given. */
-    public static final int PHRASE = 4;
-    private static final int CELLS = PHRASE * SLOTS;
+    /** The longest phrase it can keep, in bars, and the lengths it tries. */
+    public static final int LONGEST = 8;
+    private static final int[] LENGTHS = {1, 2, 4, 8};
+    private static final int CELLS = LONGEST * SLOTS;
+    /** A length comes round "nearly as well" at this much of the best; it needs this many comparisons to count; and it forgets by halves past this many. */
+    private static final double NEARLY = 0.85;
+    private static final int PHRASE_EVIDENCE = 24, PHRASE_REMEMBERS = 600;
+    private final int[] cameRound = new int[LENGTHS.length], compared = new int[LENGTHS.length];
+    private final int[] heardNote = new int[CELLS], heardInBar = new int[CELLS];
+    private final int[] tally = new int[LineEar.HIGHEST - LineEar.LOWEST + 2];
+    private int pooledNote, pooledSame, pooledHeard;
     private static final int LINE_BELIEVE = 4, LINE_DOUBT = 6, LINE_REMEMBERS = 40;
     private LineEar lineEar;              // a bass player's ear on the notes in the bottom of a track
     private final int[] lineNote = new int[CELLS], lineSame = new int[CELLS], lineHeard = new int[CELLS];
@@ -482,7 +494,16 @@ public final class Musician implements Player, Hits {
             apart -= 12 * Math.rint(apart / 12);             // the same note an octave away is the same note
             if (Math.abs(apart) <= 0.5) withTheSong++; else againstTheSong++;
         }
-        int cell = (at + phraseFrom * SLOTS) % CELLS, note = (int) Math.round(heard);
+        int cell = (at + phraseFrom * SLOTS) % CELLS, note = (int) Math.round(heard), inBar = at / SLOTS + 1, slot = at % SLOTS;
+        for (int k = 0; k < LENGTHS.length; k++) {           // does the line come round after this many bars?
+            int then = Math.floorMod(inBar - LENGTHS[k], LONGEST) * SLOTS + slot;
+            if (heardInBar[then] != inBar - LENGTHS[k]) continue;
+            compared[k]++;
+            if (heardNote[then] == note) cameRound[k]++;
+        }
+        if (compared[LENGTHS.length - 1] > PHRASE_REMEMBERS) for (int k = 0; k < LENGTHS.length; k++) { compared[k] /= 2; cameRound[k] /= 2; }
+        int here = (inBar % LONGEST) * SLOTS + slot;
+        heardNote[here] = note; heardInBar[here] = inBar;
         if (lineHeard[cell] == 0) { lineNote[cell] = note; lineSame[cell] = 1; lineHeard[cell] = 1; return; }
         lineHeard[cell]++;
         if (note == lineNote[cell]) lineSame[cell]++;
@@ -490,14 +511,33 @@ public final class Musician implements Player, Hits {
         if (lineHeard[cell] > LINE_REMEMBERS) { lineHeard[cell] /= 2; lineSame[cell] /= 2; }
     }
 
-    private boolean believesTheNoteAt(int cell) { return lineHeard[cell] >= LINE_BELIEVE && lineSame[cell] * 2 >= lineHeard[cell]; }
+    /** How many bars it believes the phrase has: the shortest length that comes round nearly as well as the best. */
+    public int phraseBars() {
+        double best = 0;
+        for (int k = 0; k < LENGTHS.length; k++) if (compared[k] >= PHRASE_EVIDENCE) best = Math.max(best, cameRound[k] / (double) compared[k]);
+        for (int k = 0; k < LENGTHS.length; k++) if (compared[k] >= PHRASE_EVIDENCE && cameRound[k] >= NEARLY * best * compared[k]) return LENGTHS[k];
+        return 1;
+    }
+
+    /** Everything it has heard at this place of the phrase, taken together. True if it believes a note there; then pooledNote says which. */
+    private boolean believesTheNoteAt(int place, int bars) {
+        java.util.Arrays.fill(tally, 0);
+        pooledHeard = 0; pooledSame = 0; pooledNote = 0;
+        for (int c = place % (bars * SLOTS); c < CELLS; c += bars * SLOTS) {
+            if (lineHeard[c] == 0) continue;
+            pooledHeard += lineHeard[c];
+            int t = Math.max(0, Math.min(tally.length - 1, lineNote[c] - LineEar.LOWEST));
+            tally[t] += lineSame[c];
+            if (tally[t] > pooledSame) { pooledSame = tally[t]; pooledNote = lineNote[c]; }
+        }
+        return pooledHeard >= LINE_BELIEVE && pooledSame * 2 >= pooledHeard;
+    }
 
     /** Where its hand goes for this place in the phrase: the note it believes is there, or the last one before it that it believes. */
     private double lineHz(int cell) {
-        for (int back = 0; back < CELLS; back++) {
-            int c = (cell - back + CELLS) % CELLS;
-            if (believesTheNoteAt(c)) return LineEar.hzOf(lineNote[c]);
-        }
+        int bars = phraseBars(), places = bars * SLOTS;
+        for (int back = 0; back < places; back++)
+            if (believesTheNoteAt(Math.floorMod(cell - back, places), bars)) return LineEar.hzOf(pooledNote);
         return Bass.LOW;                                     // it knows no line yet: its open string
     }
 
@@ -1069,13 +1109,30 @@ public final class Musician implements Player, Hits {
     public int cameInAlone() { return cameInAlone; }
     public String plays() { return hands.describe(); }
 
-    /** Which bar of the song's four-bar phrase its first bar is, counted from the song's own first bar. */
-    public void phraseFrom(int barOfTheSong) { phraseFrom = Math.floorMod(barOfTheSong, PHRASE); }
+    /** Which bar of the song its first bar is, counted from the song's own first bar. */
+    public void phraseFrom(int barOfTheSong) { phraseFrom = Math.floorMod(barOfTheSong, LONGEST); }
+
+    /** What it has heard about how long a phrase is, for its life: for one, two, four and eight bars, how often the line came round of how often it compared. */
+    public String phrase() {
+        StringBuilder b = new StringBuilder();
+        for (int k = 0; k < LENGTHS.length; k++) b.append(k == 0 ? "" : " ").append(cameRound[k]).append('/').append(compared[k]);
+        return b.toString();
+    }
+
+    /** Where its life says that had got to. */
+    public void phrase(String soFar) {
+        String[] parts = soFar.trim().split("\\s+");
+        for (int k = 0; k < LENGTHS.length && k < parts.length; k++) {
+            String[] f = parts[k].split("/");
+            if (f.length != 2) continue;
+            cameRound[k] = Integer.parseInt(f[0]); compared[k] = Integer.parseInt(f[1]);
+        }
+    }
 
     private static final String[] NOTE_NAMES = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
     static String nameOf(int midi) { return NOTE_NAMES[Math.floorMod(midi, 12)] + (midi / 12 - 1); }
 
-    /** The line it has learned, for its life: for each place in the phrase, the note, how often it heard that note, how often it listened. */
+    /** The line it has learned, for its life: for each place in eight bars, the note, how often it heard that note, how often it listened. */
     public String line() {
         StringBuilder b = new StringBuilder();
         for (int c = 0; c < CELLS; c++) b.append(c == 0 ? "" : " ").append(lineHeard[c] == 0 ? "-" : lineNote[c] + "/" + lineSame[c] + "/" + lineHeard[c]);
@@ -1092,19 +1149,19 @@ public final class Musician implements Player, Hits {
         }
     }
 
-    /** The line as it believes it, bar by bar, at the places its ticks reach: a note name, or a dot where it is not sure. */
+    /** The line as it believes it, bar by bar for as many bars as it believes the phrase has, at the places its ticks reach: a note name, or a dot where it is not sure. */
     public String lineInWords() {
         StringBuilder b = new StringBuilder();
-        int step = SLOTS / PULSES / ticks;
-        for (int c = 0; c < CELLS; c += step) {
+        int step = SLOTS / PULSES / ticks, bars = phraseBars();
+        for (int c = 0; c < bars * SLOTS; c += step) {
             if (c > 0) b.append(c % SLOTS == 0 ? " | " : " ");
-            b.append(believesTheNoteAt(c) ? nameOf(lineNote[c]) : ".");
+            b.append(believesTheNoteAt(c, bars) ? nameOf(pooledNote) : ".");
         }
         return b.toString();
     }
     /** How many places in the phrase it believes it knows the note for, of how many its ticks reach. */
-    public int linePlaces() { int k = 0; for (int c = 0; c < CELLS; c += SLOTS / PULSES / ticks) if (believesTheNoteAt(c)) k++; return k; }
-    public int linePlacesInReach() { return CELLS / (SLOTS / PULSES / ticks); }
+    public int linePlaces() { int k = 0, bars = phraseBars(); for (int c = 0; c < bars * SLOTS; c += SLOTS / PULSES / ticks) if (believesTheNoteAt(c, bars)) k++; return k; }
+    public int linePlacesInReach() { return phraseBars() * SLOTS / (SLOTS / PULSES / ticks); }
     /** Of the notes it played while the song's note was clear: how many were that note, and how many were not. */
     public int withTheSong() { return withTheSong; }
     public int againstTheSong() { return againstTheSong; }

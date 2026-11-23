@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyOneTest {
+class StepTwentyTwoTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -920,6 +920,7 @@ class StepTwentyOneTest {
         System.out.printf(Locale.ROOT, "LINE first take %d on the song's note, %d not; third take %d and %d. It believes %s (%d of %d places), out of tune by %.0f cents%n",
             first.withTheSong(), first.againstTheSong(), last.withTheSong(), last.againstTheSong(), last.line(), last.linePlaces(), last.linePlacesInReach(), last.outOfTuneCents());
         assertTrue(last.linePlacesInReach() == 32 || last.linePlacesInReach() == 64, "eight places in each of four bars, or sixteen once it has earned four ticks");
+        assertEquals(4, last.phraseBars(), "it found by ear that the line comes round every four bars: " + last.phraseHeard());
         assertTrue(last.linePlaces() >= 24, "it believes it knows the note at most places: " + last.line());
         for (String note : last.line().replace("|", " ").trim().split("\\s+")) assertTrue(inTheLine.contains(note), note + " is not in the song's line: " + last.line());
         assertTrue(last.withTheSong() >= 40, "it played plenty of notes while it could hear the song's note: " + last.withTheSong());
@@ -959,5 +960,30 @@ class StepTwentyOneTest {
             if (Math.round(ear.midi()) == note) right++;
         }
         assertTrue(right >= 19, "it named " + right + " of 21 notes, " + clear + " of them clearly");
+    }
+
+    @Test
+    void aBassPlayerFindsHowLongThePhraseIsByEar(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        int[] twoBars = {33, 33, 33, 33, 36, 36, 36, 36,  38, 38, 38, 38, 31, 31, 35, 35};
+        int[] oneBar = {33, 33, 33, 36, 36, 38, 31, 31};
+        int[] eightBars = new int[64];
+        for (int e = 0; e < 64; e++) eightBars[e] = new int[] {33, 36, 38, 40, 31, 35, 28, 29}[e / 8] + (e % 8 >= 6 ? 2 : 0);
+        int[][] lines = {oneBar, twoBars, LINE, eightBars};
+        int[] bars = {1, 2, 4, 8};
+        Path drummer = practised(dir, "d.life", 4);
+        for (int k = 0; k < lines.length; k++) {
+            float[] song = songWithALine(drums, 48, lines[k]);
+            Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+            Hearing.Bar bar = Hearing.oneBar(heard);
+            Path bass = bassPlayer(dir, "b" + k + ".life", 2, 2);
+            Session.AlongPart take = null;
+            for (int s = 0; s < 2; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5, 32, 70 + 10 * k + s).parts().get(1);
+            System.out.printf(Locale.ROOT, "PHRASE a line of %d bars: it believes %d (came round after 1, 2, 4, 8 bars: %s); %d on the song's note, %d not%n", bars[k], take.phraseBars(), take.phraseHeard(), take.withTheSong(), take.againstTheSong());
+            assertEquals(bars[k], take.phraseBars(), "a line of " + bars[k] + " bars: " + take.phraseHeard());
+            assertTrue(take.withTheSong() >= 9 * take.againstTheSong(), "and it plays it: " + take.withTheSong() + " to " + take.againstTheSong());
+            assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("phrase: ")), "what it heard about the phrase is in its life");
+        }
+        assertEquals(1, Musician.onBass("new", 92.0, 0, 0.6, 1, Musician.FIRST_BASS_PATTERN, 1, 4, 1).phraseBars(), "until it has heard enough to say, a phrase is one bar");
     }
 }
