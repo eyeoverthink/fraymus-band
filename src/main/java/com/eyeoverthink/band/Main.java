@@ -52,8 +52,10 @@ public final class Main {
             java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
             Session.Along a = Session.playAlong(wav, drummers, hats, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
+            if (b.swing() >= 0) System.out.printf(Locale.ROOT, "The song's sixteenths swing %.0f%% (50 is straight, 67 is the triplet).%n", b.swing());
             for (Session.AlongPart p : a.parts()) {
                 System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
+                System.out.println(p.swing() < 0 ? "   It plays nothing off the eighths, so it has no swing to speak of." : String.format(Locale.ROOT, "   Its sixteenths swing %.0f%% (50 is straight, 67 is the triplet).", p.swing()));
                 if (p.borrowed() > 0 || !p.own().matches("\\.*")) System.out.printf(Locale.ROOT, "   Ideas borrowed from other records: %d tried, %d held%s. Places that are its own: %s%n", p.borrowed(), p.borrowedKept(), p.borrowedKept() > 0 ? " (the last from \"" + p.borrowedFrom() + "\")" : "", p.own());
                 if (p.askedAndPlaying() + p.askedAndWaiting() > 0) System.out.printf(Locale.ROOT, "   It is playing %d of the places it was asked for; %d are waiting until it can reach them.%n", p.askedAndPlaying(), p.askedAndWaiting());
                 if (p.withTheSong() + p.againstTheSong() > 0) System.out.printf(Locale.ROOT, "   It believes a phrase is %d bars (the line came round, of the times it compared, after 1, 2, 4 and 8 bars: %s). The line: %s (%d of %d places). %d of its notes were on the note the song was on, %d were not. Out of tune by %.0f cents.%n", p.phraseBars(), p.phraseHeard(), p.line(), p.linePlaces(), p.linePlacesInReach(), p.withTheSong(), p.againstTheSong(), p.outOfTuneCents());
@@ -74,6 +76,7 @@ public final class Main {
             System.out.printf(Locale.ROOT, "With one ear on the bottom of the sound and one on the top: %d hits in the bottom, %d in the top.%n", split.dark(), split.bright());
             Hearing.Bar b = Hearing.oneBar(split);
             System.out.printf(Locale.ROOT, "The hits line up best on a steady pulse of %.2f to the minute (%.2f, where 1 is perfectly and 0 is not at all), about %d bars.%n", b.bpm(), b.linesUp(), b.barsHeard());
+            System.out.println(b.swing() < 0 ? "Nothing falls off the eighths, so there is no swing to measure." : String.format(Locale.ROOT, "The sixteenths swing %.0f%% (50 is straight, 67 is the triplet).", b.swing()));
             System.out.println("Folded onto one bar, taking the place where the dark hits weigh most as the one:");
             StringBuilder dark = new StringBuilder("  dark hits per bar:  "), bright = new StringBuilder("  bright hits per bar:"), push = new StringBuilder(), weight = new StringBuilder();
             for (int i = 0; i < Musician.SLOTS; i++) {

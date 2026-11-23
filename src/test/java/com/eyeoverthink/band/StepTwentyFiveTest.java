@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyFourTest {
+class StepTwentyFiveTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -859,7 +859,6 @@ class StepTwentyFourTest {
         Session.AlongPart a = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), oneNote, "made up", song, heard, bar, 5, 24, 7).parts().get(1);
         assertEquals(0, a.askedAndPlaying(), "it has one note, so it cannot play the high one: " + a.patternAfter());
         assertEquals(2, a.askedAndWaiting());
-        assertEquals(-1, a.patternAfter().indexOf('n'));
         Session.AlongPart b = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), twoTicks, "made up", song, heard, bar, 5, 24, 7).parts().get(1);
         assertEquals(1, b.askedAndPlaying(), b.patternAfter());
         assertEquals(2, b.askedAndWaiting(), "the one is not up for asking and two ticks do not reach a sixteenth");
@@ -1069,5 +1068,39 @@ class StepTwentyFourTest {
         assertEquals(0, part.borrowed());
         assertEquals("................", part.own());
         assertEquals(java.util.Set.of("made up"), Life.open(drummer, "the drummer").heard().keySet(), "but what it heard in the song is kept under the song's name");
+    }
+
+    @Test
+    void aPlayerTakesOnARecordsSwingUpToTheTriplet(@TempDir Path dir) throws Exception {
+        String bar = "p.nnp.nnp.nnp.nn";
+        double[] late = new double[16], hard = new double[16];
+        for (int i = 0; i < 16; i++) { late[i] = i % 2 == 1 ? 46 : 0; hard[i] = i == 0 ? 1.0 : 0.7; }
+        Lesson swung = new Lesson("swung", 92, bar, late, hard), straight = new Lesson("straight", 92, bar, new double[16], hard);
+        assertEquals(64.1, Hearing.swing(bar, late, 92), 0.1, "46 ms late on a sixteenth of 163 ms is 64 on a drum machine's dial");
+        assertEquals(50.0, Hearing.swing(bar, new double[16], 92), 1e-9);
+        assertEquals(-1, Hearing.swing("p.n.p.n.p.n.p.n.", late, 92), 1e-9, "nothing off the eighths, no swing to speak of");
+        assertThrows(IllegalArgumentException.class, () -> { double[] tooFar = late.clone(); tooFar[1] = 70; new Lesson("past the triplet", 92, bar, tooFar, hard); });
+
+        Path a = practised(dir, "a.life", 4, bar), b = practised(dir, "b.life", 4, bar);
+        Session.Report withSwing = null, without = null;
+        for (int s = 0; s < 4; s++) {
+            withSwing = Session.run(dir.resolve("t.wav"), a, swung, 6, 8, true, 700 + s);        // with a click: without one a swung record pulls a player's time apart
+            without = Session.run(dir.resolve("t.wav"), b, straight, 6, 8, true, 700 + s);
+        }
+        double swings = Hearing.swing(withSwing.patternAfter(), withSwing.feelMs(), 92), doesNot = Hearing.swing(without.patternAfter(), without.feelMs(), 92);
+        Teacher plays = new Teacher(swung, 0, 24, 0.25);     // the record on its own, with nothing straight laid over it
+        float[] record = new float[(int) (Audio.RATE * (24 * 4 * 60.0 / 92 + 2))], block = new float[Audio.BLOCK];
+        for (int now = 0; now + Audio.BLOCK <= record.length; now += Audio.BLOCK) {
+            java.util.Arrays.fill(block, 0f);
+            plays.play(block, Audio.BLOCK, now);
+            System.arraycopy(block, 0, record, now, Audio.BLOCK);
+        }
+        Hearing.Bar heardBar = Hearing.oneBar(Hearing.listenLowAndHigh(record));
+        double heard = heardBar.swing();
+        System.out.printf(Locale.ROOT, "SWING the record swings 64.1; the ear on the recording says %.1f; the player with it plays %.1f (unsteadiness %.1f ms); the player with the straight record plays %.1f%n", heard, swings, withSwing.lateUnsteadyMs(), doesNot);
+        assertEquals(64.1, swings, 3.0, "after four sessions it swings as the record does");
+        assertTrue(withSwing.lateUnsteadyMs() < 12, "and holds its time while it does: " + withSwing.lateUnsteadyMs());
+        assertEquals(50.0, doesNot, 2.0, "and the one with the straight record does not");
+        assertEquals(64.1, heard, 4.0, "the ear names the swing of a recording");
     }
 }

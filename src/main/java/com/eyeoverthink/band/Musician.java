@@ -116,6 +116,10 @@ import java.util.SplittableRandom;
  * for: it does not give it back to what it hears. It can hold two at once; a third pushes out the oldest.
  * With nothing to borrow it tries a place by chance, as before, and that is not kept as its own.
  *
+ * Swing. A place can sit as far behind its tick as the triplet, a third of a sixteenth, and a hit that far
+ * behind a tick is still heard as that place. So a player that takes on a record's feel takes on its swing,
+ * up to the triplet. Nothing here knows the word; swing is only named when the feel is reported.
+ *
  * Being asked. The bandleader can ask a player for particular places: "the and of two and the and of four,
  * on your high note." A player plays what it is asked, as far as it can: a place its ticks cannot reach
  * yet, or a note it has not earned yet, has to wait until it can. What it has been asked for it keeps. It
@@ -173,7 +177,9 @@ public final class Musician implements Player, Hits {
     /** A change to the pattern is kept if the answer stayed at least this even. */
     static final double HOLD = 0.025;
     /** It can place a heard hit only if it falls within this part of a tick from one of its ticks... */
-    static final double REACH = 0.12;
+    static final double REACH = 0.36;
+    /** It sets its clock only by hits this close to a tick, as a share of the gap between ticks. */
+    static final double STEADY_REACH = 0.12;
     /** ...but never less than this many seconds, and never more than this many. */
     static final double REACH_AT_LEAST = 0.035, REACH_AT_MOST = 0.060;
     /** A change is also kept if the answer was no more than this much rougher than its playing usually is. */
@@ -194,7 +200,7 @@ public final class Musician implements Player, Hits {
     /** How much of what it hears of a record's feel it takes on each time, how many hearings make it sure, and how far ahead of a tick it can play. */
     static final double ABSORB = 0.1;
     static final int HEARINGS_TO_TRUST = 20;
-    static final double MOST_AHEAD = 0.010, MOST_BEHIND = 0.030;
+    static final double MOST_AHEAD = 0.010;              // behind, it can go as far as the triplet: a third of a sixteenth
     /** While playing together, a hit this heavy next to the heaviest it has heard is the one. */
     static final double NEARLY_THE_HEAVIEST = 0.84;
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
@@ -646,6 +652,7 @@ public final class Musician implements Player, Hits {
             feelHeard[place]++;
         }
         if (onAClick()) return;                              // it has heard what was played; its time comes from the click
+        if (Math.abs(off) > Math.min(Math.max(STEADY_REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;   // a hit that far behind is a place with a feel, not something to set its clock by
         clock.nudge(TAP * off);
         if (best > placedTick) {                             // quiet and only listening, it leans on every hit it can place
             leanToward(at - placedAt, best - placedTick);
@@ -1084,7 +1091,7 @@ public final class Musician implements Player, Hits {
     private double feelOf(int place) {
         // Feel is where a place sits against the one. If everything it heard was early or late by the same amount,
         // that was the click and the record being a little apart, not a feel.
-        return Math.max(-Audio.samples(MOST_AHEAD), Math.min(Audio.samples(MOST_BEHIND), (feelPush[place] - feelPush[0]) * trustIn(place)));
+        return Math.max(-Audio.samples(MOST_AHEAD), Math.min(clock.period() / 12, (feelPush[place] - feelPush[0]) * trustIn(place)));   // as far behind as the triplet
     }
 
     /** How hard it means to hit a place: the usual accent, bent toward what it has heard. The one stays the heaviest. */
@@ -1218,6 +1225,13 @@ public final class Musician implements Player, Hits {
     }
 
     /** How far after the tick, in milliseconds, it means to play a place now. */
+    /** How much its sixteenths swing as it plays them now: 50 is straight, 66.7 is on the triplet, -1 if it plays nothing off the eighths. */
+    public double swing() {
+        for (int s = 0; s < SLOTS; s++) feelNow[s] = feelMs(s);
+        return Hearing.swing(pattern(), feelNow, 60.0 * Audio.RATE / clock.period());
+    }
+    private final double[] feelNow = new double[SLOTS];
+
     public double feelMs(int place) { return feelOf(place) * 1000.0 / Audio.RATE; }
     /** How hard it means to hit a place now, from 0 to 1. */
     public double feelWeight(int place) { return weightOf(place); }

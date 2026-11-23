@@ -114,9 +114,28 @@ public final class Hearing {
     }
 
     /** One bar, as the ear makes it out from the whole recording. */
+    /**
+     * Swing, as a drum machine counts it: of each pair of sixteenths, how much of the pair's time goes by
+     * before the second one. 50 is straight; 66.7 puts the second sixteenth on the triplet. It is worked out
+     * from how late the places played off the eighths are, against the places played on them. -1 if nothing
+     * is played off the eighths, or nothing on them.
+     */
+    public static double swing(String bar, double[] afterTheTickMs, double bpm) {
+        double on = 0, off = 0;
+        int ons = 0, offs = 0;
+        for (int i = 0; i < bar.length() && i < afterTheTickMs.length; i++) {
+            if (bar.charAt(i) == '.') continue;
+            if (i % 2 == 1) { off += afterTheTickMs[i]; offs++; } else { on += afterTheTickMs[i]; ons++; }
+        }
+        if (ons == 0 || offs == 0) return -1;
+        return 50 + 50 * (off / offs - on / ons) / (60000.0 / bpm / 4);
+    }
+
     public record Bar(double bpm, double linesUp, int barsHeard, String bar, double[] pushMs, double[] weight,
                       double[] darkPerBar, double[] brightPerBar, double aOneAtSeconds) {
         public Lesson asLesson(String name) { return new Lesson(name, bpm, bar, pushMs, weight); }
+        /** How much the sixteenths swing, as a drum machine counts it. See {@link Hearing#swing}. */
+        public double swing() { return Hearing.swing(bar, pushMs, bpm); }
     }
 
     /**
@@ -126,6 +145,9 @@ public final class Hearing {
      * at least a third of the bars, a pan if a bright hit did in at least half. This is the ear's own reduction of a full mix:
      * dark is whatever is low (kick, bass), bright is everything else (snare, hats, voices, keys).
      */
+    /** Two thirds of the best tempo is taken instead if the hits line up on it at least this well against the best. */
+    static final double SWUNG_NOT_FASTER = 0.6;
+
     public static Bar oneBar(Heard h) {
         double[] t = h.hitTimes();
         double bestBpm = 0, bestScore = -1, bestAngle = 0;
@@ -138,13 +160,27 @@ public final class Hearing {
             double score = w == 0 ? 0 : Math.hypot(re, im) / w;
             if (score > bestScore) { bestScore = score; bestBpm = bpm; bestAngle = Math.atan2(im, re); }
         }
+        // Sixteenths that swing hard sit near the triplet, and then the hits line up even better on a grid half
+        // as fast again, which is not the tempo. If two thirds of the best tempo lines up nearly as well, that is
+        // the tempo, and what it heard is swing.
+        double swungBpm = 0, swungScore = -1, swungAngle = 0;
+        for (double bpm = bestBpm * 2 / 3 * 0.99; bpm <= bestBpm * 2 / 3 * 1.01 && bestBpm * 2 / 3 * 0.99 >= 60; bpm += 0.01) {
+            double tick = 60.0 / bpm / 4, re = 0, im = 0, w = 0;
+            for (int i = 0; i < t.length; i++) {
+                double angle = 2 * Math.PI * (t[i] % tick) / tick;
+                re += h.hitLoud()[i] * Math.cos(angle); im += h.hitLoud()[i] * Math.sin(angle); w += h.hitLoud()[i];
+            }
+            double score = w == 0 ? 0 : Math.hypot(re, im) / w;
+            if (score > swungScore) { swungScore = score; swungBpm = bpm; swungAngle = Math.atan2(im, re); }
+        }
+        if (swungScore >= SWUNG_NOT_FASTER * bestScore) { bestBpm = swungBpm; bestScore = swungScore; bestAngle = swungAngle; }
         double tick = 60.0 / bestBpm / 4, first = (bestAngle < 0 ? bestAngle + 2 * Math.PI : bestAngle) / (2 * Math.PI) * tick;
         int n = Musician.SLOTS;
         double[] dark = new double[n], bright = new double[n], darkLoud = new double[n], brightLoud = new double[n], darkOff = new double[n], brightOff = new double[n];
         for (int i = 0; i < t.length; i++) {
             long which = Math.round((t[i] - first) / tick);
             double off = t[i] - (first + which * tick);
-            if (Math.abs(off) > 0.030) continue;             // too far from any tick to be a place
+            if (Math.abs(off) > Musician.REACH * tick) continue;   // too far from any tick to be a place; a swung sixteenth is still within reach
             int place = (int) ((which % n + n) % n);
             if (h.hitBright()[i]) { bright[place]++; brightLoud[place] += h.hitLoud()[i]; brightOff[place] += off; }
             else { dark[place]++; darkLoud[place] += h.hitLoud()[i]; darkOff[place] += off; }
@@ -170,7 +206,7 @@ public final class Hearing {
         double shift = push[0];                              // feel is measured from the one
         for (int k = 0; k < n; k++) {
             if (bar[k] == '.') { push[k] = 0; weight[k] = 0; continue; }
-            push[k] = Math.max(-30, Math.min(30, push[k] - shift));
+            push[k] = Math.max(-tick * 1000 / 3, Math.min(tick * 1000 / 3, push[k] - shift));   // no further than the triplet
             weight[k] = k == 0 ? 1.0 : Math.max(0.2, Math.min(0.85, weight[k]));
         }
         return new Bar(bestBpm, bestScore, bars, new String(bar), push, weight, darkPer, brightPer, first + one * tick);

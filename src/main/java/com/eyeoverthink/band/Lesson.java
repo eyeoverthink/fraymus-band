@@ -25,7 +25,8 @@ public record Lesson(String name, double tempo, String bar, double[] pushMs, dou
         if (!bar.matches("[pn.]+")) throw new IllegalArgumentException("A bar is written with p, n and dots only: " + bar);
         if (tempo < 40 || tempo > 200) throw new IllegalArgumentException("Tempo should be between 40 and 200: " + tempo);
         if (pushMs.length != Musician.SLOTS || weight.length != Musician.SLOTS) throw new IllegalArgumentException("push and weight need one number for each of the " + Musician.SLOTS + " places");
-        for (double p : pushMs) if (Math.abs(p) > 30) throw new IllegalArgumentException("A push of more than 30 ms is a different place in the bar, not a feel: " + p);
+        double most = 60000.0 / tempo / 12 + 0.5;            // a third of a sixteenth: as far as the triplet
+        for (double p : pushMs) if (Math.abs(p) > most) throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "A push of more than %.0f ms at this tempo is past the triplet: a different place in the bar, not a feel: %s", most, p));
     }
 
     /** A bar played dead on the tick with the usual accents. */

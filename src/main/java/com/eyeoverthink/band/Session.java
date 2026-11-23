@@ -255,7 +255,7 @@ public final class Session {
                             double unsteadyMs, double listeningBefore, double listeningAfter, int ticksBefore, int ticksAfter, int notes,
                             int askedAndPlaying, int askedAndWaiting, String line, int linePlaces, int linePlacesInReach,
                             int withTheSong, int againstTheSong, double outOfTuneCents, int phraseBars, String phraseHeard,
-                            int borrowed, int borrowedKept, String borrowedFrom, String own) {}
+                            int borrowed, int borrowedKept, String borrowedFrom, String own, double swing) {}
 
     /** One drummer plays along. */
     public static Along playAlong(Path wav, Path lifeFile, String recordingName, float[] sound, Hearing.Heard heard, Hearing.Bar bar,
@@ -350,7 +350,7 @@ public final class Session {
                     lives[i].pattern(), d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
                     unsteady, lives[i].listening(), d.listening(), lives[i].ticks(), d.ticks(), d.notes(), d.askedAndPlaying(), d.askedAndWaiting(),
                     d.lineInWords(), d.linePlaces(), d.linePlacesInReach(), d.withTheSong(), d.againstTheSong(), d.outOfTuneCents(), d.phraseBars(), d.phrase(),
-                    d.borrowed(), d.borrowedKept(), d.borrowedFrom(), d.own()));
+                    d.borrowed(), d.borrowedKept(), d.borrowedFrom(), d.own(), d.swing()));
                 lives[i].leaning(d.leaning()); lives[i].habits(d.habits()); lives[i].feel(d.feel());
                 if (i == bassAt) { lives[i].notes(d.notes()); if (d.notes() >= 2) { lives[i].line(recordingName, d.line()); lives[i].phrase(recordingName, d.phrase()); } }
                 keep(d, lives[i], recordingName);
