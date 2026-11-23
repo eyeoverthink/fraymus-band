@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepNineteenTest {
+class StepTwentyTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -812,5 +812,70 @@ class StepNineteenTest {
         assertTrue(listen[sessions - 1] > listen[0] + 0.15, "because they learned to listen");
         assertTrue(apart[sessions - 1] < apart[0] - 6, "and they land closer to the record when they play with it");
         assertTrue(landed[sessions - 1] > landed[0], "and more of them end together with it");
+    }
+
+    private static Path bassPlayer(Path dir, String name, int ticks, int notes) throws Exception {
+        Path file = dir.resolve(name);
+        Files.write(file, List.of("name: the bass player", "age: 0", "listens to itself: 0.60", "ticks to the pulse: " + ticks, "notes: " + notes,
+            "pattern: p...p...p...p...", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+        return file;
+    }
+
+    @Test
+    void aPlayerKeepsWhatTheBandleaderAskedForEvenThoughTheSongDoesNotHaveIt(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = madeUpSong(drums, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2);
+        String ask = "......n.......n.";
+        Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN).ask(ask, "the end of two and four, on an up tick");
+        for (int s = 0; s < 4; s++) {
+            Session.Along take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5, 24, 40 + s);
+            Session.AlongPart b = take.parts().get(1);
+            assertEquals('n', b.patternAfter().charAt(6), "take " + s + ": " + b.patternAfter());
+            assertEquals('n', b.patternAfter().charAt(14), "take " + s + ": " + b.patternAfter());
+            assertEquals('p', b.patternAfter().charAt(0), "the one is still the one");
+            assertEquals(2, b.askedAndPlaying());
+            assertEquals(0, b.askedAndWaiting());
+            assertEquals(0, take.parts().get(0).askedAndPlaying(), "nobody asked the drummer for anything");
+        }
+        List<String> life = Files.readAllLines(bass);
+        assertTrue(life.contains("asked for: " + ask), "it is written at the top of its life");
+        assertTrue(life.stream().anyMatch(l -> l.startsWith("asked by the bandleader: " + ask) && l.contains("the end of two and four")), "with the bandleader's words");
+        assertEquals(ask, Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN).asked(), "and it is still asked when its life is opened again");
+    }
+
+    @Test
+    void whatAPlayerCannotReachYetWaits(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = madeUpSong(drums, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4);
+        Path oneNote = bassPlayer(dir, "one.life", 2, 1), twoTicks = bassPlayer(dir, "two.life", 2, 2);
+        Life.open(oneNote, "the bass player", Musician.FIRST_BASS_PATTERN).ask("......n.......n.", "");
+        Life.open(twoTicks, "the bass player", Musician.FIRST_BASS_PATTERN).ask("n......n......n.", "");   // the one, a sixteenth it cannot reach, and one it can
+        Session.AlongPart a = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), oneNote, "made up", song, heard, bar, 5, 24, 7).parts().get(1);
+        assertEquals(0, a.askedAndPlaying(), "it has one note, so it cannot play the high one: " + a.patternAfter());
+        assertEquals(2, a.askedAndWaiting());
+        assertEquals(-1, a.patternAfter().indexOf('n'));
+        Session.AlongPart b = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), twoTicks, "made up", song, heard, bar, 5, 24, 7).parts().get(1);
+        assertEquals(1, b.askedAndPlaying(), b.patternAfter());
+        assertEquals(2, b.askedAndWaiting(), "the one is not up for asking and two ticks do not reach a sixteenth");
+        assertEquals('p', b.patternAfter().charAt(0));
+        assertEquals('.', b.patternAfter().charAt(7));
+        assertEquals('n', b.patternAfter().charAt(14));
+    }
+
+    @Test
+    void anAskIsSixteenPlacesAndNothingElse(@TempDir Path dir) throws Exception {
+        Path bass = bassPlayer(dir, "b.life", 2, 2);
+        List<String> before = Files.readAllLines(bass);
+        Life life = Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN);
+        assertEquals("................", life.asked(), "nobody has asked it for anything yet");
+        assertThrows(IllegalArgumentException.class, () -> life.ask("......n.", ""));
+        assertThrows(IllegalArgumentException.class, () -> life.ask("......x.......n.", ""));
+        assertEquals(before, Files.readAllLines(bass), "a bad ask leaves its life alone");
     }
 }

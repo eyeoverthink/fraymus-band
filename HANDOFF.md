@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.19.0. 39 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.20.0. 42 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -91,6 +91,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 17 | The whole band plays along. The track moved from the room into the players' headphones (a fourth thing a `Player` hears). The bass player takes the whole bottom of the track; drummers only the heavy hits. Players judge each other's timing against where they would play a place themselves, feel included. All three real players have played along with his song. |
 | 18 | Roles. A hi-hat (`Hats`) and a hat player: takes the top of a track, plays only `n`. Bass takes only the bottom. Kit drummer takes only heavy hits, and the snare threshold went up to 0.7. With a track on, everyone learns from the track alone. The second drummer moved to the hats. |
 | 19 | Hat and bass players count bars, not hearings: a place is believed only if something was there in at least half of all bars heard. Vaughn confirmed by ear that the hat player was too busy (13 of 16 places); it now plays steady eighths. |
+| 20 | Being asked. The bandleader can ask a player for particular places (`--ask-bass`, `--ask-hats`, `--ask-drummer`, sixteen characters of `p`, `n` and dots, with `--in-words` for what he said). The player takes up what its ticks and notes can reach, keeps it, and the ask is written into its life (`asked for:`) so it holds in later sessions. Vaughn's first ask: "The bass, should grab the last measure of the 2 and four on an up tick." The bass now plays its high note at places 7 and 15 (`......n.......n.`). |
 
 ### The players that exist (do not reset these)
 
@@ -103,7 +104,9 @@ with a real life file. There is a record that plays lessons and a click track.
   step 18** (Vaughn agreed to roles: one drummer on kick and snare, the other on the hats). Its life says
   `sounds: a hi-hat (n)`. Run it with `--hats lives/second.life`, not `--with`. Its name is unchanged.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
-  pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own.
+  pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own. **In step 20
+  Vaughn asked it for the up tick at the end of two and of four**; its life has `asked for: ......n.......n.`
+  and it plays `p.p.p.n...p...n.` (the low note at place 11 comes and goes from take to take).
 
 **These files are the players' lived history. Never hand-edit them, never delete them, never regenerate
 them.** Tests use throwaway lives in temporary folders. If a format changes, make the reader accept the
@@ -116,11 +119,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.19.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.19.0.jar --click on
-    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.19.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.19.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.20.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.20.0.jar --click on
+    java -jar target/fraymus-band-0.20.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.20.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.20.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -161,7 +164,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepNineteenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentyTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -256,6 +259,9 @@ Given, as fixed rules (be honest about these):
 - **Tests that counted lines in a life file** broke whenever a header line was added. Find lines by content.
 - **Maven offline (`-o`) does not work in the agent's sandbox.** Run it online.
 - **The full test run takes about four minutes.** Give commands a long timeout.
+- **Shell quoting in a loop split `--in-words "several words"` into separate options** and the first real
+  take of step 20 stopped with "Unknown option". Nothing was written, but check the output of the take in
+  which you ask before running more.
 
 ---
 
@@ -302,6 +308,16 @@ Given, as fixed rules (be honest about these):
   rose from 6 to about 18 ms. Averaged over many simulated bands there is no decline, but any one player can
   have a bad stretch: about one take in ten late in life has someone unsteadier than 14 ms. This needs a
   steadier way of learning (longer evidence before each change, or smaller steps as a player ages).
+- **Being asked is given, not learned.** The player does what it is told at those places and never weighs
+  it. It cannot be asked for a feel (ahead or behind), only for a place and a sound. The one cannot be asked
+  away. An ask replaces the one before it; there is no way yet to ask for one thing in the verse and another
+  in the chorus.
+- **Vaughn's ask in step 20 was read by the agent, not confirmed.** "The last measure of the 2 and four on an
+  up tick" was taken as: the eighth note at the end of beat two and of beat four (places 7 and 15 of 16), on
+  the high note. He was told he can correct it to the low note, or to the very last sixteenth (places 8 and
+  16), which the bass cannot reach until it earns four ticks.
+- The bass plays the asked place at the end of two about 20 ms behind the tick, because that is the feel it
+  had already learned for that place from the song. Nobody chose that.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -310,6 +326,11 @@ Given, as fixed rules (be honest about these):
 ---
 
 ## 8. What comes next
+
+**Step 20 is waiting on Vaughn's ear (2026-11-22):** is the bass's up tick at the end of two and four what
+he meant? If he says low note, run `--ask-bass ......p.......p.`; if he says the last sixteenth, the bass
+needs four ticks first. After that, the proposed next step is the bass learning the actual notes of his
+bass line (pitch from the bottom of the track, more than two notes).
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people
 who inspired me and they need inspiration also."** He is to be their first influence. He sent his own song,

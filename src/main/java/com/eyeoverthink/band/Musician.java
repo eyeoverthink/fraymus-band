@@ -109,6 +109,12 @@ import java.util.SplittableRandom;
  * voice or a stray note comes and goes, but a part comes round every bar. A drummer who moves to the hats brings its old
  * pattern with it: every place it used to hit, it now hits the hat.
  *
+ * Being asked. The bandleader can ask a player for particular places: "the and of two and the and of four,
+ * on your high note." A player plays what it is asked, as far as it can: a place its ticks cannot reach
+ * yet, or a note it has not earned yet, has to wait until it can. What it has been asked for it keeps. It
+ * does not drop it for not hearing it in a track, and it does not try ideas of its own there. The asking
+ * is written into its life, so it is still asked next session.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -240,6 +246,8 @@ public final class Musician implements Player, Hits {
     private int ticks;                    // ticks to the pulse it can hold: 1, 2 or 4
     private int evenBars;
     private final byte[] pattern = new byte[SLOTS];
+    private final byte[] askedFor = new byte[SLOTS];  // what the bandleader asked for at each place, or nothing
+    private int askedAndPlaying, askedAndWaiting;
     private final int[] habit = new int[SLOTS];   // how settled each place is, 0 to 9
     private int ideasHeldBack, heardWhilePlaying;
     private final int[] barsHeard = new int[SLOTS], barsHeardIn = new int[SLOTS];
@@ -851,6 +859,7 @@ public final class Musician implements Player, Hits {
 
     /** A place where it heard something other than what it plays. A pulse is never left empty. */
     private boolean wants(int s) {
+        if (askedFor[s] != REST && pattern[s] == askedFor[s]) return false;   // it was asked for this; it stays
         if (lesson[s] == pattern[s]) return false;
         if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
         // A bass player or a hat player adds a note where it believes there is one to follow, and takes one away
@@ -863,6 +872,7 @@ public final class Musician implements Player, Hits {
         int step = SLOTS / PULSES / ticks;
         int slot = step * chance.nextInt(SLOTS / step);
         if (slot == 0) return false;
+        if (askedFor[slot] != REST && pattern[slot] == askedFor[slot]) return false;   // not where it has been asked for something
         if (chance.nextInt(10) < habit[slot]) { ideasHeldBack++; return false; }   // too settled there to bother
         byte was = pattern[slot];
         if (hatsOnly) pattern[slot] = was != REST ? REST : PAN;
@@ -1025,6 +1035,30 @@ public final class Musician implements Player, Hits {
     public double feelMs(int place) { return feelOf(place) * 1000.0 / Audio.RATE; }
     /** How hard it means to hit a place now, from 0 to 1. */
     public double feelWeight(int place) { return weightOf(place); }
+    /**
+     * What the bandleader has asked it for: sixteen places, p or n where something is asked and a dot where
+     * nothing is. It takes up each one it can play now and leaves the rest waiting. Call after its ticks and
+     * notes are known.
+     */
+    public void asked(String places) {
+        int step = SLOTS / PULSES / ticks;
+        askedAndPlaying = 0; askedAndWaiting = 0;
+        for (int i = 0; i < SLOTS && i < places.length(); i++) {
+            byte want = Kit.read(places.charAt(i));
+            if (want == REST) continue;
+            if (hatsOnly) want = PAN;                                    // a hat player has one sound to give
+            boolean canReach = i % step == 0, hasTheNote = !(oneNote && want == PAN && notes < 2);
+            if (!canReach || !hasTheNote || i == 0) { askedAndWaiting++; continue; }   // the one is not up for asking
+            askedFor[i] = want;
+            pattern[i] = want;
+            habit[i] = 9;
+            askedAndPlaying++;
+        }
+    }
+    /** How many of the places it was asked for it is playing, and how many are waiting until it can. */
+    public int askedAndPlaying() { return askedAndPlaying; }
+    public int askedAndWaiting() { return askedAndWaiting; }
+
     /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
     public String habits() {
         char[] c = new char[SLOTS];

@@ -8,6 +8,7 @@ public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
+        String askBass = null, askHats = null, askDrummer = null, askWords = "";
         double from = 46;
         boolean click = false;
         double tempo = 92;
@@ -25,6 +26,10 @@ public final class Main {
                 case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
                 case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--ask-bass" -> askBass = args[i + 1];
+                case "--ask-hats" -> askHats = args[i + 1];
+                case "--ask-drummer" -> askDrummer = args[i + 1];
+                case "--in-words" -> askWords = args[i + 1];
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
@@ -32,9 +37,13 @@ public final class Main {
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
+        // The bandleader asks a player for particular places. It is written into that player's life before anyone plays.
+        if (askBass != null && bass != null) Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN).ask(askBass, askWords);
+        if (askHats != null && hats != null) Life.open(hats, "the hat player", Musician.FIRST_HATS_PATTERN).ask(askHats, askWords);
+        if (askDrummer != null) Life.open(life, "the drummer").ask(askDrummer, askWords);
         if (along != null) {                                 // the drummer plays along with a recording
             float[] song = Hearing.read(along);
             Hearing.Heard h = Hearing.listenLowAndHigh(song);
@@ -45,6 +54,7 @@ public final class Main {
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
             for (Session.AlongPart p : a.parts()) {
                 System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
+                if (p.askedAndPlaying() + p.askedAndWaiting() > 0) System.out.printf(Locale.ROOT, "   It is playing %d of the places it was asked for; %d are waiting until it can reach them.%n", p.askedAndPlaying(), p.askedAndWaiting());
                 System.out.printf(Locale.ROOT, "   %d changes taken from what it heard, %d its own idea; %d kept, %d taken back. %d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart. Unsteadiness %.1f ms. Listening %.2f to %.2f.%n",
                     p.copied(), p.ownIdeas(), p.kept(), p.takenBack(), p.landedWithIt(), p.hits(), p.apartMs(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter());
             }

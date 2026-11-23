@@ -25,6 +25,7 @@ public final class Life {
     private int notes = 1;
     private String habits = "0000000000000000";
     private String feel = "";
+    private String asked = "................";
     private String sounds = "a pot (p) and a pan (n)";
     private String pattern = Musician.FIRST_PATTERN;
 
@@ -43,6 +44,7 @@ public final class Life {
                 if (s.startsWith("name:")) life.name = s.substring(5).trim();
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
+                else if (s.startsWith("asked for:")) life.asked = s.substring(10).trim();
                 else if (s.startsWith("feel:")) life.feel = s.substring(5).trim();
                 else if (s.startsWith("habits:")) life.habits = s.substring(7).trim();
                 else if (s.startsWith("notes:")) life.notes = Integer.parseInt(s.substring(6).trim());
@@ -76,6 +78,19 @@ public final class Life {
     public double leaning() { return leaning; }
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
+
+    /** What the bandleader has asked it for: p or n at each place asked, a dot elsewhere. */
+    public String asked() { return asked; }
+
+    /** The bandleader asks for something new. It replaces whatever was asked before and is written down at once. */
+    public void ask(String places, String inWords) throws IOException {
+        if (places.length() != Musician.SLOTS || !places.matches("[pn.]+")) throw new IllegalArgumentException("Ask with sixteen places of p, n and dots: " + places);
+        asked = places;
+        set("asked for", places);
+        lines.add("asked by the bandleader: " + places + (inWords == null || inWords.isBlank() ? "" : " (\"" + inWords.trim() + "\")"));
+        if (file.getParent() != null) Files.createDirectories(file.getParent());
+        Files.write(file, lines, StandardCharsets.UTF_8);
+    }
 
     /** Its feel: for each place, milliseconds after the tick / how hard / how often heard. Empty until it has one. */
     public String feel() { return feel; }
