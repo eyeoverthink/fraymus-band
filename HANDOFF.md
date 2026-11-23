@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.17.0. 37 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.18.0. 39 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -89,6 +89,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 15 | Two ears for a full recording: one on the bottom of the sound, one on the top (`Hearing.listenLowAndHigh`). Recovers the record's bar exactly from under a loud voice-like sound. `Main --hear` also writes a clip with the pulse and the one marked by clicks, for Vaughn to check by ear. |
 | 16 | Playing along with a real recording (`Main --along`, `Session.playAlong`, `Recording`). The song plays in the room, a click at its tempo is lined up with its one, and the drummer plays along with two ears, noticing only heavy hits, learning two bars at a time. Vaughn confirmed by ear that the clicks were on the beat and the one was right. The real first drummer has played along with his song five times. |
 | 17 | The whole band plays along. The track moved from the room into the players' headphones (a fourth thing a `Player` hears). The bass player takes the whole bottom of the track; drummers only the heavy hits. Players judge each other's timing against where they would play a place themselves, feel included. All three real players have played along with his song. |
+| 18 | Roles. A hi-hat (`Hats`) and a hat player: takes the top of a track, plays only `n`. Bass takes only the bottom. Kit drummer takes only heavy hits, and the snare threshold went up to 0.7. With a track on, everyone learns from the track alone. The second drummer moved to the hats. |
 
 ### The players that exist (do not reset these)
 
@@ -97,7 +98,9 @@ with a real life file. There is a record that plays lessons and a click track.
   pattern went from `pn.pn...p.p.n..n` to `p.n.n.n.n.n.n.np` (it believes the song is `p.n.n.n.ppn.n.np`:
   kick on one and three, something bright on every off eighth). This is the first real influence on a
   real player. If Vaughn dislikes what it became, the earlier life is in git history (commit `c8a07a0`).
-- `lives/second.life`: "the second drummer". Born in step 5. Taught by the first.
+- `lives/second.life`: "the second drummer". Born in step 5. Taught by the first. **Moved to the hi-hat in
+  step 18** (Vaughn agreed to roles: one drummer on kick and snare, the other on the hats). Its life says
+  `sounds: a hi-hat (n)`. Run it with `--hats lives/second.life`, not `--with`. Its name is unchanged.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
   pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own.
 
@@ -112,11 +115,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.17.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.17.0.jar --click on
-    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.17.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.18.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.18.0.jar --click on
+    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.18.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -137,7 +140,8 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `Clock`: one player's pulse. `period`, `nextBeat`, `advance`, `drift`, `pullToward`, `nudge`.
 - `Ear`: finds hits in a stream of sound: when, how loud, bright or dark. One ear per stream.
 - `Room`: one ring buffer per player. A player's own sound reaches it in 3 ms, others' in 9 ms.
-- `Instrument`: what a player's hands are on. `Kit` (pot and pan) and `Bass` (fretless, low E and high E).
+- `Instrument`: what a player's hands are on. `Kit` (pot and pan), `Hats` (one closed hi-hat) and `Bass`
+  (fretless, low E and high E). In `Musician`, `hatsOnly` and `oneNote` mark a hat player and a bass player.
 - `PitchEar`: measures the pitch of a player's own note from its own sound, by how far the bottom tone
   turns between two short listens. Accurate to about one hundredth of a semitone.
 - `Sound`, `Thump` (pot), `Pan`: sounds are worked out once into tables and only read while playing.
@@ -156,7 +160,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepSeventeenTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepEighteenTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -336,6 +340,18 @@ no drum stem. He was sent `gleam-of-the-prize-pulse-marked.wav` (30 s from 0:46 
 and a higher click on the supposed one) and asked whether the high click is on the one. **He answered: the clicks are on the beat and it is on
 the one** ("That song was a challenge. It's on the 1.").
 
+**Roles (step 18), what was learned:**
+- On his song, with each ear keeping its loudest-lately at 0.8: top hits of at least 0.7 fall on places 3, 5
+  and 13 (the snare and something on the "and" of one); at least 0.35 gives steady eighths (the hats); at
+  0.2 nearly every place is filled. So `HEAVY_HIGH` = 0.7 for the kit and `HAT_NOTICE` = 0.35 for the hats.
+  These were chosen on one song.
+- The bass player was copying the hat player's hats as high notes, because it was still learning from the
+  players beside it. With a track on, everyone now learns from the track alone.
+- The hat player kept every place it had ever heard once. Hat and bass players now drop a place heard less
+  than one time in four.
+- In the real band after twelve takes with roles: kit `p.n.n...ppp.n..p`, hats `n.nnn.nnnnnnnnn.` (busy),
+  bass `p.p.p.p.p.p...p.`. Three different parts.
+
 **Playing along with the whole band (step 17), what was learned:**
 - With feel, leaning on another player's hits went wrong: each dragged the others toward notes that were late
   on purpose (unsteadiness 18 to 25 ms). Fixed by measuring another player against where it would play that
@@ -357,7 +373,7 @@ the one** ("That song was a challenge. It's on the 1.").
 
 In order:
 
-0. Done for the whole band in steps 16 and 17. Still to do under this heading: line the click up on the heavy
+0. Done for the whole band in steps 16 to 18, with roles. Still to do under this heading: line the click up on the heavy
    hits only; a second song, to see whether the thresholds hold; and the players all ending up on much the
    same line, which is the next thing to fix (item 2).
 1. **Let a player listen to a real recording.** A player that plays a WAV into the room (convert MP3 with

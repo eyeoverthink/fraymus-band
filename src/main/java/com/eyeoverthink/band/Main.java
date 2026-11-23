@@ -7,7 +7,7 @@ import java.util.Locale;
 public final class Main {
     public static void main(String[] args) throws Exception {
         int answers = 4, together = -1;
-        Path with = null, teach = null, bass = null, hear = null, along = null;
+        Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         double from = 46;
         boolean click = false;
         double tempo = 92;
@@ -25,13 +25,14 @@ public final class Main {
                 case "--click" -> click = args[i + 1].equalsIgnoreCase("on") || args[i + 1].equalsIgnoreCase("yes");
                 case "--tempo" -> tempo = Double.parseDouble(args[i + 1]);
                 case "--with" -> with = Path.of(args[i + 1]);
+                case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         if (along != null) {                                 // the drummer plays along with a recording
@@ -40,10 +41,10 @@ public final class Main {
             Hearing.Bar b = Hearing.oneBar(h);
             String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
             java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
-            Session.Along a = Session.playAlong(wav, drummers, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
+            Session.Along a = Session.playAlong(wav, drummers, hats, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
             for (Session.AlongPart p : a.parts()) {
-                System.out.printf(Locale.ROOT, "%s: went from %s to %s. It believes it heard %s.%n", p.name(), p.patternBefore(), p.patternAfter(), p.believes());
+                System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
                 System.out.printf(Locale.ROOT, "   %d changes taken from what it heard, %d its own idea; %d kept, %d taken back. %d of its %d hits landed within 25 ms of a hit in the recording, %.0f ms apart. Unsteadiness %.1f ms. Listening %.2f to %.2f.%n",
                     p.copied(), p.ownIdeas(), p.kept(), p.takenBack(), p.landedWithIt(), p.hits(), p.apartMs(), p.unsteadyMs(), p.listeningBefore(), p.listeningAfter());
             }

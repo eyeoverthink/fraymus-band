@@ -97,7 +97,15 @@ import java.util.SplittableRandom;
  * the first bar, takes its time from the click, and every two bars moves one place toward what it has been
  * hearing, the way the bass player does with the drummers. It takes on the feel of what it hears as well.
  * A bass player playing along wants the whole of the bottom of the track, not just the heavy hits: that is
- * the bass line. A drummer with a track on learns its part from the track and not from the bass beside it.
+ * the bass line, and none of the top. With a track on, everyone learns their part from the track and not
+ * from the players beside them.
+ *
+ * Roles. What a player listens for follows from what its hands are on. A drummer at the kit takes the heavy
+ * hits from a track: the kick and the snare. A bass player takes the whole bottom of it. A hat player takes
+ * the top of it, light hits and all but the faintest, and nothing from the bottom; with no track it listens for the
+ * bright hits of the players around it and ignores the dark ones. A hat player has one sound, so its
+ * pattern is written with n alone, and its one is a hat. A drummer who moves to the hats brings its old
+ * pattern with it: every place it used to hit, it now hits the hat.
  *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
@@ -166,6 +174,8 @@ public final class Musician implements Player, Hits {
     public static final String FIRST_PATTERN = "p...p...p...p...";
     /** A newborn bass player: its one note, on the one. */
     public static final String FIRST_BASS_PATTERN = "p...............";
+    /** A newborn hat player: one hat, on the one. */
+    public static final String FIRST_HATS_PATTERN = "n...............";
 
     private static final byte REST = Kit.REST, POT = Kit.POT, PAN = Kit.PAN;
     private static final long READY = Math.round(Audio.samples(0.012));
@@ -194,8 +204,11 @@ public final class Musician implements Player, Hits {
     private long lowUsed, highUsed;
     private static final double LOW_PASS = 1 - Math.exp(-2 * Math.PI * 150.0 / Audio.RATE), HIGH_PASS = 1 - Math.exp(-2 * Math.PI * 5000.0 / Audio.RATE);
     /** How loud a hit in the bottom, or in the top, of a recording must be for a drummer to take notice (the loudest lately is 0.8). */
-    static final double HEAVY_LOW = 0.6, HEAVY_HIGH = 0.5;
+    static final double HEAVY_LOW = 0.6, HEAVY_HIGH = 0.7;
+    /** How loud a hit in the top of a recording must be for a hat player to take notice: much less, since hats are light. */
+    static final double HAT_NOTICE = 0.35;
     private static final double LEVEL_FALLS = Math.exp(-1.0 / Audio.samples(4.0));   // an ear forgets how loud things were over a few seconds
+    private final boolean hatsOnly;       // a hat player: one bright sound; listens for the bright hits and the top of a track
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player
     private final PitchEar pitchEar = new PitchEar();
@@ -295,6 +308,12 @@ public final class Musician implements Player, Hits {
         learnsWhilePlaying = true;
     }
 
+    /** A hat player. Call {@link #alongATrackFrom} to have it play along with a track. */
+    public static Musician onHats(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                                  int ticksSoFar, String patternSoFar, int bars, long seed) {
+        return new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, new Hats());
+    }
+
     /** A bass player joining others who are already playing. It comes in after a bar. */
     public static Musician onBass(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                   int ticksSoFar, String patternSoFar, int notesSoFar, int bars, long seed) {
@@ -322,7 +341,8 @@ public final class Musician implements Player, Hits {
                     int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars, Instrument hands) {
         this.hands = hands;
         this.oneNote = hands instanceof Bass;
-        this.learnsWhilePlaying = oneNote;
+        this.hatsOnly = hands instanceof Hats;
+        this.learnsWhilePlaying = oneNote || hatsOnly;
         this.bass = oneNote ? (Bass) hands : null;
         this.withARecord = withARecord;
         this.teachBars = teachBars;
@@ -334,6 +354,7 @@ public final class Musician implements Player, Hits {
         this.upFirst = (seed & 2) == 0;
         this.ticks = ticksSoFar;
         for (int i = 0; i < SLOTS; i++) pattern[i] = Kit.read(i < patternSoFar.length() ? patternSoFar.charAt(i) : '.');
+        if (hatsOnly) { for (int i = 0; i < SLOTS; i++) if (pattern[i] != REST) pattern[i] = PAN; pattern[0] = PAN; }   // every place it hit, it now hits the hat
         this.bars = answers * TURN;
         this.allBars = bars + barsTogether;
         this.comfortable = Audio.periodOf(comfortableBpm);
@@ -411,10 +432,10 @@ public final class Musician implements Player, Hits {
         lowEar.listen(lowPart, n, blockStart);
         // A drummer takes notice only of the heavy hits. In the bottom of a song the kick stands above the bass
         // line; in the top the snare stands above the hats. A bass player wants the whole of the bottom: that
-        // is the bass line it has come to learn.
-        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (lowEar.hitLoud() >= (oneNote ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        // is the bass line it has come to learn. A hat player wants the whole of the top and none of the bottom.
+        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (!hatsOnly && lowEar.hitLoud() >= (oneNote ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
         highEar.listen(highPart, n, blockStart);
-        if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if (highEar.hitLoud() >= HEAVY_HIGH) someoneElse(Math.round(highEar.hitTime() - earTakes), true, highEar.hitLoud(), true); }
+        if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if (!oneNote && highEar.hitLoud() >= (hatsOnly ? HAT_NOTICE : HEAVY_HIGH)) someoneElse(Math.round(highEar.hitTime() - earTakes), true, highEar.hitLoud(), true); }
     }
 
     /** A click in its ears. */
@@ -444,8 +465,8 @@ public final class Musician implements Player, Hits {
         double tick = clock.period() / ticks;
         if (loud > heaviest) heaviest = loud;
         if (mode == TOGETHER) {
-            // With a track on, a drummer learns its part from the track and not from the bass player beside it.
-            if (learnsWhilePlaying && (fromTrack || !fullMix || oneNote)) noteWhatItHears(at, kind, loud, tick, fromTrack);
+            // With a track on, everyone learns their part from the track and not from the players beside them.
+            if (learnsWhilePlaying && (fromTrack || !fullMix)) noteWhatItHears(at, kind, loud, tick, fromTrack);
             if (!fromTrack) alongside(at, loud, tick);       // a track will not lean back, and its hits have a feel of their own
             return;
         }
@@ -518,6 +539,7 @@ public final class Musician implements Player, Hits {
     /** While it plays: which of its places was that hit nearest to? A bass player only notes the dark ones. */
     private void noteWhatItHears(long at, byte kind, double loud, double tick, boolean fromTrack) {
         if (oneNote && kind != POT && notes < 2) return;     // a bass player with one note has no use for the bright hits
+        if (hatsOnly && kind != PAN) return;                 // and a hat player none for the dark ones
         int barTicks = PULSES * ticks, back = 0;
         double off = Double.MAX_VALUE;
         for (int b = 0; b <= 2; b++) {
@@ -785,7 +807,7 @@ public final class Musician implements Player, Hits {
     private void believe() {
         callsHeard++;
         for (int s = 0; s < SLOTS; s++) {
-            if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN)) votes[hearing[s]][s]++;   // a bass player with one note has no use for the bright hits
+            if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s]++;   // a bass player with one note has no use for the bright hits
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
         }
@@ -809,11 +831,10 @@ public final class Musician implements Player, Hits {
     /** A place where it heard something other than what it plays. A pulse is never left empty. */
     private boolean wants(int s) {
         if (lesson[s] == pattern[s]) return false;
-        if (!oneNote) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
-        // A bass player adds a note where it believes there is a pot. It takes one away only when it has
-        // listened at least four times this session and never once heard a pot there: not hearing something
-        // is weak evidence that it is not there.
-        return lesson[s] != REST || (callsHeard >= 4 && votes[POT][s] == 0 && votes[PAN][s] == 0);
+        if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
+        // A bass player or a hat player adds a note where it believes there is one to follow, and takes one away
+        // where it has listened at least four times and heard something there less than one time in four.
+        return lesson[s] != REST || (callsHeard >= 4 && 4 * (votes[POT][s] + votes[PAN][s]) < callsHeard);
     }
 
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
@@ -823,7 +844,8 @@ public final class Musician implements Player, Hits {
         if (slot == 0) return false;
         if (chance.nextInt(10) < habit[slot]) { ideasHeldBack++; return false; }   // too settled there to bother
         byte was = pattern[slot];
-        if (oneNote) pattern[slot] = was != REST ? REST : notes >= 2 && chance.nextBoolean() ? PAN : POT;
+        if (hatsOnly) pattern[slot] = was != REST ? REST : PAN;
+        else if (oneNote) pattern[slot] = was != REST ? REST : notes >= 2 && chance.nextBoolean() ? PAN : POT;
         else pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
                       : was == POT ? PAN
                       : slot % (SLOTS / PULSES) == 0 ? POT : REST;

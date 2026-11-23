@@ -92,8 +92,8 @@ public final class Life {
     /** Note how many it has now. It is written with the next session. */
     public void notes(int now) { notes = now; set("notes", Integer.toString(now)); }
 
-    /** What it plays, for a life that does not say yet. */
-    public void plays(String what) { sounds = what; }
+    /** What its hands are on. A player who has moved to a different instrument has that written into its life. */
+    public void plays(String what) { if (!what.equals(sounds)) { sounds = what; if (lines.stream().anyMatch(l -> l.trim().startsWith("sounds:"))) set("sounds", what); } }
 
     /** The sixteen places of its bar: p for the pot, n for the pan, a dot for nothing. */
     public String pattern() { return pattern; }

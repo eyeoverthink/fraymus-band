@@ -254,22 +254,33 @@ public final class Session {
      */
     public static Along playAlong(Path wav, java.util.List<Path> drummerLives, Path bassLife, String recordingName, float[] sound,
                                   Hearing.Heard heard, Hearing.Bar bar, double fromSeconds, int bars, long seed) throws IOException {
+        return playAlong(wav, drummerLives, null, bassLife, recordingName, sound, heard, bar, fromSeconds, bars, seed);
+    }
+
+    /** The same, with a hat player as well if a life is given for one. The order is drummers, hat player, bass player. */
+    public static Along playAlong(Path wav, java.util.List<Path> drummerLives, Path hatsLife, Path bassLife, String recordingName, float[] sound,
+                                  Hearing.Heard heard, Hearing.Bar bar, double fromSeconds, int bars, long seed) throws IOException {
         Metronome metronome = new Metronome(bar.bpm(), 0.25);
         double start = metronome.firstBarSeconds(), barSeconds = Musician.PULSES * 60.0 / bar.bpm();
         double one = bar.aOneAtSeconds() + Math.ceil((fromSeconds - bar.aOneAtSeconds()) / barSeconds) * barSeconds;   // the first one at or after there
         float loudest = 1e-9f;                               // found once, before anything plays
         for (float v : sound) loudest = Math.max(loudest, Math.abs(v));
-        int n = drummerLives.size() + (bassLife == null ? 0 : 1), bassAt = bassLife == null ? -1 : n - 1;
-        float trackLevel = (n == 1 ? 0.55f : 0.45f) / loudest, playerLevel = n == 1 ? 1f : 0.55f;   // room for everyone on top without clipping
+        int n = drummerLives.size() + (hatsLife == null ? 0 : 1) + (bassLife == null ? 0 : 1), bassAt = bassLife == null ? -1 : n - 1;
+        int hatsAt = hatsLife == null ? -1 : drummerLives.size();
+        float trackLevel = (n == 1 ? 0.55f : 0.45f) / loudest, playerLevel = n == 1 ? 1f : n <= 3 ? 0.55f : 0.45f;   // room for everyone on top without clipping
         Recording recording = new Recording(sound, one - start, 1f / loudest);
         Life[] lives = new Life[n];
         Musician[] players = new Musician[n];
         String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
         for (int i = 0; i < n; i++) {
-            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN)
+                     : i == hatsAt ? Life.open(hatsLife, "the hat player", Musician.FIRST_HATS_PATTERN)
+                     : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
                 ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)
+                : i == hatsAt
+                ? Musician.onHats(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, chance)
                 : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, start, chance);
             players[i].alongATrackFrom(start);
             players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feel());

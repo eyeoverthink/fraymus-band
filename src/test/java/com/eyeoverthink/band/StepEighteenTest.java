@@ -12,8 +12,8 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Step seventeen: the whole band plays along with a recording, the track in their headphones. */
-class StepSeventeenTest {
+/** Step eighteen: roles. A drummer on kick and snare, a hat player, a bass player. */
+class StepEighteenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -392,6 +392,58 @@ class StepSeventeenTest {
         }
         assertTrue(steady >= 3, "everyone kept their time in " + steady + " of 4 bands");
         assertTrue(moved >= 3, "both drummers moved toward the song's drum part in " + moved + " of 4 bands");
+    }
+
+    @Test
+    void theHatIsBrightToTheEarAndAHatPlayerPlaysNothingElse(@TempDir Path dir) throws Exception {
+        Ear ear = new Ear();
+        Hats hats = new Hats();
+        hats.strike(Kit.PAN, 1f);
+        float[] air = new float[Audio.RATE / 2];
+        for (int i = 1000; i < air.length; i++) air[i] = hats.next();
+        ear.listen(air, air.length, 0);
+        assertEquals(1, ear.hitsEver(), "one hat is one hit");
+        assertTrue(ear.hitBright(), "and it is bright");
+        assertEquals("a hi-hat (n)", hats.describe());
+    }
+
+    /** A made-up song with a quiet hat on every eighth. A drummer who moves to the hats should find them; the kit drummer should not. */
+    @Test
+    void eachPlayerTakesItsOwnPartFromTheSong(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = madeUpSong(drums, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        int hatsRight = 0, kitRight = 0, steady = 0;
+        for (int d = 0; d < 4; d++) {
+            Path kit = dir.resolve(d + "a.life"), hat = dir.resolve(d + "b.life"), bass = dir.resolve(d + "c.life");
+            for (Path life : new Path[] {kit, hat})
+                Files.write(life, List.of("name: " + (life == kit ? "the drummer" : "the second drummer"), "age: 0", "listens to itself: 0.60", "sounds: a pot (p) and a pan (n)",
+                    "ticks to the pulse: 4", "pattern: p...p...p...p...", "", "session 1: bars=400, hits=3000, made up for a test"));
+            Files.write(bass, List.of("name: the bass player", "age: 0", "listens to itself: 0.60", "ticks to the pulse: 2", "notes: 2",
+                "pattern: p...............", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+            Session.Along take = null;
+            for (int s = 0; s < 4; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(kit), hat, bass, "made up", song, heard, bar, 5, 24, 100L * d + s);
+            assertEquals(3, take.parts().size());
+            assertTrue(take.peak() > 0.2f && take.peak() < 1.0f, "loud enough to hear, never clipped: " + take.peak());
+            Session.AlongPart k = take.parts().get(0), h = take.parts().get(1), b = take.parts().get(2);
+            assertEquals("a hi-hat (n)", h.plays());
+            assertTrue(Files.readAllLines(hat).contains("sounds: a hi-hat (n)"), "moving to the hats is written into its life");
+            assertEquals('n', h.patternAfter().charAt(0), "a hat player's one is a hat");
+            int onEighths = 0, offEighths = 0;
+            for (int i = 0; i < 16; i++) {
+                assertNotEquals('p', h.patternAfter().charAt(i), "a hat player has no pot: " + h.patternAfter());
+                if (h.patternAfter().charAt(i) == 'n') { if (i % 2 == 0) onEighths++; else offEighths++; }
+            }
+            if (onEighths >= 6 && offEighths <= 2) hatsRight++;
+            if (drums.matches(k.patternAfter()) >= 14) kitRight++;
+            if (k.unsteadyMs() < 14 && h.unsteadyMs() < 14 && b.unsteadyMs() < 14) steady++;
+            if (d == 0) System.out.printf(Locale.ROOT, "ROLES the song has drums %s and a hat on every eighth; the kit drummer plays %s, the hat player %s, the bass player %s%n",
+                drums.bar(), k.patternAfter(), h.patternAfter(), b.patternAfter());
+        }
+        assertTrue(hatsRight >= 3, "the hat player found the eighth-note hats in " + hatsRight + " of 4 bands");
+        assertTrue(kitRight >= 3, "the kit drummer stayed on the kick and snare in " + kitRight + " of 4 bands");
+        assertTrue(steady >= 3, "everyone kept their time in " + steady + " of 4 bands");
     }
 
     /** The record, with something loud in the middle of the sound laid over it, the way a voice sits over the drums. */

@@ -7,7 +7,8 @@ A band of players built on the computer. Each one owns an instrument, keeps its 
 into a shared room, and has to grow up before it can play well. Java, no interpreted code, every buffer
 claimed before the first sample.
 
-So far there are three players: two drummers with a pot and a pan, and a bass player with two notes. There
+So far there are three players: a drummer with a pot and a pan, a hat player, and a bass player with two
+notes. There
 is a record for them to learn from and a click for their ears.
 
 ## What the drummer does
@@ -108,6 +109,14 @@ a track on learns its part from the track, not from the bass player beside it. N
 in the song. The tool that sets the click finds the tempo and the one beforehand, and a person should
 check the one by ear (`--hear` writes a clip for that).
 
+**Roles.** What a player listens for follows from what its hands are on. A drummer at the kit takes the
+heavy hits from a track: the kick in the bottom, the snare in the top. A bass player takes the whole
+bottom and none of the top. A hat player takes the top, light hits and all but the faintest, and none of
+the bottom. A hat player has one sound, a closed hi-hat, so its pattern is written with `n` alone and its
+one is a hat. A drummer who moves to the hats brings its old pattern with it. With a track on, everyone
+learns their part from the track and not from the players beside them. Hat and bass players drop a
+place they have listened to four times and heard something at less than one time in four.
+
 Players judge each other's timing against where they themselves would play a place, feel included. Someone
 who plays a place late on purpose is not behind.
 
@@ -136,7 +145,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.17.0.jar
+    java -jar target/fraymus-band-0.18.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -144,37 +153,37 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.17.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.18.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.17.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.18.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.17.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.18.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
-after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer and `--bass LIFE` for the
+after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
 bass player. The take is the song and the players together. Check the one
 first with `--hear`, below.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.17.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.18.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
@@ -288,6 +297,11 @@ player starting with one note on the one, three takes. The drummers end on `p...
 `p...n...p.ppnp..` (the song's drums are `p...n...p.p.n...`), the bass player on `p...n.p.p.p.n.p.`, and
 everyone keeps their time in at least three bands of four.
 
+With roles, on the same made-up song (which has a quiet hat on every eighth): the kit drummer ends on
+`p...n...p.ppn...`, the hat player on `n...n...n.n.n.n.`, the bass player on `p.p.p.p.p.p.p.p.`. In at
+least three bands of four the hat player finds the eighth-note hats, the kit drummer stays on the kick
+and snare, and everyone keeps their time.
+
 **Feel.** *Honest.* Six practised drummers raised for six sessions on each of two records that use the
 same places and opposite feels, with a click.
 
@@ -369,8 +383,9 @@ drummer plays or hears a place its ticks cannot reach.
 - Playing along has only been tried on one real song. How heavy a hit must be to count (0.6 in the bottom,
   0.5 in the top) was chosen on that song and may not suit another.
 - In the bottom of a song a drummer cannot tell a loud bass note from a kick.
-- Playing along, everyone ends up on much the same line. The drummers hear the same heavy hits, and the
-  bass player follows the bottom of the track at the eighth notes it can reach.
+- Roles are given with the instrument, not found. Nobody decides for itself what the band is missing.
+- The hat player is busy. In a real song the top of the sound is full of things that are not hats.
+- The bass player follows where the bass line's notes fall, not which notes they are.
 - A player's feel can pick up the lateness of a slow bass note as if it were a late kick.
 - Feel is one number for timing and one for weight at each place. It cannot hold swing: a swung note is
   about 100 ms off the straight tick, which is a different place, and the players have no triplet ticks.
@@ -392,7 +407,7 @@ drummer plays or hears a place its ticks cannot reach.
 - `Ear` hears hits in the room
 - `Room` the shared air: each player's sound, and how long it takes to reach the others
 - `PitchEar` how a player hears whether its own note was in tune
-- `Instrument`, `Kit`, `Bass` what a player's hands are on; `Thump`, `Pan` the kit's two sounds
+- `Instrument`, `Kit`, `Hats`, `Bass` what a player's hands are on; `Thump`, `Pan` the kit's two sounds
 - `Lesson`, `Teacher` the bar to learn and the record that plays it
 - `Hearing` what the players' ear makes of a recording; `Recording` a song playing in the room
 - `Metronome` the click in the players' ears
