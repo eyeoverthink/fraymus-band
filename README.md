@@ -150,7 +150,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.22.0.jar
+    java -jar target/fraymus-band-0.23.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -158,28 +158,28 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.22.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.22.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.23.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.22.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.22.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.23.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
 after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
@@ -188,7 +188,7 @@ first with `--hear`, below.
 
 ## Ask a player for something
 
-    java -jar target/fraymus-band-0.22.0.jar --along songs/some-song.wav --bass lives/bass.life \
+    java -jar target/fraymus-band-0.23.0.jar --along songs/some-song.wav --bass lives/bass.life \
         --ask-bass ......n.......n. --in-words "grab the end of two and four on an up tick"
 
 The bandleader can ask a player for particular places in the bar: sixteen characters, `p` or `n` where
@@ -211,7 +211,8 @@ note with the note at the same place one, two, four and eight bars before, and t
 that comes round nearly as well as the best. Until it can say, a phrase is one bar. Once it has listened to a
 place four times and heard the same note at least half of them, its hand goes to that note there; where
 it is not sure it holds the last note it is sure of. Its high note is the octave above. The line is
-written into its life (`line:`), and the report says how many of its notes were on the note the song was
+written into its life under the song's name (`line from "the song":`), so what it takes from one song is
+kept apart from what it takes from another, and the report says how many of its notes were on the note the song was
 on at that moment.
 
 Measured with the real band on one song, whose line the ear makes out as C, D, Eb, G and Bb: on the first
@@ -219,11 +220,12 @@ take 26 of the bass's 86 notes were on the song's note (it started on E, as it a
 84 of 89. Out of tune by 5 cents by its own ear. On a made-up song with a known line: 107 of 107 by the
 third take, every believed note right. The phrase: on the real song the line came round 86 times in 100
 after four bars, 13 after one and 9 after two, so it believes four. Made-up lines of one, two, four and
-eight bars were each found.
+eight bars were each found. Kept apart: after three takes of one made-up song and three of another with
+no note in common, back on the first song 190 of 190 notes were on its note from the first bar.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.22.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.23.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
@@ -430,7 +432,8 @@ drummer plays or hears a place its ticks cannot reach.
 - Roles are given with the instrument, not found. Nobody decides for itself what the band is missing.
 - The bass player learns which note belongs at each place of a phrase of one, two, four or eight bars; no
   other length. It has
-  one line, not one per song. It does not learn how long a note is held.
+  one line per song, not one per section of a song. Only the line is kept by song so far; pattern and feel
+  are not. It does not learn how long a note is held.
 - Whether a note was "on the song's note" is judged by the same ear that learned the line.
 - A player's feel can pick up the lateness of a slow bass note as if it were a late kick.
 - Feel is one number for timing and one for weight at each place. It cannot hold swing: a swung note is

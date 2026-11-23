@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.22.0. 45 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.23.0. 47 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -94,6 +94,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 20 | Being asked. The bandleader can ask a player for particular places (`--ask-bass`, `--ask-hats`, `--ask-drummer`, sixteen characters of `p`, `n` and dots, with `--in-words` for what he said). The player takes up what its ticks and notes can reach, keeps it, and the ask is written into its life (`asked for:`) so it holds in later sessions. Vaughn's first ask: "The bass, should grab the last measure of the 2 and four on an up tick." The bass now plays its high note at places 7 and 15 (`......n.......n.`). |
 | 21 | The line. A bass player with both notes hears which note the bottom of a track is on after each tick (`LineEar`), keeps a four-bar phrase of notes counted from the song's first bar, and moves its hand to the note it believes for each place (`Bass.tune`). The high note is the octave above. Found on the way: **the bass had been playing E under Vaughn's song, whose bass line is C, D, Eb, G, Bb**. After four takes the real bass plays the song's note for 84 of 89 notes (first take: 26 of 86). |
 | 22 | The phrase length is found by ear, not given. The bass compares each note it hears with the note at the same place 1, 2, 4 and 8 bars before; the phrase is the shortest length that comes round at least 0.85 as well as the best. Until it can say, a phrase is one bar. It keeps eight bars of places and pools those that fall together. Its life has a `phrase:` header. On Vaughn's song: 4 bars (came round 86% of the time after four bars, 13% after one, 9% after two). Made-up lines of 1, 2, 4 and 8 bars are each found. |
+| 23 | Influences kept apart, first part (item 2 of section 8). A bass player's line and phrase are kept in its life under the song's name (`line from "song":`, `phrase from "song":`); a new song starts with no line and cannot overwrite another's. A line written by steps 21 and 22 with no name is taken to belong to the last song the player played along with. Also fixed: a bass with four ticks to the pulse never finished listening for a note (each tick cut off the one before). |
 
 ### The players that exist (do not reset these)
 
@@ -111,7 +112,8 @@ with a real life file. There is a record that plays lessons and a click track.
   and it plays `p.p.p.n...p...n.` (the low note at place 11 comes and goes from take to take). **In step 21
   it learned the line of "Gleam of the Prize"**: `C2 C2 C2 C2 D2 Eb2 . D2 | D2 D2 . . Eb2 . . Eb2 |
   Eb2 Eb2 D2 C2 C2 C2 . C2 | C2 C2 G1 Bb1 C2 . . C2` (24 of 32 places; its life has a `line:` header). In step 22 it found by ear that the phrase is four bars
-  (`phrase: 28/222 21/231 203/236 153/185`).
+  (`phrase: 28/222 21/231 203/236 153/185`). Since step 23 both are kept under the song's name:
+  `line from "gleam of the prize":` and `phrase from "gleam of the prize":`.
 
 **These files are the players' lived history. Never hand-edit them, never delete them, never regenerate
 them.** Tests use throwaway lives in temporary folders. If a format changes, make the reader accept the
@@ -124,11 +126,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.22.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.22.0.jar --click on
-    java -jar target/fraymus-band-0.22.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.22.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.22.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.23.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.23.0.jar --click on
+    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.23.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.23.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -172,7 +174,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyTwoTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentyThreeTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -274,6 +276,11 @@ Given, as fixed rules (be honest about these):
   agent cannot hear; the reports only counted timing. Since step 21 the report says how many of the bass's
   notes were on the note the song was on. When a new kind of thing is played, add a measure for whether it
   is right before sending Vaughn the take.
+- **With four ticks to the pulse the bass heard no notes at all** (steps 21 and 22): the ear on the line needs
+  0.24 s after a tick and a new tick came every 0.16 s and started it again. The real bass has two ticks, so
+  it did not show; a test with a second song found it. Now a tick that comes while it is listening is let go.
+- Small changes in what a player hears change everything after (which ticks it earns, its pattern). A test
+  that assumed the bass stayed on two ticks broke for that reason. Tests should ask the player what it has.
 - A test that wanted a bass player without its second note used a practised one-note life; it earned the
   note during the take. Use a newborn for that.
 
@@ -335,7 +342,7 @@ Given, as fixed rules (be honest about these):
 - **The line (steps 21 and 22):** the phrase can only be 1, 2, 4 or 8 bars; a three- or twelve-bar phrase
   would be heard wrongly. In the first take after step 22 the real bass went back to a one-bar phrase for the
   first bars (25 notes off the song's note) until it had heard enough; that will not recur for this song, but
-  a new song starts from what it believed about the last one. One line per player: a second
+  One line per song since step 23, but still one per song, not per section: a second
   song, or a second section of this one, would overwrite it place by place. "On the note the song was on" is
   judged by the same ear that learned the line, so if the ear is wrong (a kick drum's own pitch, the wrong
   octave) both are wrong together; only Vaughn's ear can check it. It listens for 0.2 s after each tick,
@@ -354,7 +361,9 @@ Given, as fixed rules (be honest about these):
 **Steps 20 and 21 are waiting on Vaughn's ear (2026-11-22).** Step 20: is the bass's up tick at the end of
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
-work. Continue" after step 20 without correcting the reading. Possible next steps: a line per song or per section; note lengths; the drummer telling a bass note from a kick by pitch.
+work. Continue" after step 20 without correcting the reading. Possible next steps: the rest of item 2 below (a player's pattern and feel are still one mix of everything
+it has heard, not kept by song, and its own ideas are not yet borrowed from one influence into another);
+**a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people
 who inspired me and they need inspiration also."** He is to be their first influence. He sent his own song,

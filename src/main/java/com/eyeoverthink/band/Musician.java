@@ -1012,7 +1012,7 @@ public final class Musician implements Player, Hits {
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
-            if (lineEar != null && notes >= 2 && fullMix && mode == TOGETHER && !last) { lineEar.noteAt(Math.round(clock.nextBeat())); hearingAt = bar * SLOTS + slot; }
+            if (lineEar != null && notes >= 2 && fullMix && mode == TOGETHER && !last && !lineEar.busy()) { lineEar.noteAt(Math.round(clock.nextBeat())); hearingAt = bar * SLOTS + slot; }
             if (sound != REST) {
                 strikePush = last ? 0 : feelOf(slot);
                 long meant = Math.round(clock.nextBeat() + strikePush + chance.nextGaussian() * Audio.samples(slip()));

@@ -55,6 +55,9 @@ public final class LineEar {
     /** A tick falls at this moment: listen for the note that is sounding just after it. */
     public void noteAt(long tick) { from = tick + SKIP; }
 
+    /** True while it is still listening after a tick. It cannot start on another until it has finished with this one. */
+    public boolean busy() { return from >= 0; }
+
     /** True once enough of the track has gone by since that tick. */
     public boolean ready(long now) { return from >= 0 && now >= from + (long) (PIECE + 1) * EVERY; }
 

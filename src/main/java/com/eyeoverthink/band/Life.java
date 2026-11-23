@@ -25,8 +25,8 @@ public final class Life {
     private int notes = 1;
     private String habits = "0000000000000000";
     private String feel = "";
-    private String line = "";
-    private String phrase = "";
+    private final java.util.Map<String, String> lineFrom = new java.util.LinkedHashMap<>(), phraseFrom = new java.util.LinkedHashMap<>();
+    private String lineFromSomewhere = "", phraseFromSomewhere = "", lastSong;
     private String asked = "................";
     private String sounds = "a pot (p) and a pan (n)";
     private String pattern = Musician.FIRST_PATTERN;
@@ -47,14 +47,18 @@ public final class Life {
                 else if (s.startsWith("listens to itself:")) life.listening = Double.parseDouble(s.substring(18).trim());
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
                 else if (s.startsWith("asked for:")) life.asked = s.substring(10).trim();
-                else if (s.startsWith("phrase:")) life.phrase = s.substring(7).trim();
-                else if (s.startsWith("line:")) life.line = s.substring(5).trim();
+                else if (s.startsWith("phrase from \"") && s.indexOf("\":") > 0) life.phraseFrom.put(s.substring(13, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("line from \"") && s.indexOf("\":") > 0) life.lineFrom.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("phrase:")) life.phraseFromSomewhere = s.substring(7).trim();     // how steps 21 and 22 wrote it, with no song named
+                else if (s.startsWith("line:")) life.lineFromSomewhere = s.substring(5).trim();
                 else if (s.startsWith("feel:")) life.feel = s.substring(5).trim();
                 else if (s.startsWith("habits:")) life.habits = s.substring(7).trim();
                 else if (s.startsWith("notes:")) life.notes = Integer.parseInt(s.substring(6).trim());
                 else if (s.startsWith("ticks to the pulse:")) life.ticks = Integer.parseInt(s.substring(19).trim());
                 else if (s.startsWith("pattern:")) life.pattern = s.substring(8).trim();
                 else if (s.startsWith("session ")) {
+                    int song = s.indexOf("played along with \"");
+                    if (song >= 0 && s.indexOf('"', song + 19) > 0) life.lastSong = s.substring(song + 19, s.indexOf('"', song + 19));
                     life.sessions++;
                     int at = s.indexOf("hits=");
                     if (at < 0) at = s.indexOf("pulses=") + 2;      // how the first sessions were written
@@ -83,14 +87,36 @@ public final class Life {
     /** Note where its leaning has got to. It is written with the next session. */
     public void leaning(double now) { leaning = now; set("leans on the others", String.format(Locale.ROOT, "%.2f", now)); }
 
-    /** What a bass player has heard about how long a phrase is: for one, two, four and eight bars, how often the line came round of how often it compared. */
-    public String phrase() { return phrase; }
-    public void phrase(String now) { phrase = now; set("phrase", now); }
+    /**
+     * What a bass player has heard about how long a phrase is in this song: for one, two, four and eight bars,
+     * how often the line came round of how often it compared. Nothing, for a song it has not played along with.
+     */
+    public String phrase(String song) { return phraseFrom.getOrDefault(song, song.equals(lastSong) ? phraseFromSomewhere : ""); }
+    public void phrase(String song, String now) { namedNow(); phraseFrom.put(song, now); set("phrase from \"" + song + "\"", now); }
 
-    /** A bass player's line: for each place in eight bars, the note, how often it heard that note, how often it listened. */
-    public String line() { return line; }
-    /** Note where its line has got to. It is written with the next session. */
-    public void line(String now) { line = now; set("line", now); }
+    /**
+     * A bass player's line for this song: for each place in eight bars, the note, how often it heard that
+     * note, how often it listened. What it takes from one song it keeps under that song's name, apart from
+     * what it took from any other.
+     */
+    public String line(String song) { return lineFrom.getOrDefault(song, song.equals(lastSong) ? lineFromSomewhere : ""); }
+    /** Note where its line for this song has got to. It is written with the next session. */
+    public void line(String song, String now) { namedNow(); lineFrom.put(song, now); set("line from \"" + song + "\"", now); }
+    /** The songs it has a line from. */
+    public java.util.Set<String> songs() { namedNow(); return java.util.Collections.unmodifiableSet(lineFrom.keySet()); }
+
+    /** A line written before lines were kept by song belongs to the last song it played along with. */
+    private void namedNow() {
+        if (lastSong != null && !lineFromSomewhere.isEmpty() && !lineFrom.containsKey(lastSong)) {
+            lineFrom.put(lastSong, lineFromSomewhere);
+            for (int i = 0; i < lines.size(); i++) if (lines.get(i).trim().startsWith("line:")) lines.set(i, "line from \"" + lastSong + "\": " + lineFromSomewhere);
+        }
+        if (lastSong != null && !phraseFromSomewhere.isEmpty() && !phraseFrom.containsKey(lastSong)) {
+            phraseFrom.put(lastSong, phraseFromSomewhere);
+            for (int i = 0; i < lines.size(); i++) if (lines.get(i).trim().startsWith("phrase:")) lines.set(i, "phrase from \"" + lastSong + "\": " + phraseFromSomewhere);
+        }
+        lineFromSomewhere = ""; phraseFromSomewhere = "";
+    }
 
     /** What the bandleader has asked it for: p or n at each place asked, a dot elsewhere. */
     public String asked() { return asked; }

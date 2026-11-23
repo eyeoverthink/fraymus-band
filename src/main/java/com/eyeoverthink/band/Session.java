@@ -286,7 +286,7 @@ public final class Session {
                 : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, start, chance);
             players[i].alongATrackFrom(start);
             players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feel()); players[i].asked(lives[i].asked());
-            if (i == bassAt) { players[i].line(lives[i].line()); players[i].phrase(lives[i].phrase()); players[i].phraseFrom((int) Math.round((one - bar.aOneAtSeconds()) / barSeconds)); }
+            if (i == bassAt) { players[i].line(lives[i].line(recordingName)); players[i].phrase(lives[i].phrase(recordingName)); players[i].phraseFrom((int) Math.round((one - bar.aOneAtSeconds()) / barSeconds)); }
             lives[i].plays(players[i].plays());
         }
         Room room = new Room(n, NEAR, ACROSS);
@@ -335,7 +335,7 @@ public final class Session {
                     unsteady, lives[i].listening(), d.listening(), lives[i].ticks(), d.ticks(), d.notes(), d.askedAndPlaying(), d.askedAndWaiting(),
                     d.lineInWords(), d.linePlaces(), d.linePlacesInReach(), d.withTheSong(), d.againstTheSong(), d.outOfTuneCents(), d.phraseBars(), d.phrase()));
                 lives[i].leaning(d.leaning()); lives[i].habits(d.habits()); lives[i].feel(d.feel());
-                if (i == bassAt) { lives[i].notes(d.notes()); if (d.notes() >= 2) { lives[i].line(d.line()); lives[i].phrase(d.phrase()); } }
+                if (i == bassAt) { lives[i].notes(d.notes()); if (d.notes() >= 2) { lives[i].line(recordingName, d.line()); lives[i].phrase(recordingName, d.phrase()); } }
                 lives[i].rememberAlong(recordingName, bars, hits, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);
             }
             return new Along(recordingName, bar.bpm(), one, bars, Audio.seconds(out.samples()), parts, out.peak(), wav);

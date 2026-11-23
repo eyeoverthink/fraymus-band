@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyTwoTest {
+class StepTwentyThreeTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -385,7 +385,7 @@ class StepTwentyTwoTest {
             Session.AlongPart a = take.parts().get(0), b = take.parts().get(1), c = take.parts().get(2);
             if (drums.matches(a.patternAfter()) > 12 && drums.matches(b.patternAfter()) > 12) moved++;
             assertEquals("the bass player", c.name());
-            for (int i = 0; i < 16; i++) if (i % 2 != 0) assertEquals('.', c.patternAfter().charAt(i), "the bass player has two ticks to the pulse and plays only what they reach");
+            for (int i = 0; i < 16; i++) if (i % (4 / c.ticksAfter()) != 0) assertEquals('.', c.patternAfter().charAt(i), "the bass player plays only what its ticks reach (it has " + c.ticksAfter() + " to the pulse)");
             assertTrue(c.hits() > 24, "the bass player found more to play than its one note on the one: " + c.patternAfter());
             assertTrue(Files.readAllLines(bass).get(Files.readAllLines(bass).size() - 1).contains("played along with \"made up\""));
             if (d == 0) System.out.printf(Locale.ROOT, "BAND ALONG the song's drums are %s; the drummers play %s and %s, the bass player %s%n", drums.bar(), a.patternAfter(), b.patternAfter(), c.patternAfter());
@@ -926,7 +926,7 @@ class StepTwentyTwoTest {
         assertTrue(last.withTheSong() >= 40, "it played plenty of notes while it could hear the song's note: " + last.withTheSong());
         assertTrue(last.withTheSong() >= 9 * last.againstTheSong(), "and nine in ten were the song's note: " + last.withTheSong() + " to " + last.againstTheSong());
         assertTrue(last.outOfTuneCents() < 15, "and it still plays in tune, by its own ear, wherever its hand has gone: " + last.outOfTuneCents());
-        assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("line: ")), "the line is written into its life");
+        assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("line from \"made up\": ")), "the line is written into its life");
 
         Session.AlongPart again = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5 + 2 * 4 * 60.0 / 92, 24, 99).parts().get(1);
         assertTrue(again.withTheSong() >= 9 * again.againstTheSong(), "starting two bars further into the song it still knows where it is in the phrase: " + again.withTheSong() + " to " + again.againstTheSong());
@@ -935,7 +935,7 @@ class StepTwentyTwoTest {
         assertEquals(0, young.linePlaces(), "a newborn bass player has not earned its second note and is not listening for a line yet");
         assertEquals(1, young.notes());
         assertEquals(0, young.withTheSong() + young.againstTheSong());
-        assertTrue(Files.readAllLines(oneNote).stream().noneMatch(l -> l.startsWith("line: ")));
+        assertTrue(Files.readAllLines(oneNote).stream().noneMatch(l -> l.startsWith("line")));
     }
 
     @Test
@@ -982,8 +982,48 @@ class StepTwentyTwoTest {
             System.out.printf(Locale.ROOT, "PHRASE a line of %d bars: it believes %d (came round after 1, 2, 4, 8 bars: %s); %d on the song's note, %d not%n", bars[k], take.phraseBars(), take.phraseHeard(), take.withTheSong(), take.againstTheSong());
             assertEquals(bars[k], take.phraseBars(), "a line of " + bars[k] + " bars: " + take.phraseHeard());
             assertTrue(take.withTheSong() >= 9 * take.againstTheSong(), "and it plays it: " + take.withTheSong() + " to " + take.againstTheSong());
-            assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("phrase: ")), "what it heard about the phrase is in its life");
+            assertTrue(Files.readAllLines(bass).stream().anyMatch(l -> l.startsWith("phrase from \"made up\": ")), "what it heard about the phrase is in its life");
         }
         assertEquals(1, Musician.onBass("new", 92.0, 0, 0.6, 1, Musician.FIRST_BASS_PATTERN, 1, 4, 1).phraseBars(), "until it has heard enough to say, a phrase is one bar");
+    }
+
+    @Test
+    void whatAPlayerTakesFromOneSongItKeepsApartFromAnother(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        int[] otherLine = {30, 30, 30, 30, 34, 34, 34, 34,  37, 37, 37, 37, 42, 42, 42, 42};      // two bars, and no note the first song has
+        float[] songA = songWithALine(drums, 40, LINE), songB = songWithALine(drums, 40, otherLine);
+        Hearing.Heard heardA = Hearing.listenLowAndHigh(songA), heardB = Hearing.listenLowAndHigh(songB);
+        Hearing.Bar barA = Hearing.oneBar(heardA), barB = Hearing.oneBar(heardB);
+        java.util.Set<String> inA = new java.util.HashSet<>(List.of("A1", "C2", "D2", "E2", "G1", "B1", ".")), inB = new java.util.HashSet<>(List.of("F#1", "Bb1", "C#2", "F#2", "."));
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2);
+        Session.AlongPart a = null, b = null;
+        for (int s = 0; s < 3; s++) a = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "song a", songA, heardA, barA, 5, 24, 80 + s).parts().get(1);
+        for (int s = 0; s < 3; s++) {
+            b = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "song b", songB, heardB, barB, 5, 24, 90 + s).parts().get(1);
+            for (String note : b.line().replace("|", " ").trim().split("\\s+")) assertTrue(inB.contains(note), "take " + s + " of the second song: " + note + " came from somewhere else: " + b.line());
+        }
+        assertEquals(2, b.phraseBars(), "the second song's phrase is two bars, whatever the first one's was: " + b.phraseHeard());
+        assertTrue(b.withTheSong() >= 9 * b.againstTheSong(), b.withTheSong() + " to " + b.againstTheSong());
+        Session.AlongPart back = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "song a", songA, heardA, barA, 5, 24, 99).parts().get(1);
+        System.out.printf(Locale.ROOT, "APART after three takes of one song, three of another, then back: %d on the first song's note, %d not, from its first bar; phrase %d bars%n", back.withTheSong(), back.againstTheSong(), back.phraseBars());
+        assertEquals(4, back.phraseBars(), "back with the first song, it still knows its phrase is four bars");
+        assertTrue(back.withTheSong() >= 9 * back.againstTheSong(), "and its line, from the first bar: " + back.withTheSong() + " to " + back.againstTheSong());
+        for (String note : back.line().replace("|", " ").trim().split("\\s+")) assertTrue(inA.contains(note), note + " is not in the first song: " + back.line());
+        Life life = Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN);
+        assertEquals(java.util.Set.of("song a", "song b"), life.songs());
+        assertEquals("", life.line("a song it never heard"));
+    }
+
+    @Test
+    void aLineFromBeforeSongsWereNamedBelongsToTheLastSongItPlayedWith(@TempDir Path dir) throws Exception {
+        Path bass = dir.resolve("old.life");
+        Files.write(bass, List.of("name: the bass player", "age: 0", "listens to itself: 0.60", "ticks to the pulse: 2", "notes: 2", "pattern: p...p...p...p...",
+            "line: 36/5/6 - 38/4/4", "phrase: 1/10 2/10 9/10 8/9", "",
+            "session 1: played along with \"an old song\" for 24 bars, hits=100, unsteadiness 8.0 ms"));
+        Life life = Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN);
+        assertEquals("36/5/6 - 38/4/4", life.line("an old song"));
+        assertEquals("1/10 2/10 9/10 8/9", life.phrase("an old song"));
+        assertEquals("", life.line("a new song"));
+        assertEquals(java.util.Set.of("an old song"), life.songs());
     }
 }
