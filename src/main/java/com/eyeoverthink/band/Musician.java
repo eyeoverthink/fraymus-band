@@ -116,6 +116,10 @@ import java.util.SplittableRandom;
  * for: it does not give it back to what it hears. It can hold two at once; a third pushes out the oldest.
  * With nothing to borrow it tries a place by chance, as before, and that is not kept as its own.
  *
+ * Threes. A bar can be counted in threes: twelve places, three to the pulse, as in a shuffle or a slow
+ * blues. A player counts in fours or in threes for life, from the first record it meets. One that counts
+ * in threes has one tick to the pulse, or three once its pulse is even; there is nothing between.
+ *
  * Swing. A place can sit as far behind its tick as the triplet, a third of a sixteenth, and a hit that far
  * behind a tick is still heard as that place. So a player that takes on a record's feel takes on its swing,
  * up to the triplet. Nothing here knows the word; swing is only named when the feel is reported.
@@ -206,6 +210,13 @@ public final class Musician implements Player, Hits {
     /** It can see how much farther away the others are than its own hands, so it knows how much later their sound reaches it. */
     static final double FARTHER = Audio.samples(Session.ACROSS - Session.NEAR);
     public static final String FIRST_PATTERN = "p...p...p...p...";
+    /** A bar counted in threes has twelve places, three to the pulse. A player counts in fours or in threes for life. */
+    public static final int THREES = 12;
+    public static final String FIRST_PATTERN_IN_THREES = "p..p..p..p..";
+    private final int per, slots;        // places to the pulse (four, or three), and places in its bar
+    /** How many places its bar has: sixteen, or twelve if it counts in threes. */
+    public int slots() { return slots; }
+    public int per() { return per; }
     /** A newborn bass player: its one note, on the one. */
     public static final String FIRST_BASS_PATTERN = "p...............";
     /** A newborn hat player: one hat, on the one. */
@@ -414,6 +425,9 @@ public final class Musician implements Player, Hits {
         this.howItListens = new Setting(listeningSoFar, 0.02, 0.95, (seed & 1) == 0);
         this.howItLeans = new Setting(0, 0, LEAN_MOST, (seed & 2) == 0);
         this.upFirst = (seed & 2) == 0;
+        this.slots = patternSoFar.length() == THREES ? THREES : SLOTS;   // a pattern of twelve places counts in threes
+        this.per = slots / PULSES;
+        if (slots == THREES && !withARecord) throw new IllegalArgumentException(name + " counts in threes. So far a player that counts in threes can sit with a record, and nothing else.");
         this.ticks = ticksSoFar;
         for (int i = 0; i < SLOTS; i++) pattern[i] = Kit.read(i < patternSoFar.length() ? patternSoFar.charAt(i) : '.');
         if (hatsOnly) { for (int i = 0; i < SLOTS; i++) if (pattern[i] != REST) pattern[i] = PAN; pattern[0] = PAN; }   // every place it hit, it now hits the hat
@@ -427,7 +441,7 @@ public final class Musician implements Player, Hits {
         this.hits = new long[allBars * SLOTS + 8];
         this.hitSlots = new int[hits.length];
         this.hitPushes = new double[hits.length];
-        for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i);
+        for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i, per);
     }
 
     @Override public String name() { return name; }
@@ -641,7 +655,7 @@ public final class Musician implements Player, Hits {
             return;
         }
         heardPlaced++;
-        int place = (best % (PULSES * ticks)) * (SLOTS / PULSES / ticks);
+        int place = (best % (PULSES * ticks)) * (per / ticks);
         hearing[place] = kind;
         if (loud > weight[place]) weight[place] = loud;
         if (withARecord && feelHeard[place] < 1_000_000) {    // take on a little of how the record played that place
@@ -674,7 +688,7 @@ public final class Musician implements Player, Hits {
             if (Math.abs(d) < Math.abs(off)) { off = d; back = b; }
         }
         if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
-        int place = (((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks);
+        int place = (((tickInBar - back) % barTicks + barTicks) % barTicks) * (per / ticks);
         hearing[place] = kind;
         if (barsHeardIn[place] != bar) { barsHeardIn[place] = bar; barsHeard[place]++; }   // in how many of these bars was something there?
         heardWhilePlaying++;
@@ -723,7 +737,7 @@ public final class Musician implements Player, Hits {
             tickInBar = ((tickInBar - inBar) % barTicks + barTicks) % barTicks;
             refoundTheOne++;
         }
-        double meant = knownFeelOf((((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks));   // as when listening: late on purpose is not late
+        double meant = knownFeelOf((((tickInBar - back) % barTicks + barTicks) % barTicks) * (per / ticks));   // as when listening: late on purpose is not late
         clock.nudge(TAP * (off - meant));
         long which = ticksTogether - back;
         if (placedTogether < 0) { placedTogether = which; placedTogetherAt = at - meant; }
@@ -755,7 +769,7 @@ public final class Musician implements Player, Hits {
         }
         // Someone who plays a place late on purpose is not behind. Measure them against where it would play that
         // place itself, feel and all; players who grew up on the same records then agree.
-        off -= feelOf((((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks));
+        off -= feelOf((((tickInBar - back) % barTicks + barTicks) % barTicks) * (per / ticks));
         if (Math.abs(off) > Math.min(Math.max(REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;
         clock.nudge(leaning * off);
         farSum += Math.abs(off);
@@ -771,7 +785,7 @@ public final class Musician implements Player, Hits {
     /** A gap between two of its own hits, come back through the room. */
     private void ownGap(double gap) {
         double tick = clock.period() / ticks;
-        int span = (int) Math.max(1, Math.round(gap / tick)) * (SLOTS / PULSES / ticks);
+        int span = (int) Math.max(1, Math.round(gap / tick)) * (per / ticks);
         if (gapCount > 0) {
             int before = (gapHead - 1 + Ear.MEMORY) % Ear.MEMORY;
             double expected = gaps[before] * span / gapSlots[before];
@@ -781,7 +795,7 @@ public final class Musician implements Player, Hits {
             unevenHead = (unevenHead + 1) % Ear.MEMORY;
             if (unevenCount < Ear.MEMORY) unevenCount++;
             roundUneven += off; roundGaps++;
-            if (span == SLOTS / PULSES / ticks) {
+            if (span == per / ticks) {
                 tickUneven[tickHead] = off;
                 tickHead = (tickHead + 1) % Ear.MEMORY;
                 if (tickCount < Ear.MEMORY) tickCount++;
@@ -804,7 +818,7 @@ public final class Musician implements Player, Hits {
             int at = (gapHead - j + Ear.MEMORY) % Ear.MEMORY;
             time += gaps[at]; places += gapSlots[at];
         }
-        return time / places * (SLOTS / PULSES);
+        return time / places * (per);
     }
 
     double unevenness() {
@@ -876,8 +890,8 @@ public final class Musician implements Player, Hits {
 
     /** The top of a bar in its answer: where it finds out what it has earned. */
     private void barLine() {
-        if (ticks < 4 && tickUnevenness() < EARN) {
-            if (++evenBars >= 2) { ticks *= 2; evenBars = 0; tickCount = 0; }
+        if (ticks < per && tickUnevenness() < EARN) {
+            if (++evenBars >= 2) { ticks = per == 3 ? 3 : ticks * 2; evenBars = 0; tickCount = 0; }
         } else evenBars = 0;
         if (bar % TURN == 0 && judgeN >= 2) judge();         // every two bars it takes stock of how it has sounded
         if (oneNote && notes < 2 && tuneCount == Ear.MEMORY) {          // has it been in tune enough to earn its next note?
@@ -903,8 +917,8 @@ public final class Musician implements Player, Hits {
     /** Could it hold the change it tried? */
     private void endOfAnswer() {
         double rough = roundGaps > 0 ? roundUneven / roundGaps : 0;
-        int step = SLOTS / PULSES / ticks;                   // every place it can reach gets more settled, or less
-        for (int s = 0; s < SLOTS; s += step) {
+        int step = per / ticks;                   // every place it can reach gets more settled, or less
+        for (int s = 0; s < slots; s += step) {
             if (s == triedSlot) habit[s] = 0;
             else if (!hasLesson || !wants(s)) habit[s] = Math.min(9, habit[s] + 1);
             else habit[s] = Math.max(0, habit[s] - 2);
@@ -921,16 +935,16 @@ public final class Musician implements Player, Hits {
     /** The record has played its two bars. Keep what it made of them, pick one change, and come in. */
     private void startAnswer() {
         int one = 0;                                        // was the heaviest hit where it thought the one was?
-        for (int s = 1; s < SLOTS; s++) if (weight[s] > weight[one]) one = s;
+        for (int s = 1; s < slots; s++) if (weight[s] > weight[one]) one = s;
         if (weight[one] <= HEAVIER * weight[0]) one = 0;
         if (one != 0) {                                      // no: the heavy hit is the one, and it is already that far into the bar
-            for (int s = 0; s < SLOTS; s++) shifted[s] = hearing[(s + one) % SLOTS];
-            System.arraycopy(shifted, 0, hearing, 0, SLOTS);
+            for (int s = 0; s < slots; s++) shifted[s] = hearing[(s + one) % slots];
+            System.arraycopy(shifted, 0, hearing, 0, slots);
             refoundTheOne++;
         }
         believe();
         mode = ANSWERING;
-        tickInBar = ((SLOTS - one) % SLOTS) / (SLOTS / PULSES / ticks);
+        tickInBar = ((slots - one) % slots) / (per / ticks);
         mineBefore = -1; gapCount = 0;
         if (hasLesson && chance.nextInt(OWN_IDEA_ONE_IN) != 0 && copyOnePlace()) copied++;
         else if (ownIdea()) ownIdeas++;
@@ -939,7 +953,7 @@ public final class Musician implements Player, Hits {
     /** One hearing can be wrong. It believes a place only if it has heard it there in at least half its hearings so far. */
     private void believe() {
         callsHeard++;
-        for (int s = 0; s < SLOTS; s++) {
+        for (int s = 0; s < slots; s++) {
             if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s]++;   // a bass player with one note has no use for the bright hits
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
@@ -955,7 +969,7 @@ public final class Musician implements Player, Hits {
      */
     private void believeByTheBar() {
         callsHeard += TURN;
-        for (int s = 0; s < SLOTS; s++) {
+        for (int s = 0; s < slots; s++) {
             if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s] += Math.min(TURN, barsHeard[s]);
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
@@ -965,11 +979,11 @@ public final class Musician implements Player, Hits {
 
     /** Move one place it can reach toward what it heard. False if it already plays everything it heard. */
     private boolean copyOnePlace() {
-        int step = SLOTS / PULSES / ticks, differ = 0;
-        for (int s = step; s < SLOTS; s += step) if (wants(s)) differ++;
+        int step = per / ticks, differ = 0;
+        for (int s = step; s < slots; s += step) if (wants(s)) differ++;
         if (differ == 0) return false;
         int pick = chance.nextInt(differ);
-        for (int s = step; s < SLOTS; s += step) {
+        for (int s = step; s < slots; s += step) {
             if (!wants(s) || pick-- != 0) continue;
             triedSlot = s; triedWas = pattern[s]; triedFrom = -1;
             pattern[s] = lesson[s];
@@ -982,7 +996,7 @@ public final class Musician implements Player, Hits {
         if (askedFor[s] != REST && pattern[s] == askedFor[s]) return false;   // it was asked for this; it stays
         if (own[s] != REST && pattern[s] == own[s]) return false;             // this is its own; it stays
         if (lesson[s] == pattern[s]) return false;
-        if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (SLOTS / PULSES) == 0);
+        if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (per) == 0);
         // A bass player or a hat player adds a note where it believes there is one to follow, and takes one away
         // where it has listened at least four times and heard something there less than one time in four.
         return lesson[s] != REST || (callsHeard >= 4 && 4 * (votes[POT][s] + votes[PAN][s]) < callsHeard);
@@ -990,10 +1004,10 @@ public final class Musician implements Player, Hits {
 
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
     private boolean ownIdea() {
-        int step = SLOTS / PULSES / ticks;
+        int step = per / ticks;
         int found = 0, at = -1, from = -1;                   // first, something to borrow from another record it has lived with
         for (int k = 0; k < influences; k++)
-            for (int s = step; s < SLOTS; s += step) {
+            for (int s = step; s < slots; s += step) {
                 byte want = influence[k][s];
                 if (want == REST || want == pattern[s] || (hasLesson && want == lesson[s]) || askedFor[s] != REST || own[s] != REST) continue;
                 if ((hatsOnly && want != PAN) || (oneNote && want == PAN && notes < 2)) continue;
@@ -1006,7 +1020,7 @@ public final class Musician implements Player, Hits {
             borrowed++;
             return true;
         }
-        int slot = step * chance.nextInt(SLOTS / step);
+        int slot = step * chance.nextInt(slots / step);
         if (slot == 0 || own[slot] != REST) return false;
         triedFrom = -1;
         if (askedFor[slot] != REST && pattern[slot] == askedFor[slot]) return false;   // not where it has been asked for something
@@ -1016,7 +1030,7 @@ public final class Musician implements Player, Hits {
         else if (oneNote) pattern[slot] = was != REST ? REST : notes >= 2 && chance.nextBoolean() ? PAN : POT;
         else pattern[slot] = was == REST ? (chance.nextBoolean() ? POT : PAN)
                       : was == POT ? PAN
-                      : slot % (SLOTS / PULSES) == 0 ? POT : REST;
+                      : slot % (per) == 0 ? POT : REST;
         triedSlot = slot; triedWas = was;
         return true;
     }
@@ -1028,7 +1042,7 @@ public final class Musician implements Player, Hits {
             if (waitingSince < 0) waitingSince = blockStart;
             else if (blockStart - waitingSince > TURN * PULSES * clock.period()) {   // nobody came: come in on its own
                 clock.startAt(blockStart);
-                System.arraycopy(lesson, 0, hearing, 0, SLOTS);
+                System.arraycopy(lesson, 0, hearing, 0, slots);
                 java.util.Arrays.fill(weight, 0);
                 cameInAlone++;
                 mode = LISTENING; listenTick = listenBars * PULSES * ticks;
@@ -1053,7 +1067,7 @@ public final class Musician implements Player, Hits {
                 barLine();
                 if (mode == WAITING) break;
             }
-            int slot = tickInBar * (SLOTS / PULSES / ticks);
+            int slot = tickInBar * (per / ticks);
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
@@ -1063,7 +1077,7 @@ public final class Musician implements Player, Hits {
                 long meant = Math.round(clock.nextBeat() + strikePush + chance.nextGaussian() * Audio.samples(slip()));
                 strikeAt = Math.max(meant, blockStart);
                 strikeSound = sound;
-                strikeSlot = last ? allBars * SLOTS : bar * SLOTS + slot;
+                strikeSlot = last ? allBars * slots : bar * slots + slot;
                 landing = last;
             }
             if (last) break;
@@ -1079,7 +1093,7 @@ public final class Musician implements Player, Hits {
                     bass.detune(chance.nextGaussian() * tuneSlip());
                     struck = strikeSound; struckAt = strikeSlot;
                 }
-                hands.strike(strikeSound, (float) (weightOf(strikeSlot % SLOTS) * (0.88 + 0.12 * chance.nextDouble())));
+                hands.strike(strikeSound, (float) (weightOf(strikeSlot % slots) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitPushes[hitCount] = strikePush; hitSlots[hitCount++] = strikeSlot; }
                 struckPushBefore = struckPush; struckPush = strikePush;
                 experience++;
@@ -1116,7 +1130,7 @@ public final class Musician implements Player, Hits {
     private double weightOf(int place) {
         if (place == 0) return 1.0;
         double t = trustIn(place);
-        return Math.min(0.9, Kit.weight(place) * (1 - t) + feelWeight[place] * t);
+        return Math.min(0.9, Kit.weight(place, per) * (1 - t) + feelWeight[place] * t);
     }
 
     /** On to its next tick, with the wander of its hand and the pull of the tempo its body likes. */
@@ -1133,9 +1147,9 @@ public final class Musician implements Player, Hits {
     public String pattern() { return write(pattern); }
     /** What it believes the lesson is, from every call it has heard this session. */
     public String lessonAsHeard() { return write(lesson); }
-    private static String write(byte[] b) {
-        char[] c = new char[SLOTS];
-        for (int i = 0; i < SLOTS; i++) c[i] = Kit.write(b[i]);
+    private String write(byte[] b) {
+        char[] c = new char[slots];
+        for (int i = 0; i < slots; i++) c[i] = Kit.write(b[i]);
         return new String(c);
     }
 
@@ -1145,7 +1159,7 @@ public final class Musician implements Player, Hits {
     /** How far off its tick it meant that hit to be, in samples. */
     public double hitPush(int i) { return hitPushes[i]; }
     /** The first place, counted from the start, that belongs to the bars played together with the record. */
-    public int togetherFrom() { return Math.max(bars, teachBars) * SLOTS; }
+    public int togetherFrom() { return Math.max(bars, teachBars) * slots; }
     public double tempoNow() { return Audio.bpmOf(clock.period()); }
     public double lastPulse() { return lastPulse; }
     public long experience() { return experience; }
@@ -1210,7 +1224,7 @@ public final class Musician implements Player, Hits {
         StringBuilder b = new StringBuilder();
         int step = SLOTS / PULSES / ticks, bars = phraseBars();
         for (int c = 0; c < bars * SLOTS; c += step) {
-            if (c > 0) b.append(c % SLOTS == 0 ? " | " : " ");
+            if (c > 0) b.append(c % slots == 0 ? " | " : " ");
             b.append(believesTheNoteAt(c, bars) ? nameOf(pooledNote) : ".");
         }
         return b.toString();
@@ -1225,7 +1239,7 @@ public final class Musician implements Player, Hits {
     /** Its feel, for its life: for each place, milliseconds after the tick, how hard, and how often heard. */
     public String feel() {
         StringBuilder b = new StringBuilder();
-        for (int i = 0; i < SLOTS; i++)
+        for (int i = 0; i < slots; i++)
             b.append(i == 0 ? "" : " ").append(String.format(java.util.Locale.ROOT, "%.1f/%.2f/%d", feelPush[i] * 1000.0 / Audio.RATE, feelWeight[i], feelHeard[i]));
         return b.toString();
     }
@@ -1233,7 +1247,7 @@ public final class Musician implements Player, Hits {
     /** Where its life says its feel had got to. */
     public void feel(String soFar) {
         String[] parts = soFar.trim().split("\\s+");
-        for (int i = 0; i < SLOTS && i < parts.length; i++) {
+        for (int i = 0; i < slots && i < parts.length; i++) {
             String[] f = parts[i].split("/");
             if (f.length != 3) continue;
             feelPush[i] = Audio.samples(Double.parseDouble(f[0]) / 1000.0);
@@ -1246,7 +1260,8 @@ public final class Musician implements Player, Hits {
     /** How far after the tick, in milliseconds, it means to play a place now. */
     /** How much its sixteenths swing as it plays them now: 50 is straight, 66.7 is on the triplet, -1 if it plays nothing off the eighths. */
     public double swing() {
-        for (int s = 0; s < SLOTS; s++) feelNow[s] = feelMs(s);
+        if (per != 4) return -1;                             // swing is a matter of sixteenths
+        for (int s = 0; s < slots; s++) feelNow[s] = feelMs(s);
         return Hearing.swing(pattern(), feelNow, 60.0 * Audio.RATE / clock.period());
     }
     private final double[] feelNow = new double[SLOTS];
@@ -1260,9 +1275,9 @@ public final class Musician implements Player, Hits {
      * notes are known.
      */
     public void asked(String places) {
-        int step = SLOTS / PULSES / ticks;
+        int step = per / ticks;
         askedAndPlaying = 0; askedAndWaiting = 0;
-        for (int i = 0; i < SLOTS && i < places.length(); i++) {
+        for (int i = 0; i < slots && i < places.length(); i++) {
             byte want = Kit.read(places.charAt(i));
             if (want == REST) continue;
             if (hatsOnly) want = PAN;                                    // a hat player has one sound to give
@@ -1284,7 +1299,7 @@ public final class Musician implements Player, Hits {
         borrowedKept++;
         borrowedFrom = influenceName[triedFrom];
         int held = 0, oldest = -1;
-        for (int i = 0; i < SLOTS; i++) if (own[i] != REST) { held++; if (oldest < 0 || ownSince[i] < ownSince[oldest]) oldest = i; }
+        for (int i = 0; i < slots; i++) if (own[i] != REST) { held++; if (oldest < 0 || ownSince[i] < ownSince[oldest]) oldest = i; }
         if (held > MOST_OWN) own[oldest] = REST;
     }
 
@@ -1292,7 +1307,7 @@ public final class Musician implements Player, Hits {
     public void influence(String name, String bar) {
         if (influences == MOST_INFLUENCES) return;
         influenceName[influences] = name;
-        for (int i = 0; i < SLOTS && i < bar.length(); i++) influence[influences][i] = Kit.read(bar.charAt(i));
+        for (int i = 0; i < slots && i < bar.length(); i++) influence[influences][i] = Kit.read(bar.charAt(i));
         influences++;
     }
 
@@ -1300,7 +1315,7 @@ public final class Musician implements Player, Hits {
     public String own() { return write(own); }
     /** Where its life says they were. Only those it still plays count. */
     public void own(String places) {
-        for (int i = 0; i < SLOTS && i < places.length(); i++) {
+        for (int i = 0; i < slots && i < places.length(); i++) {
             byte was = Kit.read(places.charAt(i));
             if (was != REST && pattern[i] == was) { own[i] = was; ownSince[i] = ++ownClock; }
         }
@@ -1312,13 +1327,13 @@ public final class Musician implements Player, Hits {
 
     /** How settled each of its sixteen places is, a digit from 0 to 9 for each. */
     public String habits() {
-        char[] c = new char[SLOTS];
-        for (int i = 0; i < SLOTS; i++) c[i] = (char) ('0' + habit[i]);
+        char[] c = new char[slots];
+        for (int i = 0; i < slots; i++) c[i] = (char) ('0' + habit[i]);
         return new String(c);
     }
     /** Where its life says its habits had got to. */
     public void habits(String soFar) {
-        for (int i = 0; i < SLOTS && i < soFar.length(); i++) habit[i] = Math.max(0, Math.min(9, soFar.charAt(i) - '0'));
+        for (int i = 0; i < slots && i < soFar.length(); i++) habit[i] = Math.max(0, Math.min(9, soFar.charAt(i) - '0'));
     }
     public int ideasHeldBack() { return ideasHeldBack; }
     /** How many hits of what it was playing along with it managed to put at one of its places. */

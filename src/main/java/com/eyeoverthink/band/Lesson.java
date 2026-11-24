@@ -21,27 +21,27 @@ import java.nio.file.Path;
  */
 public record Lesson(String name, double tempo, String bar, double[] pushMs, double[] weight) {
     public Lesson {
-        if (bar.length() != Musician.SLOTS) throw new IllegalArgumentException("A bar has " + Musician.SLOTS + " places, this one has " + bar.length() + ": " + bar);
+        if (bar.length() != Musician.SLOTS && bar.length() != Musician.THREES) throw new IllegalArgumentException("A bar has sixteen places, or twelve if it is counted in threes; this one has " + bar.length() + ": " + bar);
         if (!bar.matches("[pn.]+")) throw new IllegalArgumentException("A bar is written with p, n and dots only: " + bar);
         if (tempo < 40 || tempo > 200) throw new IllegalArgumentException("Tempo should be between 40 and 200: " + tempo);
-        if (pushMs.length != Musician.SLOTS || weight.length != Musician.SLOTS) throw new IllegalArgumentException("push and weight need one number for each of the " + Musician.SLOTS + " places");
+        if (pushMs.length != bar.length() || weight.length != bar.length()) throw new IllegalArgumentException("push and weight need one number for each of the " + bar.length() + " places");
         double most = 60000.0 / tempo / 12 + 0.5;            // a third of a sixteenth: as far as the triplet
         for (double p : pushMs) if (Math.abs(p) > most) throw new IllegalArgumentException(String.format(java.util.Locale.ROOT, "A push of more than %.0f ms at this tempo is past the triplet: a different place in the bar, not a feel: %s", most, p));
     }
 
     /** A bar played dead on the tick with the usual accents. */
-    public Lesson(String name, double tempo, String bar) { this(name, tempo, bar, new double[Musician.SLOTS], usualWeights()); }
+    public Lesson(String name, double tempo, String bar) { this(name, tempo, bar, new double[bar.length()], usualWeights(bar.length())); }
 
-    private static double[] usualWeights() {
-        double[] w = new double[Musician.SLOTS];
-        for (int i = 0; i < w.length; i++) w[i] = Kit.weight(i);
+    private static double[] usualWeights(int places) {
+        double[] w = new double[places];
+        for (int i = 0; i < w.length; i++) w[i] = Kit.weight(i, places / Musician.PULSES);
         return w;
     }
 
     public static Lesson read(Path file) throws IOException {
         String name = file.getFileName().toString(), bar = null;
         double tempo = 96;
-        double[] push = new double[Musician.SLOTS], weight = usualWeights();
+        double[] push = null, weight = null;
         for (String line : Files.readAllLines(file)) {
             String s = line.trim();
             if (s.startsWith("name:")) name = s.substring(5).trim();
@@ -51,12 +51,13 @@ public record Lesson(String name, double tempo, String bar, double[] pushMs, dou
             else if (s.startsWith("weight:")) weight = numbers(s.substring(7), file);
         }
         if (bar == null) throw new IOException("No 'bar:' line in " + file);
+        if (push == null) push = new double[bar.length()];
+        if (weight == null) weight = usualWeights(bar.length());
         return new Lesson(name, tempo, bar, push, weight);
     }
 
     private static double[] numbers(String text, Path file) throws IOException {
         String[] parts = text.trim().split("\\s+");
-        if (parts.length != Musician.SLOTS) throw new IOException("Expected " + Musician.SLOTS + " numbers and found " + parts.length + " in " + file);
         double[] out = new double[parts.length];
         for (int i = 0; i < parts.length; i++) out[i] = Double.parseDouble(parts[i]);
         return out;
@@ -65,7 +66,7 @@ public record Lesson(String name, double tempo, String bar, double[] pushMs, dou
     /** How many of the sixteen places of a pattern are the same as this lesson's. */
     public int matches(String pattern) {
         int same = 0;
-        for (int i = 0; i < Musician.SLOTS; i++) if (pattern.charAt(i) == bar.charAt(i)) same++;
+        for (int i = 0; i < bar.length() && i < pattern.length(); i++) if (pattern.charAt(i) == bar.charAt(i)) same++;
         return same;
     }
 }

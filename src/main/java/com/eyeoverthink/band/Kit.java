@@ -24,6 +24,12 @@ public final class Kit implements Instrument {
     }
 
     /** How hard a place in the bar is hit: the one hardest, the pulses next, the small ticks softest. */
+    /** The same for a bar counted with this many places to the pulse: four, or three. */
+    public static double weight(int place, int toThePulse) {
+        if (toThePulse == 4) return weight(place);
+        return place == 0 ? 1.0 : place % toThePulse == 0 ? 0.75 : 0.52;
+    }
+
     public static double weight(int place) {
         return place == 0 ? 1.0 : place % 4 == 0 ? 0.75 : place % 2 == 0 ? 0.62 : 0.52;
     }

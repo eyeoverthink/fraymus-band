@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentySixTest {
+class StepTwentySevenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1122,5 +1122,48 @@ class StepTwentySixTest {
         assertTrue(worst < 15, "once it knows the record swings it holds its time: " + worst);
         assertTrue(slowest > 89.5 && fastest < 94, "and its tempo: " + slowest + " to " + fastest);
         assertEquals(64.1, swing, 3.0);
+    }
+
+    @Test
+    void aNewbornCanGrowUpCountingInThrees(@TempDir Path dir) throws Exception {
+        Lesson shuffle = Lesson.read(Path.of("lessons/shuffle.lesson"));
+        assertEquals(12, shuffle.bar().length(), "a bar in threes has twelve places");
+        assertThrows(IllegalArgumentException.class, () -> new Lesson("thirteen", 92, "p.nn.np.nn.n."));
+        int drummers = 12, sessions = 30;
+        double[] like = new double[sessions], apart = new double[sessions], unsteady = new double[sessions];
+        int[] atThree = new int[sessions], landed = new int[sessions];
+        for (int d = 0; d < drummers; d++) {
+            Path life = dir.resolve("three" + d + ".life");
+            int had = 1;
+            for (int s = 0; s < sessions; s++) {
+                Session.Report r = Session.run(dir.resolve("t.wav"), life, shuffle, 4, 8, 2000L * d + s);
+                assertEquals(12, r.patternAfter().length(), "it counts in threes from its first record on");
+                assertTrue(r.ticksAfter() == 1 || r.ticksAfter() == 3, "one tick to the pulse or three, nothing between: " + r.ticksAfter());
+                assertTrue(r.ticksAfter() >= had, "ticks only ever get finer");
+                had = r.ticksAfter();
+                for (int i = 0; i < 12; i++) {
+                    if (i % (3 / had) != 0) assertEquals('.', r.patternAfter().charAt(i), "it only plays places its ticks can reach: " + r.patternAfter());
+                    if (i % 3 == 0) assertNotEquals('.', r.patternAfter().charAt(i), "a pulse is never left empty: " + r.patternAfter());
+                }
+                assertTrue(r.endedBpm() > 55 && r.endedBpm() < 150, "its tempo does not run away: " + r.endedBpm());
+                assertTrue(r.peak() > 0.2f && r.peak() < 1.0f);
+                like[s] += r.matchesAfter() / (double) drummers;
+                apart[s] += (r.hitsTogether() > 0 ? r.apartMs() : 80) / drummers;
+                unsteady[s] += r.earlyUnsteadyMs() / drummers;
+                if (had == 3) atThree[s]++;
+                if (Math.abs(r.landedApartMs()) < 40) landed[s]++;
+            }
+        }
+        for (int s : new int[] {0, 9, 19, 29})
+            System.out.printf(Locale.ROOT, "THREES session %2d: like the shuffle in %.1f of 12, three ticks %d of %d, together %.1f ms apart, last hits together in %d, unsteadiness %.1f ms%n", s + 1, like[s], atThree[s], drummers, apart[s], landed[s], unsteady[s]);
+        assertTrue(atThree[0] <= 2, "hardly anyone finds the triplet in a first session: " + atThree[0]);
+        assertTrue(atThree[sessions - 1] > drummers / 2, "with practice most of them get there: " + atThree[sessions - 1]);
+        assertTrue(like[sessions - 1] > like[0] + 2, "and their pattern has grown toward the shuffle: " + like[0] + " to " + like[sessions - 1]);
+        assertTrue(apart[sessions - 1] < 25, "and they play it with the record: " + apart[sessions - 1]);
+
+        Path fours = practised(dir, "fours.life", 4);
+        assertThrows(IllegalArgumentException.class, () -> Session.run(dir.resolve("t.wav"), fours, shuffle, 4, 8, 1), "a player that counts in fours cannot sit with a record in threes yet");
+        assertThrows(IllegalArgumentException.class, () -> Session.run(dir.resolve("t.wav"), dir.resolve("three0.life"), LESSON, 4, 8, 1), "nor one that counts in threes with a record in fours");
+        assertThrows(IllegalArgumentException.class, () -> Session.together(dir.resolve("t.wav"), dir.resolve("three0.life"), dir.resolve("three1.life"), 8, 1), "and two that count in threes cannot play together yet");
     }
 }

@@ -7,7 +7,7 @@ package com.eyeoverthink.band;
  */
 public final class Teacher implements Player, Hits {
     private static final long AHEAD = Math.round(Audio.samples(0.035));
-    private static final int CALL = Musician.TURN * Musician.SLOTS, CYCLE = 2 * CALL;
+    private final int places, call, cycle;   // places in the record's bar (sixteen, or twelve in threes), and in a call and a call-and-answer
 
     private final Clock clock;
     private final Kit kit = new Kit();
@@ -24,13 +24,14 @@ public final class Teacher implements Player, Hits {
 
     public Teacher(Lesson lesson, int calls, int barsTogether, double firstBeatSeconds) {
         this.clock = new Clock(Audio.periodOf(lesson.tempo()), Audio.samples(firstBeatSeconds));
-        for (int i = 0; i < Musician.SLOTS; i++) {
+        this.places = lesson.bar().length(); this.call = Musician.TURN * places; this.cycle = 2 * call;
+        for (int i = 0; i < places; i++) {
             bar[i] = Kit.read(lesson.bar().charAt(i));
             push[i] = Audio.samples(lesson.pushMs()[i] / 1000.0);
             weight[i] = lesson.weight()[i];
         }
-        this.straightFrom = (long) calls * CYCLE;
-        this.lastTick = straightFrom + (long) barsTogether * Musician.SLOTS;
+        this.straightFrom = (long) calls * cycle;
+        this.lastTick = straightFrom + (long) barsTogether * places;
         this.hits = new long[(calls * Musician.TURN + barsTogether + 1) * Musician.SLOTS];
     }
 
@@ -41,8 +42,8 @@ public final class Teacher implements Player, Hits {
     public void play(float[] out, int n, long blockStart) {
         long blockEnd = blockStart + n;
         while (strikeAt < 0 && tick <= lastTick && clock.dueBefore(blockEnd + AHEAD)) {   // early enough to play a place ahead of its tick
-            int place = (int) (tick % Musician.SLOTS);
-            boolean playing = tick < straightFrom ? tick % CYCLE < CALL : tick < lastTick;
+            int place = (int) (tick % places);
+            boolean playing = tick < straightFrom ? tick % cycle < call : tick < lastTick;
             boolean ending = tick == lastTick && lastTick > straightFrom;
             byte sound = ending ? Kit.POT : playing ? bar[place] : Kit.REST;
             if (sound != Kit.REST) {
@@ -50,7 +51,7 @@ public final class Teacher implements Player, Hits {
                 strikeSound = sound;
                 strikePlace = place;
             }
-            clock.advance(1.0 / (Musician.SLOTS / Musician.PULSES));
+            clock.advance(1.0 / (places / Musician.PULSES));
             tick++;
         }
         for (int i = 0; i < n; i++) {

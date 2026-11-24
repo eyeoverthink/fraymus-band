@@ -9,6 +9,7 @@ public final class Main {
         int answers = 4, together = -1;
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
+        String born = null;
         double from = 46;
         boolean click = false;
         double tempo = 92;
@@ -30,6 +31,7 @@ public final class Main {
                 case "--ask-hats" -> askHats = args[i + 1];
                 case "--ask-drummer" -> askDrummer = args[i + 1];
                 case "--in-words" -> askWords = args[i + 1];
+                case "--name" -> born = args[i + 1];
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
@@ -37,8 +39,13 @@ public final class Main {
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        // A newborn can be given a name. One that already has a life keeps the name it has.
+        if (born != null && !java.nio.file.Files.exists(life)) {
+            if (life.getParent() != null) java.nio.file.Files.createDirectories(life.getParent());
+            java.nio.file.Files.write(life, java.util.List.of("name: " + born));
         }
         // The bandleader asks a player for particular places. It is written into that player's life before anyone plays.
         if (askBass != null && bass != null) Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN).ask(askBass, askWords);
@@ -123,8 +130,8 @@ public final class Main {
             if (click) System.out.printf(Locale.ROOT, "Both had a click in their ears at %.0f bpm. It is not on the recording.%n", tempo);
             System.out.printf(Locale.ROOT, "%s played its pattern for %s: %s%n", t.teacher(), t.learner(), t.teacherPattern());
             System.out.printf(Locale.ROOT, "With %d ticks to the pulse %s heard it as: %s%n", t.ticksAfter(), t.learner(), t.heardAs());
-            System.out.printf(Locale.ROOT, "Its pattern before: %s (like the teacher's in %d of 16 places)%n", t.patternBefore(), t.matchesBefore());
-            System.out.printf(Locale.ROOT, "Its pattern after:  %s (like the teacher's in %d of 16 places)%n", t.patternAfter(), t.matchesAfter());
+            System.out.printf(Locale.ROOT, "Its pattern before: %s (like the teacher's in %d of its places)%n", t.patternBefore(), t.matchesBefore());
+            System.out.printf(Locale.ROOT, "Its pattern after:  %s (like the teacher's in %d of its places)%n", t.patternAfter(), t.matchesAfter());
             System.out.printf(Locale.ROOT, "%d answers, %.1f s. %d changes copied, %d its own idea; %d kept, %d taken back; cut short %d times.%n",
                 t.calls(), t.seconds(), t.copied(), t.ownIdeas(), t.changesKept(), t.changesTakenBack(), t.cutShort());
             System.out.printf(Locale.ROOT, "Ticks to the pulse: %d before, %d after. Listening: %.2f before, %.2f after.%n", t.ticksBefore(), t.ticksAfter(), t.listeningBefore(), t.listeningAfter());
@@ -152,8 +159,8 @@ public final class Main {
         if (click) System.out.printf(Locale.ROOT, "The drummer had a click in its ears at the record's tempo. It is not on the recording.%n");
         System.out.printf(Locale.ROOT, "The record played \"%s\" at %.0f bpm: %s%n", lesson.name(), lesson.tempo(), lesson.bar());
         System.out.printf(Locale.ROOT, "With %d ticks to the pulse the drummer heard it as: %s%n", r.ticksAfter(), r.lessonAsHeard());
-        System.out.printf(Locale.ROOT, "Its pattern before: %s (like the lesson in %d of 16 places)%n", r.patternBefore(), r.matchesBefore());
-        System.out.printf(Locale.ROOT, "Its pattern after:  %s (like the lesson in %d of 16 places)%n", r.patternAfter(), r.matchesAfter());
+        System.out.printf(Locale.ROOT, "Its pattern before: %s (like the lesson in %d of its places)%n", r.patternBefore(), r.matchesBefore());
+        System.out.printf(Locale.ROOT, "Its pattern after:  %s (like the lesson in %d of its places)%n", r.patternAfter(), r.matchesAfter());
         System.out.printf(Locale.ROOT, "%d answers, %d hits, %.1f s. %d changes copied from the record, %d its own idea; %d kept, %d taken back; cut short %d times.%n",
             r.answers(), r.hits(), r.seconds(), r.copied(), r.ownIdeas(), r.changesKept(), r.changesTakenBack(), r.cutShort());
         System.out.printf(Locale.ROOT, "Ticks to the pulse: %d before, %d after. Listening: %.2f before, %.2f after.%n", r.ticksBefore(), r.ticksAfter(), r.listeningBefore(), r.listeningAfter());
@@ -164,7 +171,7 @@ public final class Main {
             System.out.printf(Locale.ROOT, "Their last hits were %.0f ms apart.%n", Math.abs(r.landedApartMs()));
         }
         StringBuilder feel = new StringBuilder();
-        for (int i = 0; i < Musician.SLOTS; i++) if (r.patternAfter().charAt(i) != '.')
+        for (int i = 0; i < r.patternAfter().length(); i++) if (r.patternAfter().charAt(i) != '.')
             feel.append(String.format(Locale.ROOT, " %d:%+.0fms/%.2f", i + 1, r.feelMs()[i], r.feelWeight()[i]));
         System.out.println("Its feel now, for each place it plays (place: after the tick / how hard):" + feel);
         System.out.printf(Locale.ROOT, "It landed on the one and let it ring %.2f s; its pulse was %.2f s.%n", r.ringSeconds(), r.lastPulseSeconds());

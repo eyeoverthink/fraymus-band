@@ -32,7 +32,10 @@ public final class Session {
         Metronome metronome = click ? new Metronome(lesson.tempo(), 0.25) : null;
         double start = click ? metronome.firstBarSeconds() : 0.25;
         float[] clicks = new float[Audio.BLOCK];
-        Life life = Life.open(lifeFile, "the drummer");
+        boolean inThrees = lesson.bar().length() == Musician.THREES;
+        Life life = Life.open(lifeFile, "the drummer", inThrees ? Musician.FIRST_PATTERN_IN_THREES : Musician.FIRST_PATTERN);   // a newborn counts as its first record does
+        if (life.pattern().length() != lesson.bar().length())
+            throw new IllegalArgumentException(life.name() + " counts in " + (life.pattern().length() == Musician.THREES ? "threes" : "fours") + " and this record is in " + (inThrees ? "threes" : "fours") + ". A player counts one way for life, so far.");
         Teacher teacher = new Teacher(lesson, answers, barsTogether, start);
         Musician drummer = new Musician(life.name(), 92.0, life.hitsPlayed(), life.listening(), life.ticks(), life.pattern(), answers, barsTogether, seed);
         Room room = new Room(2, NEAR, ACROSS);
@@ -67,7 +70,7 @@ public final class Session {
             double apart = with.sum, lean = with.lean;
             double landedApart = barsTogether == 0 ? 0 : with.landed;
             double[] feelMs = new double[Musician.SLOTS], feelWeight = new double[Musician.SLOTS];
-            for (int i = 0; i < Musician.SLOTS; i++) { feelMs[i] = drummer.feelMs(i); feelWeight[i] = drummer.feelWeight(i); }
+            for (int i = 0; i < drummer.slots(); i++) { feelMs[i] = drummer.feelMs(i); feelWeight[i] = drummer.feelWeight(i); }
             Report report = new Report(lesson, answers, n, Audio.seconds(out.samples()),
                 startedBpm, drummer.tempoNow(), early, late, life.listening(), drummer.listening(),
                 life.ticks(), drummer.ticks(), life.pattern(), drummer.pattern(), drummer.lessonAsHeard(),
@@ -459,12 +462,12 @@ public final class Session {
     static double tempoOver(Musician d, int fromBar, int toBar) {
         int first = -1, last = -1;
         for (int i = 0; i < d.hitCount(); i++) {
-            int bar = d.hitSlot(i) / Musician.SLOTS;
+            int bar = d.hitSlot(i) / d.slots();
             if (bar >= fromBar && bar <= toBar) { if (first < 0) first = i; last = i; }
         }
         if (first < 0 || last == first) return 0;
         double places = d.hitSlot(last) - d.hitSlot(first);
-        double pulse = (d.hitAt(last) - d.hitAt(first)) / places * (Musician.SLOTS / Musician.PULSES);
+        double pulse = (d.hitAt(last) - d.hitAt(first)) / places * d.per();
         return Audio.bpmOf(pulse);
     }
 
@@ -474,7 +477,7 @@ public final class Session {
      * compared. A slow change of tempo does not count against the player; a lurch does.
      */
     static double unsteadiness(Musician d, int from, int to) {
-        int count = 0, answer = Musician.TURN * Musician.SLOTS;
+        int count = 0, answer = Musician.TURN * d.slots();
         double sumSquares = 0;
         for (int i = from + 2; i < to; i++) {
             if (d.hitSlot(i) / answer != d.hitSlot(i - 2) / answer) continue;
