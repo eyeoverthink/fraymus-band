@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyFiveTest {
+class StepTwentySixTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1102,5 +1102,25 @@ class StepTwentyFiveTest {
         assertTrue(withSwing.lateUnsteadyMs() < 12, "and holds its time while it does: " + withSwing.lateUnsteadyMs());
         assertEquals(50.0, doesNot, 2.0, "and the one with the straight record does not");
         assertEquals(64.1, heard, 4.0, "the ear names the swing of a recording");
+    }
+
+    @Test
+    void aPlayerHoldsItsTimeWithASwungRecordAndNoClick(@TempDir Path dir) throws Exception {
+        String bar = "p.nnp.nnp.nnp.nn";
+        double[] late = new double[16], hard = new double[16];
+        for (int i = 0; i < 16; i++) { late[i] = i % 2 == 1 ? 46 : 0; hard[i] = i == 0 ? 1.0 : 0.7; }
+        Lesson swung = new Lesson("swung", 92, bar, late, hard);
+        Path drummer = practised(dir, "d.life", 4, bar);
+        double worst = 0, slowest = 999, fastest = 0, swing = 0, first = 0;
+        for (int s = 0; s < 10; s++) {
+            Session.Report r = Session.run(dir.resolve("t.wav"), drummer, swung, 6, 8, 700 + s);
+            if (s < 4) { first = Math.max(first, r.lateUnsteadyMs()); continue; }   // the first sessions are where it finds out the record swings, and they are rough
+            worst = Math.max(worst, r.lateUnsteadyMs()); slowest = Math.min(slowest, r.endedBpm()); fastest = Math.max(fastest, r.endedBpm());
+            swing = Hearing.swing(r.patternAfter(), r.feelMs(), 92);
+        }
+        System.out.printf(Locale.ROOT, "SWING, NO CLICK first four sessions unsteady by up to %.1f ms; sessions five to ten: at worst %.1f ms, tempo ended between %.1f and %.1f, swing %.1f%n", first, worst, slowest, fastest, swing);
+        assertTrue(worst < 15, "once it knows the record swings it holds its time: " + worst);
+        assertTrue(slowest > 89.5 && fastest < 94, "and its tempo: " + slowest + " to " + fastest);
+        assertEquals(64.1, swing, 3.0);
     }
 }

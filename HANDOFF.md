@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.25.0. 50 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.26.0. 51 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -97,6 +97,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 23 | Influences kept apart, first part (item 2 of section 8). A bass player's line and phrase are kept in its life under the song's name (`line from "song":`, `phrase from "song":`); a new song starts with no line and cannot overwrite another's. A line written by steps 21 and 22 with no name is taken to belong to the last song the player played along with. Also fixed: a bass with four ticks to the pulse never finished listening for a note (each tick cut off the one before). |
 | 24 | Borrowed ideas (the rest of item 2 of section 8). Every player keeps what it believes each record or song plays under its name (`heard from "name":`). An idea of its own is now borrowed: a place another record had that the present one has not. If it can hold it, the place becomes its own (`its own:` in its life), kept like an asked place, two at most. The real drummer sat with its first lesson again, then borrowed places 4 (pot) and 16 (pan) from it into Vaughn's song and held them for four takes: `p.npn...ppp.n..n`. |
 | 25 | Swing (in place of item 4, triplet ticks). Vaughn's song swings: its off sixteenths sit about 26 ms late, 56% as a drum machine counts it. Swing is now named when a recording is heard (`Hearing.swing`, `--hear`) and in each player's report. A place can sit as far behind its tick as the triplet (was 30 ms), a hit that far behind is still heard as that place (`REACH` 0.36), and lessons may push that far. The ear on a recording no longer takes hard swing for a tempo half as fast again. With a click, a player with a record swung 64% plays 63%. The real drummer plays 57% under the song's 56%. |
+| 26 | Holding time with a swung record and no click. A player sets its clock by how far a record's hit is from where it knows that place to sit, using the feel it brought with it from earlier days (`knownFeelOf`), not the feel it is taking in right now. With a record swung 64% and no click: rough for the first four sessions (up to 176 ms unsteady, tempo down to 75), then 4 to 11 ms and tempo within 2 of 92. At 58% it holds from the second session. Before this step it lost its tempo in about half of all sessions for good. |
 
 ### The players that exist (do not reset these)
 
@@ -128,11 +129,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.25.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.25.0.jar --click on
-    java -jar target/fraymus-band-0.25.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.25.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.25.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.26.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.26.0.jar --click on
+    java -jar target/fraymus-band-0.26.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.26.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.26.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -176,7 +177,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyFiveTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentySixTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -293,6 +294,13 @@ Given, as fixed rules (be honest about these):
 - **A hard-swung record was heard as 138 to the minute instead of 92**: swung sixteenths sit near the triplet
   and line up better on a grid half as fast again. The ear now takes two thirds of the best tempo if the hits
   line up on it at least 0.6 as well. Checked that Vaughn's song still reads 92.10.
+- **Step 26, three versions measured before one was kept.** (a) Correcting by the feel it is taking in now,
+  and not setting the clock by far-off hits: a swung record held from the second session, but forty newborns
+  with a straight lesson ended 19.8 ms apart from the record instead of 14.0, because a learner's own tempo
+  error makes later places look late, gets taken in as feel, and then is no longer corrected. (b) The same
+  with far-off hits still counted: 17.7. (c) Correcting only by the feel it came into the session with: 15.0
+  for the newborns, and the swung record takes four sessions. (c) was kept. Always run the forty-newborn study
+  (`itGrowsIntoTheLesson`) after touching how a player sets its clock.
 
 ---
 
@@ -365,8 +373,8 @@ Given, as fixed rules (be honest about these):
   way to a third, is a rule that was given; nothing weighs whether a borrowed place is good, only whether
   the player could hold its time while playing it. In the real drummer three candidates take turns pushing
   each other out. Sitting with a record again also pulls a player's pattern toward that record.
-- **Swing (step 25):** without a click, a player with a swung record loses its tempo in some sessions (down
-  to 60 to 80 to the minute). This was already so before step 25, at any swing; with a click it holds (5 ms).
+- **Swing (steps 25 and 26):** without a click, the first four sessions with a hard-swung record are still
+  rough (the feel is not in its life yet). With a click it holds from the start (5 ms).
   Swing is one number for the whole bar, measured on the sixteenths only; swung eighths, and real triplets
   with the middle one played, are still out of reach (no triplet ticks). The ear's 56% for Vaughn's song is
   an average over everything in the mix, some of which may be played straight. The two-thirds rule for tempo
@@ -384,7 +392,7 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-real triplet ticks (item 4; step 25 covers swing only), holding time with a swung record without a click, a way for the hat and bass players to sit with a record alone;
+real triplet ticks (item 4; step 25 covers swing only), a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people

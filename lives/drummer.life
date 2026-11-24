@@ -1,12 +1,12 @@
 name: the drummer
 age: 0
-listens to itself: 0.82
+listens to itself: 0.80
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
 pattern: p.npn...ppp.n..n
-leans on the others: 0.42
-habits: 9999969999999909
-feel: -16.0/1.00/1059 -34.1/0.95/46 -12.4/0.99/766 2.6/0.61/32 -18.9/0.98/844 -9.6/0.98/210 25.1/0.89/141 27.1/0.90/328 -6.3/0.99/640 7.6/0.93/598 -13.7/0.99/842 13.5/0.85/76 -19.5/1.00/725 -18.0/0.94/67 -17.6/0.95/347 15.7/0.92/933
+leans on the others: 0.41
+habits: 9999959993999919
+feel: -19.9/1.00/1081 -35.0/0.96/48 -13.4/0.99/781 2.6/0.61/32 -16.9/0.98/862 -9.5/0.98/215 29.7/0.91/143 23.1/0.90/334 -2.4/0.99/654 7.3/0.93/610 -13.3/0.99/859 14.0/0.85/77 -15.5/1.00/740 -15.3/0.95/70 -16.3/0.95/352 15.1/0.92/951
 heard from "first lesson": p..pn...p.p.n..n
 heard from "gleam of the prize": p.n.n...ppp.n..p
 its own: ...p...........n
@@ -162,3 +162,4 @@ session 148: played along with "gleam of the prize" for 24 bars, hits=231, unste
 session 149: played along with "gleam of the prize" for 24 bars, hits=225, unsteadiness 9.8 ms, listening 0.82, ticks to the pulse 4, pattern p.npn...npp.n..n, 141 of its hits landed with a hit in the recording, 11 ms apart
 session 150: played along with "gleam of the prize" for 24 bars, hits=233, unsteadiness 9.8 ms, listening 0.84, ticks to the pulse 4, pattern p.npn...ppp.n.nn, 150 of its hits landed with a hit in the recording, 13 ms apart
 session 151: played along with "gleam of the prize" for 24 bars, hits=243, unsteadiness 9.1 ms, listening 0.82, ticks to the pulse 4, pattern p.npn...ppp.n..n, 158 of its hits landed with a hit in the recording, 12 ms apart
+session 152: played along with "gleam of the prize" for 24 bars, hits=221, unsteadiness 13.6 ms, listening 0.80, ticks to the pulse 4, pattern p.npn...ppp.n..n, 137 of its hits landed with a hit in the recording, 14 ms apart

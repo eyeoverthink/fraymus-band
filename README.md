@@ -150,7 +150,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.25.0.jar
+    java -jar target/fraymus-band-0.26.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -158,28 +158,28 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.25.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.26.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.25.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.26.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.25.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.26.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.25.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.26.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
 after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
@@ -188,7 +188,7 @@ first with `--hear`, below.
 
 ## Ask a player for something
 
-    java -jar target/fraymus-band-0.25.0.jar --along songs/some-song.wav --bass lives/bass.life \
+    java -jar target/fraymus-band-0.26.0.jar --along songs/some-song.wav --bass lives/bass.life \
         --ask-bass ......n.......n. --in-words "grab the end of two and four on an up tick"
 
 The bandleader can ask a player for particular places in the bar: sixteen characters, `p` or `n` where
@@ -227,6 +227,12 @@ Measured: with a click, a player with a record swung 64% plays 63% after four se
 to 5 ms; one with the same record played straight plays 51%. The ear on that recording says 64%. On a real
 song the ear says 56% and the drummer playing along plays 57%.
 
+Without a click a player sets its clock by the record. A place the record plays late on purpose is not the
+record running late, so it measures each hit against where it knows that place to sit: the feel it brought
+with it from earlier days, not the one it is taking in now, which it cannot tell from its own mistakes.
+Measured, no click, a record swung 64%: the first four sessions are rough (up to 176 ms unsteady); from
+the fifth to the tenth it is 4 to 11 ms and its tempo ends within 2 of 92. At 58% it holds from the second.
+
 ## The bass line
 
 A bass player that has earned both its notes listens, while it plays along with a song, for which note the
@@ -249,7 +255,7 @@ no note in common, back on the first song 190 of 190 notes were on its note from
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.25.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.26.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,
@@ -435,8 +441,7 @@ drummer plays or hears a place its ticks cannot reach.
   because it found it.
 - Its own since step 24: places borrowed from one record and held while with another. Given: that it holds
   two, and that the oldest gives way.
-- Learned: a record's swing, up to the triplet, with a click. Without a click a swung record still pulls a
-  player's time apart.
+- Learned: a record's swing, up to the triplet. Without a click it takes a few rough sessions first.
 - Not there yet: taste of its own. Nothing weighs whether an idea is good, only whether it can be held. It copies the one record it hears. Its own ideas are picked by chance.
 
 ## Known limits

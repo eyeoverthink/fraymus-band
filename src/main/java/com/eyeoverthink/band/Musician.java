@@ -228,7 +228,7 @@ public final class Musician implements Player, Hits {
     private long lastStrike = -1;
     private double ownDelay = Audio.samples(Session.NEAR);   // learned from its own hits
     private double heaviest;                  // the heaviest hit it has heard from the record
-    private long ticksTogether; private long placedTogether = -1; private long placedTogetherAt;
+    private long ticksTogether; private long placedTogether = -1; private double placedTogetherAt;
     private final Instrument hands;
     private boolean learnsWhilePlaying;   // it changes its pattern while it plays, from what it hears
     private boolean fullMix;              // what it hears is a real recording: listen with two ears
@@ -307,7 +307,7 @@ public final class Musician implements Player, Hits {
 
     private int mode = WAITING;
     private int listenTick;               // which tick of the record's two bars its clock is about to reach
-    private int placedTick = -1; private long placedAt;
+    private int placedTick = -1; private double placedAt;
     private final byte[] hearing = new byte[SLOTS];   // what it is making of the bars being played now
     private final double[] weight = new double[SLOTS];  // and how heavy the hit at each place was
     private final byte[] shifted = new byte[SLOTS];
@@ -652,11 +652,14 @@ public final class Musician implements Player, Hits {
             feelHeard[place]++;
         }
         if (onAClick()) return;                              // it has heard what was played; its time comes from the click
-        if (Math.abs(off) > Math.min(Math.max(STEADY_REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST))) return;   // a hit that far behind is a place with a feel, not something to set its clock by
-        clock.nudge(TAP * off);
+        // A place the record plays late on purpose is not the record running late. It sets its clock by how far
+        // the hit is from where it would play that place itself, and not at all by one that is still far off.
+        double meant = knownFeelOf(place);
+        if (Math.abs(off - meant) > steadyReach(tick)) return;
+        clock.nudge(TAP * (off - meant));
         if (best > placedTick) {                             // quiet and only listening, it leans on every hit it can place
-            leanToward(at - placedAt, best - placedTick);
-            placedTick = best; placedAt = at;
+            leanToward(at - meant - placedAt, best - placedTick);
+            placedTick = best; placedAt = at - meant;
         }
     }
 
@@ -720,12 +723,13 @@ public final class Musician implements Player, Hits {
             tickInBar = ((tickInBar - inBar) % barTicks + barTicks) % barTicks;
             refoundTheOne++;
         }
-        clock.nudge(TAP * off);
+        double meant = knownFeelOf((((tickInBar - back) % barTicks + barTicks) % barTicks) * (SLOTS / PULSES / ticks));   // as when listening: late on purpose is not late
+        clock.nudge(TAP * (off - meant));
         long which = ticksTogether - back;
-        if (placedTogether < 0) { placedTogether = which; placedTogetherAt = at; }
+        if (placedTogether < 0) { placedTogether = which; placedTogetherAt = at - meant; }
         else if (which - placedTogether >= ticks) {
-            leanToward(at - placedTogetherAt, which - placedTogether);
-            placedTogether = which; placedTogetherAt = at;
+            leanToward(at - meant - placedTogetherAt, which - placedTogether);
+            placedTogether = which; placedTogetherAt = at - meant;
         }
     }
 
@@ -734,6 +738,9 @@ public final class Musician implements Player, Hits {
      * quicker on a heavy hit than a light one, so a short gap says little about the pulse. While it is
      * playing too, it only leans on gaps at least a pulse long.
      */
+    /** How close to where it would play a place a hit must be for it to set its clock by it. */
+    private double steadyReach(double tick) { return Math.min(Math.max(STEADY_REACH * tick, Audio.samples(REACH_AT_LEAST)), Audio.samples(REACH_AT_MOST)); }
+
     private void leanToward(double gap, long ticksApart) {
         clock.pullToward(gap / ticksApart * ticks, listening);
     }
@@ -1085,6 +1092,17 @@ public final class Musician implements Player, Hits {
     }
 
     /** How sure it is of the feel of a place: nothing until it has heard it, everything after twenty hearings. */
+    /**
+     * How far after its tick it knew a place to sit when this session began. What it is taking in right now
+     * is no use for telling a feel from an error: if its own tempo is off, every later place in the bar looks
+     * late, and it would take its own mistake for the record's feel and stop correcting it. What it brought
+     * with it from other days is the record's.
+     */
+    private double knownFeelOf(int place) {
+        return Math.max(-Audio.samples(MOST_AHEAD), Math.min(clock.period() / 12, (feelCameWith[place] - feelCameWith[0]) * trustIn(place)));
+    }
+    private final double[] feelCameWith = new double[SLOTS];
+
     private double trustIn(int place) { return Math.min(1.0, feelHeard[place] / (double) HEARINGS_TO_TRUST); }
 
     /** How far after its tick it means to play a place, in samples. It cannot get more than a moment ahead. */
@@ -1221,6 +1239,7 @@ public final class Musician implements Player, Hits {
             feelPush[i] = Audio.samples(Double.parseDouble(f[0]) / 1000.0);
             feelWeight[i] = Double.parseDouble(f[1]);
             feelHeard[i] = Integer.parseInt(f[2]);
+            feelCameWith[i] = feelPush[i];
         }
     }
 
