@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.30.0. 55 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.31.0. 56 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -102,6 +102,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 28 | Threes, second part: players who count in threes teach and play with each other. A pupil counts as its teacher does. Players in one room must count the same way, or the session refuses. Six pupils taught the shuffle: like it in 7.2 of 12 places after one session, 11.7 after 24, all with three ticks, 6 ms from their teacher. A second player was raised: `lives/shuffle-second.life`, "the second shuffle drummer", taught by the first (`--name-pupil` names a newborn pupil). |
 | 29 | Threes, third part: a bass in threes. A newborn bass counts as the drummers it joins do (`--name-bass` names it). Five made-up basses with two shuffle drummers: 2.6 notes in the bar after one session, 7.8 after forty, all with three ticks and both notes, 12 ms from the first drummer (after 24 sessions only three of five had the triplet and they were 27 ms apart). A third player in threes was raised: `lives/shuffle-bass.life`, "the shuffle bass player". |
 | 30 | Threes, fourth part: parts that differ. The ear on a recording hears threes (it is in threes if the loudness comes round 1.15 times better after twelve ticks than after sixteen), and prefers a tick twice as long when it fits as well. Players in threes can play along with a recording on kit, hi-hat or bass, with the bass line. `MadeUp.shuffle` (`--make-up-shuffle FILE`) writes a made-up shuffle recording with a kick, a snare, a hat and a four-bar bass line, written by the agent. The three shuffle players played along with it six times: kit `p..n..p..n..`, hi-hat `n.nn.nn.nn.n` (the second shuffle drummer moved to the hi-hat), bass `p..p..p..p.p` on the written line. |
+| 31 | Vaughn's second song, "1,2-3" (`songs/one-two-three.wav`, not committed). The ear: 88.81 to the minute, in fours, sixteenths swing 55%, but the tempo wanders between 88.5 and 89.3 from one quarter of the song to the next (his first song holds 92.1). So the click is now set from the stretch being played (`Hearing.near`), not the whole song. The first three players played along five times from 0:29: 150 to 190 of about 200 to 250 hits each within 25 ms of the song, unsteadiness 5.6 to 8.4 ms; the bass hears a one-bar line on F; all three now borrow places from his first song into his second. |
 
 ### The players that exist (do not reset these)
 
@@ -144,11 +145,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.30.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.30.0.jar --click on
-    java -jar target/fraymus-band-0.30.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.30.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.30.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.31.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.31.0.jar --click on
+    java -jar target/fraymus-band-0.31.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.31.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.31.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -192,7 +193,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepThirtyTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepThirtyOneTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -329,6 +330,9 @@ Given, as fixed rules (be honest about these):
 - The made-up shuffle's balance was tuned until each player heard its own part (kick 0.8, snare 0.15, hat
   0.6, bass 0.2; a kick that is gone in 45 ms; a snare of hiss with no bottom). That is fitting the recording
   to the players' thresholds, which were set on one real song.
+- **A click set from a whole song drifts on a song that was not made to a grid.** Half a beat-per-minute of
+  difference is a third of a second over 24 bars. Found by listening to each quarter of "1,2-3" separately
+  before letting the players near it. Do that with every new song.
 
 ---
 
@@ -412,6 +416,12 @@ Given, as fixed rules (be honest about these):
   the parts written into it. A player counts in fours or in threes for life, so the first three players and
   the three shuffle players cannot share a room. No six to the pulse. Whether a recording is in threes is
   one threshold (1.15) checked on one made-up shuffle, one made-up straight song and Vaughn's song.
+- **"1,2-3" (step 31):** Vaughn has not yet confirmed by ear that the pulse and the one are right
+  (`songs/one-two-three-pulse-marked.wav`, from 0:29, was sent to him). The players have only played the
+  stretch from 0:29. Within a stretch the click is still one steady tempo; a song that speeds up inside 24
+  bars would still pull away. The bass's line is one bar, `F1 F1 B2 . F1 F1 . Bb1`; the B2 looks wrong and
+  the same ear that learned it scores it (54 of 65 on the note). The song's title in the lives is
+  "one two three", from the file name.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -425,6 +435,7 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
+**Vaughn's ear on "1,2-3"** (is the click on the beat and the one right, as he confirmed for the first song);
 a real song in threes from Vaughn; a player raised in fours learning threes so the two bands can meet; a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 

@@ -83,6 +83,9 @@ public final class Main {
             Hearing.Bar b = Hearing.oneBar(h, forThrees);
             String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
             java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
+            Hearing.Bar whole = b;
+            b = Hearing.near(song, whole, from, together < 0 ? 24 : together);   // the click is set from the stretch they play, not from the whole song
+            if (Math.abs(b.bpm() - whole.bpm()) >= 0.05) System.out.printf(Locale.ROOT, "The whole song is %.2f to the minute; this stretch of it is %.2f, and the click is set to that.%n", whole.bpm(), b.bpm());
             Session.Along a = Session.playAlong(wav, drummers, hats, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
             if (b.swing() >= 0) System.out.printf(Locale.ROOT, "The song's sixteenths swing %.0f%% (50 is straight, 67 is the triplet).%n", b.swing());

@@ -254,6 +254,28 @@ public final class Hearing {
     }
 
     /**
+     * The pulse of one stretch of a recording. A song that was not made to a grid does not hold one tempo from
+     * end to end, and a click set from the whole of it drifts away from any part of it. So the stretch that is
+     * about to be played along with is listened to on its own for its tempo and for where its ticks fall. Which
+     * place is the one, and what the bar is like, are still the whole song's, and bars are still counted from
+     * the whole song's first one. If the stretch is too short, or what is heard in it is something else
+     * entirely, the whole song's pulse is kept.
+     */
+    public static Bar near(float[] sound, Bar whole, double fromSeconds, int bars) {
+        double barSec = Musician.PULSES * 60.0 / whole.bpm();
+        int a = (int) Math.max(0, Audio.samples(fromSeconds - barSec)), b = (int) Math.min(sound.length, Audio.samples(fromSeconds + (bars + 2) * barSec));
+        if (b - a < Audio.samples(8 * barSec)) return whole;
+        Bar local = oneBar(listenLowAndHigh(java.util.Arrays.copyOfRange(sound, a, b)), whole.bar().length() == Musician.THREES);
+        if (local.bar().length() != whole.bar().length() || Math.abs(local.bpm() - whole.bpm()) > 0.02 * whole.bpm()) return whole;
+        double localBar = Musician.PULSES * 60.0 / local.bpm(), tick = localBar / whole.bar().length();
+        double wholeOne = whole.aOneAtSeconds() + Math.ceil((fromSeconds - whole.aOneAtSeconds()) / barSec) * barSec;   // where the whole song puts the first one of the stretch
+        double localOne = Audio.seconds(a) + local.aOneAtSeconds();
+        double one = localOne + Math.round((wholeOne - localOne) / tick) * tick;                                      // the tick of the stretch nearest to it
+        long barsIn = Math.round((one - whole.aOneAtSeconds()) / barSec);
+        return new Bar(local.bpm(), local.linesUp(), whole.barsHeard(), whole.bar(), whole.pushMs(), whole.weight(), whole.darkPerBar(), whole.brightPerBar(), one - barsIn * localBar);
+    }
+
+    /**
      * A stretch of the recording with a click laid over it where the ear thinks the pulse is, and a higher
      * click where it thinks the one is. The ear can be wrong about the one, and nobody here can listen, so
      * this is for a person to check by ear.

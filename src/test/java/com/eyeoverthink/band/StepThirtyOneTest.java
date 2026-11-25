@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyTest {
+class StepThirtyOneTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1268,5 +1268,27 @@ class StepThirtyTest {
 
         Path fours = practised(dir, "fours.life", 4);
         assertThrows(IllegalArgumentException.class, () -> Session.playAlong(dir.resolve("t.wav"), fours, "made-up shuffle", song, heard, bar, 3, 8, 1), "a player that counts in fours cannot play along with a song in threes");
+    }
+
+    @Test
+    void theClickIsSetFromTheStretchThatIsPlayedNotFromTheWholeSong() {
+        String drums = "p...n...p.p.n...";
+        float[] slow = madeUpSong(new Lesson("made up", 92, drums), 30), fast = madeUpSong(new Lesson("made up", 93, drums), 30);
+        int keep = (int) (Audio.RATE * (0.25 + 30 * 4 * 60.0 / 92));        // the first thirty bars, and then the same thing a little faster
+        float[] song = new float[keep + fast.length];
+        System.arraycopy(slow, 0, song, 0, keep);
+        System.arraycopy(fast, 0, song, keep, fast.length);
+        Hearing.Bar whole = Hearing.oneBar(Hearing.listenLowAndHigh(song));
+        Hearing.Bar early = Hearing.near(song, whole, 8, 16), late = Hearing.near(song, whole, Audio.seconds(keep) + 8, 16);
+        System.out.printf(Locale.ROOT, "STRETCH a song that goes from 92 to 93: the whole of it %.2f, an early stretch %.2f, a late stretch %.2f%n", whole.bpm(), early.bpm(), late.bpm());
+        assertEquals(92.0, early.bpm(), 0.2);
+        assertEquals(93.0, late.bpm(), 0.2);
+        assertEquals(whole.bar(), late.bar(), "what the bar is like is still the whole song's");
+        Hearing.Bar steady = Hearing.oneBar(Hearing.listenLowAndHigh(slow));
+        Hearing.Bar same = Hearing.near(slow, steady, 8, 16);
+        assertEquals(steady.bpm(), same.bpm(), 0.1, "a song that holds its tempo is heard the same in any stretch");
+        double bar = 4 * 60.0 / steady.bpm(), apart = Math.abs(same.aOneAtSeconds() - steady.aOneAtSeconds()) % bar;
+        assertTrue(Math.min(apart, bar - apart) < 0.02, "and its one is in the same place: " + apart);
+        assertSame(steady, Hearing.near(slow, steady, 8, 2), "too short a stretch to say: the whole song's pulse is kept");
     }
 }
