@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyEightTest {
+class StepTwentyNineTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1194,5 +1194,40 @@ class StepTwentyEightTest {
         Path fours = practised(dir, "fours.life", 4);
         assertThrows(IllegalArgumentException.class, () -> Session.together(dir.resolve("t.wav"), fours, dir.resolve("pupil0.life"), 8, 92, 1), "one who counts in fours and one who counts in threes cannot play together yet");
         assertThrows(IllegalArgumentException.class, () -> Session.teach(dir.resolve("t.wav"), dir.resolve("teacher0.life"), fours, 4, 8, 92, 1));
+    }
+
+    @Test
+    void aBassPlayerGrowsUpInThreesWithTwoShuffleDrummers(@TempDir Path dir) throws Exception {
+        String shuffle = "p.nn.np.nn.n";
+        int bands = 5, sessions = 40, threeTicks = 0, twoNotes = 0;
+        double notesFirst = 0, notesLast = 0, apartLast = 0, tuneLast = 0, onDrums = 0;
+        for (int k = 0; k < bands; k++) {
+            Path a = practised(dir, "a" + k + ".life", 3, shuffle), b = practised(dir, "b" + k + ".life", 3, shuffle), bass = dir.resolve("bass" + k + ".life");
+            Session.Band band = null;
+            for (int s = 0; s < sessions; s++) {
+                band = Session.band(dir.resolve("t.wav"), List.of(a, b), bass, 8, 92, 4000L * k + s);
+                assertEquals(12, band.bassAfter().length(), "a newborn bass counts as the drummers do");
+                assertEquals('p', band.bassAfter().charAt(0), "the one is a low note");
+                assertTrue(band.peak() < 1.0f);
+                if (s == 0) notesFirst += band.bassNotes() / (double) bands;
+            }
+            Session.Part part = band.parts().get(2);
+            notesLast += band.bassNotes() / (double) bands;
+            onDrums += (band.bassNotesOnAPot() + band.bassHighNotesOnAPan()) / (double) Math.max(1, band.bassNotes()) / bands;
+            apartLast += band.bassApartMs() / bands;
+            tuneLast += band.bassOutOfTuneCents() / bands;
+            if (part.ticksAfter() == 3) threeTicks++;
+            if (band.bassNotesKnownAfter() == 2) twoNotes++;
+        }
+        System.out.printf(Locale.ROOT, "THREES BASS %.1f notes in the bar after one session, %.1f after %d; %.0f%% of them where a drummer plays the same kind of hit; %d of %d have three ticks, %d have both notes; %.1f ms from the first drummer; out of tune by %.0f cents%n",
+            notesFirst, notesLast, sessions, 100 * onDrums, threeTicks, bands, twoNotes, apartLast, tuneLast);
+        assertTrue(notesLast > notesFirst, "its part grows: " + notesFirst + " to " + notesLast);
+        assertTrue(threeTicks >= 3, "most of them earn the triplet: " + threeTicks);
+        assertTrue(apartLast < 30, "and plays with the drummers: " + apartLast);
+
+        Path fours = dir.resolve("fours-bass.life");
+        Files.write(fours, List.of("name: the bass player", "ticks to the pulse: 2", "notes: 2", "pattern: p...p...p...p..."));
+        Path a0 = dir.resolve("a0.life"), b0 = dir.resolve("b0.life");
+        assertThrows(IllegalArgumentException.class, () -> Session.band(dir.resolve("t.wav"), List.of(a0, b0), fours, 8, 92, 1), "a bass player that counts in fours cannot join drummers who count in threes");
     }
 }

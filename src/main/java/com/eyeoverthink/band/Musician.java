@@ -220,6 +220,7 @@ public final class Musician implements Player, Hits {
     public int per() { return per; }
     /** A newborn bass player: its one note, on the one. */
     public static final String FIRST_BASS_PATTERN = "p...............";
+    public static final String FIRST_BASS_PATTERN_IN_THREES = "p...........";
     /** A newborn hat player: one hat, on the one. */
     public static final String FIRST_HATS_PATTERN = "n...............";
 
@@ -443,7 +444,7 @@ public final class Musician implements Player, Hits {
         this.hitSlots = new int[hits.length];
         this.hitPushes = new double[hits.length];
         for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i, per);
-        if (slots == THREES && (oneNote || hatsOnly)) throw new IllegalArgumentException(name + " counts in threes. So far only a drummer on a kit can.");
+        if (slots == THREES && hatsOnly) throw new IllegalArgumentException(name + " counts in threes. So far a drummer on a kit can, and a bass player, but not a hat player.");
     }
 
     @Override public String name() { return name; }

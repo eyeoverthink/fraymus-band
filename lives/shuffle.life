@@ -5,7 +5,7 @@ feel: 10.8/0.99/113 -0.8/0.57/1 1.1/0.52/208 -4.7/0.75/229 4.1/0.54/1 -6.8/0.52/
 heard from "shuffle": p.nn.np.nn.n
 its own: ............
 sounds: a pot (p) and a pan (n)
-listens to itself: 0.81
+listens to itself: 0.58
 ticks to the pulse: 3
 pattern: p.nn.np.nn.n
 session 1: heard "shuffle", answers=4, hits=59, tempo 92.0 to 87.3 bpm, unsteadiness 22.1 ms at the start, 69.0 ms by the end, listening 0.15, ticks to the pulse 1, pattern p..n..n..p.., like the lesson in 6 of 16 places, 8 bars with the record, 38 ms apart
@@ -64,3 +64,44 @@ session 53: played its pattern for the second shuffle drummer, 4 calls and 8 bar
 session 54: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.6 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
 session 55: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.4 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
 session 56: played 16 bars with the second shuffle drummer, no record, hits=129, unsteadiness 7.9 ms, listening 0.81, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 57: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.2 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 58: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.9 ms, listening 0.87, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 59: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.4 ms, listening 0.92, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 60: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.1 ms, listening 0.92, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 61: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 6.5 ms, listening 0.94, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 62: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 6.9 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 63: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.6 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 64: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 6.8 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 65: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.1 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 66: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.7 ms, listening 0.91, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 67: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.6 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, 4 ms apart
+session 68: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.0 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 69: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.1 ms, listening 0.82, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 70: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 6.7 ms, listening 0.82, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 71: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.7 ms, listening 0.82, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 72: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.3 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 73: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 10.9 ms, listening 0.78, ticks to the pulse 3, pattern p.nn.np.nn.n, 7 ms apart
+session 74: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.1 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 7 ms apart
+session 75: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.9 ms, listening 0.88, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 76: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.0 ms, listening 0.90, ticks to the pulse 3, pattern p.nn.np.nn.n, 4 ms apart
+session 77: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.9 ms, listening 0.88, ticks to the pulse 3, pattern p.nn.np.nn.n, 7 ms apart
+session 78: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.3 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 79: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.7 ms, listening 0.82, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 80: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 12.3 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 81: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.2 ms, listening 0.82, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 82: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 5.5 ms, listening 0.78, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 83: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.2 ms, listening 0.72, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 84: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.5 ms, listening 0.72, ticks to the pulse 3, pattern p.nn.np.nn.n, 4 ms apart
+session 85: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 10.1 ms, listening 0.70, ticks to the pulse 3, pattern p.nn.np.nn.n, 7 ms apart
+session 86: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.2 ms, listening 0.74, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 87: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.6 ms, listening 0.76, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 88: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.8 ms, listening 0.74, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 89: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.5 ms, listening 0.72, ticks to the pulse 3, pattern p.nn.np.nn.n, 8 ms apart
+session 90: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 6.6 ms, listening 0.68, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart
+session 91: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.8 ms, listening 0.65, ticks to the pulse 3, pattern p.nn.np.nn.n, 8 ms apart
+session 92: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.6 ms, listening 0.65, ticks to the pulse 3, pattern p.nn.np.nn.n, 7 ms apart
+session 93: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 8.3 ms, listening 0.63, ticks to the pulse 3, pattern p.nn.np.nn.n, 8 ms apart
+session 94: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.2 ms, listening 0.65, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 95: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.5 ms, listening 0.63, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart
+session 96: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.5 ms, listening 0.63, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
+session 97: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 10.4 ms, listening 0.58, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart

@@ -9,7 +9,7 @@ public final class Main {
         int answers = 4, together = -1;
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
-        String born = null, bornPupil = null;
+        String born = null, bornPupil = null, bornBass = null;
         double from = 46;
         boolean click = false;
         double tempo = 92;
@@ -33,6 +33,7 @@ public final class Main {
                 case "--in-words" -> askWords = args[i + 1];
                 case "--name" -> born = args[i + 1];
                 case "--name-pupil" -> bornPupil = args[i + 1];
+                case "--name-bass" -> bornBass = args[i + 1];
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
@@ -40,7 +41,7 @@ public final class Main {
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         // A newborn can be given a name. One that already has a life keeps the name it has.
@@ -52,6 +53,10 @@ public final class Main {
         if (bornPupil != null && pupil != null && !java.nio.file.Files.exists(pupil)) {
             if (pupil.getParent() != null) java.nio.file.Files.createDirectories(pupil.getParent());
             java.nio.file.Files.write(pupil, java.util.List.of("name: " + bornPupil));
+        }
+        if (bornBass != null && bass != null && !java.nio.file.Files.exists(bass)) {
+            if (bass.getParent() != null) java.nio.file.Files.createDirectories(bass.getParent());
+            java.nio.file.Files.write(bass, java.util.List.of("name: " + bornBass));
         }
         // The bandleader asks a player for particular places. It is written into that player's life before anyone plays.
         if (askBass != null && bass != null) Life.open(bass, "the bass player", Musician.FIRST_BASS_PATTERN).ask(askBass, askWords);

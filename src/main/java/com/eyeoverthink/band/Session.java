@@ -393,7 +393,8 @@ public final class Session {
         Musician[] players = new Musician[n];
         String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
         for (int i = 0; i < n; i++) {
-            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", lives[0].pattern().length() == Musician.THREES ? Musician.FIRST_BASS_PATTERN_IN_THREES : Musician.FIRST_BASS_PATTERN)   // a newborn bass counts as the drummer does
+                     : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)], firstPatternLike(lives[0] == null ? Life.open(drummerLives.get(0), nameIfNew[0]) : lives[0]));
             countTheSame(lives[0], lives[i]);
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
@@ -432,7 +433,7 @@ public final class Session {
             java.util.List<Part> parts = new java.util.ArrayList<>();
             StringBuilder names = new StringBuilder();
             for (int i = 0; i < n; i++) {
-                Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
+                Apart a = i == 0 ? apart(first, first.slots(), players[1]) : apart(players[i], 0, first);
                 parts.add(new Part(lives[i].name(), players[i].hitCount(), unsteadiness(players[i], 0, players[i].hitCount()),
                     lives[i].listening(), players[i].listening(), lives[i].ticks(), players[i].ticks(), players[i].pattern(), a.alone(),
                     lives[i].leaning(), players[i].leaning()));
@@ -440,7 +441,7 @@ public final class Session {
             Apart bassToFirst = apart(bass, 0, first);
             int notes = 0, onAPot = 0;
             int high = 0, onAPan = 0;
-            for (int s = 0; s < Musician.SLOTS; s++) {
+            for (int s = 0; s < bass.slots(); s++) {
                 char played = bass.pattern().charAt(s);
                 if (played == '.') continue;
                 notes++;
@@ -454,7 +455,7 @@ public final class Session {
             for (int i = 0; i < n; i++) {
                 names.setLength(0);
                 for (int k = 0; k < n; k++) if (k != i) names.append(names.length() == 0 ? "" : " and ").append(lives[k].name());
-                Apart a = i == 0 ? apart(first, SLOTS_IN_A_BAR, players[1]) : apart(players[i], 0, first);
+                Apart a = i == 0 ? apart(first, first.slots(), players[1]) : apart(players[i], 0, first);
                 lives[i].leaning(players[i].leaning()); lives[i].habits(players[i].habits());
                 if (i == bassAt) lives[i].notes(players[i].notes());
                 keep(players[i], lives[i], null);

@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.28.0. 53 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.29.0. 54 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -100,6 +100,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 26 | Holding time with a swung record and no click. A player sets its clock by how far a record's hit is from where it knows that place to sit, using the feel it brought with it from earlier days (`knownFeelOf`), not the feel it is taking in right now. With a record swung 64% and no click: rough for the first four sessions (up to 176 ms unsteady, tempo down to 75), then 4 to 11 ms and tempo within 2 of 92. At 58% it holds from the second session. Before this step it lost its tempo in about half of all sessions for good. |
 | 27 | Threes (item 4, real triplets, first part). A bar can be counted in threes: twelve places, three to the pulse. A lesson with a twelve-place bar is in threes (`lessons/shuffle.lesson`, `p.nn.np.nn.n`). A newborn counts as its first record does, for life; in threes it has one tick to the pulse, then three. Inside `Musician` the bar is now `slots` places with `per` to the pulse; `SLOTS` is only the size of the arrays. Twelve newborns on the shuffle: 7.5 of 12 places like it in the first session, 11.8 by the thirtieth, all with three ticks, 8 ms from the record. A new player was raised: `lives/shuffle.life`, "the shuffle drummer" (`--name` names a newborn). |
 | 28 | Threes, second part: players who count in threes teach and play with each other. A pupil counts as its teacher does. Players in one room must count the same way, or the session refuses. Six pupils taught the shuffle: like it in 7.2 of 12 places after one session, 11.7 after 24, all with three ticks, 6 ms from their teacher. A second player was raised: `lives/shuffle-second.life`, "the second shuffle drummer", taught by the first (`--name-pupil` names a newborn pupil). |
+| 29 | Threes, third part: a bass in threes. A newborn bass counts as the drummers it joins do (`--name-bass` names it). Five made-up basses with two shuffle drummers: 2.6 notes in the bar after one session, 7.8 after forty, all with three ticks and both notes, 12 ms from the first drummer (after 24 sessions only three of five had the triplet and they were 27 ms apart). A third player in threes was raised: `lives/shuffle-bass.life`, "the shuffle bass player". |
 
 ### The players that exist (do not reset these)
 
@@ -117,6 +118,9 @@ with a real life file. There is a record that plays lessons and a click track.
 - `lives/shuffle-second.life`, "the second shuffle drummer": born in step 28, taught by the shuffle drummer in
   24 sessions with a click. Three ticks, the same pattern, listening 0.95. Together, with a click, the two are
   5 ms apart. They play the same part on the same kind of kit; no roles in threes yet.
+- `lives/shuffle-bass.life`, "the shuffle bass player": born in step 29 with the two shuffle drummers, 41
+  sessions with a click. Three ticks, both notes, pattern `p.nn.np.nn.n`: low E where they have a pot, high E
+  where they have a pan. 17 ms from the first drummer in its last take, looser than the drummers are.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
   pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own. **In step 20
   Vaughn asked it for the up tick at the end of two and of four**; its life has `asked for: ......n.......n.`
@@ -137,11 +141,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.28.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.28.0.jar --click on
-    java -jar target/fraymus-band-0.28.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.28.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.28.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.29.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.29.0.jar --click on
+    java -jar target/fraymus-band-0.29.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.29.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.29.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -185,7 +189,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyEightTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepTwentyNineTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -389,10 +393,11 @@ Given, as fixed rules (be honest about these):
   with the middle one played, are still out of reach (no triplet ticks). The ear's 56% for Vaughn's song is
   an average over everything in the mix, some of which may be played straight. The two-thirds rule for tempo
   was checked on one real song.
-- **Threes (steps 27 and 28):** two drummers on kits is all there is in threes. No bass, no hats, no playing
-  along with a song (the ear on a recording only folds onto sixteen), no roles: the two shuffle drummers play
-  the same part. A player counts in fours or in threes for life, so the first three players and the two
-  shuffle drummers cannot share a room. The duo was only measured with a click. No six to the pulse.
+- **Threes (steps 27 to 29):** two drummers on kits and a bass. All three play the same rhythm (the bass
+  follows every drum hit, low for a pot and high for a pan, on E): one part three times over, no roles. No
+  hats, no playing along with a song (the ear on a recording only folds onto sixteen), so no bass line and no
+  song's feel in threes. A player counts in fours or in threes for life, so the first three players and the
+  three shuffle players cannot share a room. Only measured with a click. No six to the pulse.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -406,8 +411,8 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-the rest of threes (a bass and a hat in threes, hearing a recording in threes, a player raised in fours
-learning threes so the two bands can meet), a way for the hat and bass players to sit with a record alone;
+the rest of threes (parts that differ: a hat in threes and roles without a song; hearing a recording in
+threes; a player raised in fours learning threes so the two bands can meet), a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people
