@@ -154,6 +154,9 @@ import java.util.SplittableRandom;
  * for a place, it falls back on the note it has heard most in that song, and if it has not heard enough to
  * say, it presses nothing. Without a song it has only the note its hand rests on.
  *
+ * A singer is a keys player with a voice for an instrument: a sung "oh" with no words, higher up, held until
+ * its next note. Unlike keys a voice can be out of tune, and a young one is, as a young bass player is.
+ *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
  *
@@ -271,7 +274,9 @@ public final class Musician implements Player, Hits {
     private final boolean hatsOnly;       // a hat player: one bright sound; listens for the bright hits and the top of a track
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player or a keys player
-    private final boolean keys;
+    private final boolean keys, voice;
+    /** The notes a singer listens for: from middle C to the E an octave and a third above it. */
+    public static final int VOICE_LOWEST = 60, VOICE_HIGHEST = 76;
     /** The notes a keys player listens for in a song: from the C below middle C to the G above it. A keys player notices a hit in the middle of a song at this much of the loudest lately. */
     public static final int KEYS_LOWEST = 48, KEYS_HIGHEST = 67;
     static final double MID_NOTICE = 0.5;
@@ -397,7 +402,7 @@ public final class Musician implements Player, Hits {
 
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
-        if (oneNote) lineEar = keys ? new LineEar(KEYS_LOWEST, KEYS_HIGHEST) : new LineEar();
+        if (oneNote) lineEar = voice ? LineEar.high(VOICE_LOWEST, VOICE_HIGHEST) : keys ? new LineEar(KEYS_LOWEST, KEYS_HIGHEST) : new LineEar();
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
         fullMix = true;
@@ -414,6 +419,14 @@ public final class Musician implements Player, Hits {
     public static Musician onBass(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
                                   int ticksSoFar, String patternSoFar, int notesSoFar, int bars, long seed) {
         Musician m = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, new Bass());
+        m.notes = Math.max(1, Math.min(2, notesSoFar));
+        return m;
+    }
+
+    /** A singer: a voice with no words, one note at a time, higher than the keys. It listens to the middle of a song for its notes, and has to learn to sing them in tune. */
+    public static Musician onVoice(String name, double comfortableBpm, long experienceSoFar, double listeningSoFar,
+                                   int ticksSoFar, String patternSoFar, int notesSoFar, int bars, long seed) {
+        Musician m = new Musician(name, comfortableBpm, experienceSoFar, listeningSoFar, ticksSoFar, patternSoFar, 0, bars, seed, false, false, 0, Bass.voice());
         m.notes = Math.max(1, Math.min(2, notesSoFar));
         return m;
     }
@@ -445,7 +458,8 @@ public final class Musician implements Player, Hits {
                     int ticksSoFar, String patternSoFar, int answers, int barsTogether, long seed, boolean withARecord, boolean starts, int teachBars, Instrument hands) {
         this.hands = hands;
         this.oneNote = hands instanceof Bass;
-        this.keys = oneNote && ((Bass) hands).isKeys();
+        this.voice = oneNote && ((Bass) hands).isVoice();
+        this.keys = oneNote && (((Bass) hands).isKeys() || voice);   // a singer takes the middle of a song as a keys player does
         this.hatsOnly = hands instanceof Hats;
         this.learnsWhilePlaying = oneNote || hatsOnly;
         this.bass = oneNote ? (Bass) hands : null;
@@ -1149,7 +1163,7 @@ public final class Musician implements Player, Hits {
                     boolean noNote = struckHz == 0;                  // a keys player that does not know a note for this song yet does not press one
                     if (noNote) struckHz = bass.open();
                     bass.tune(struckHz);
-                    bass.detune(keys ? 0 : chance.nextGaussian() * tuneSlip());
+                    bass.detune(keys && !voice ? 0 : chance.nextGaussian() * tuneSlip());   // keys are where they are; a voice has to find the note
                     if (noNote) {                                    // the place goes by unplayed; the take still ends where it should
                         struckAt = -1; strikeAt = -1; laidOut++;
                         if (landing) { lastPulse = clock.period(); endAt = blockStart + i + Math.round(lastPulse); }

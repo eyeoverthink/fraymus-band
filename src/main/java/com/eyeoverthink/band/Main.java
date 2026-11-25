@@ -10,7 +10,7 @@ public final class Main {
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
         String born = null, bornPupil = null, bornBass = null;
-        Path madeUp = null, keysLife = null;
+        Path madeUp = null, keysLife = null, singerLife = null;
         boolean inThrees = false;
         double from = 46;
         boolean click = false;
@@ -40,13 +40,14 @@ public final class Main {
                 case "--count" -> inThrees = args[i + 1].equals("threes");
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--keys" -> keysLife = Path.of(args[i + 1]);
+                case "--singer" -> singerLife = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --singer LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         if (madeUp != null) {                                // write the made-up shuffle recording, for players in threes to play along with
@@ -87,7 +88,7 @@ public final class Main {
             Hearing.Bar whole = b;
             b = Hearing.near(song, whole, from, together < 0 ? 24 : together);   // the click is set from the stretch they play, not from the whole song
             if (Math.abs(b.bpm() - whole.bpm()) >= 0.05) System.out.printf(Locale.ROOT, "The whole song is %.2f to the minute; this stretch of it is %.2f, and the click is set to that.%n", whole.bpm(), b.bpm());
-            Session.Along a = Session.playAlong(wav, drummers, hats, bass, keysLife, title, song, h, b, from, together < 0 ? 24 : together, seed);
+            Session.Along a = Session.playAlong(wav, drummers, hats, bass, keysLife, singerLife, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
             if (b.swing() >= 0) System.out.printf(Locale.ROOT, "The song's sixteenths swing %.0f%% (50 is straight, 67 is the triplet).%n", b.swing());
             for (Session.AlongPart p : a.parts()) {

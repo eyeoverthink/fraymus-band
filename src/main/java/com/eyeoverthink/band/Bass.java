@@ -18,17 +18,27 @@ public final class Bass implements Instrument {
     private final double ring, open;
     private final boolean keys;
 
-    public Bass() { this(false); }
-    private Bass(boolean keys) {
-        this.keys = keys;
+    private final boolean voice;
+    /** Where a singer's voice sits when it knows no better: the C above middle C. */
+    public static final double VOICE_OPEN = 523.25;
+    private static final double[] MOUTH = {500, 900, 2500}, MOUTH_WIDE = {90, 110, 160}, MOUTH_LOUD = {1.0, 0.6, 0.25};   // an open "oh"
+    private final double[] sung = new double[24];        // how loud each tone of the sung note is, set when the note starts
+    private int tones;
+
+    public Bass() { this(false, false); }
+    /** A voice: a sung "oh" with no words, held until the next note or until the breath runs out, with a little waver once it has settled. It can be out of tune, as a bass with no frets can. */
+    public static Bass voice() { return new Bass(false, true); }
+    public boolean isVoice() { return voice; }
+    private Bass(boolean keys, boolean voice) {
+        this.keys = keys; this.voice = voice;
         PARTIAL = keys ? KEYS_PARTIAL : BASS_PARTIAL;
-        LENGTH = (int) Audio.samples(keys ? 0.9 : 0.55);
+        LENGTH = (int) Audio.samples(voice ? 1.3 : keys ? 0.9 : 0.55);
         ring = keys ? 0.45 : 0.30;
-        open = keys ? KEYS_OPEN : LOW;
+        open = voice ? VOICE_OPEN : keys ? KEYS_OPEN : LOW;
         low = open;
     }
     /** The same kind of thing with keys under the hand: a struck tone in the middle of the band, an electric piano more or less. Its notes are where they are; it cannot be out of tune. */
-    public static Bass keys() { return new Bass(true); }
+    public static Bass keys() { return new Bass(true, false); }
     public boolean isKeys() { return keys; }
     /** The pitch of its low note when its hand has not been moved. */
     public double open() { return open; }
@@ -53,11 +63,34 @@ public final class Bass implements Instrument {
         hz = (sound == Kit.PAN ? 2 * low : low) * Math.pow(2, cents / 1200.0);
         at = 0;
         loud = loudness;
+        if (voice) {                                         // the mouth shapes the note: each tone is as loud as the mouth lets it be
+            tones = (int) Math.min(sung.length, 5000 / hz);
+            double most = 1e-9;
+            for (int k = 0; k < tones; k++) {
+                double f = hz * (k + 1), a = 0;
+                for (int m = 0; m < MOUTH.length; m++) { double away = (f - MOUTH[m]) / MOUTH_WIDE[m]; a += MOUTH_LOUD[m] / (1 + away * away); }
+                sung[k] = a / Math.sqrt(k + 1) + 0.03 / (k + 1); most = Math.max(most, sung[k]);
+            }
+            for (int k = 0; k < tones; k++) sung[k] /= most;
+            phase = 0;
+        }
     }
+
+    private double phase;
 
     @Override
     public float next() {
         if (at < 0) return 0f;
+        if (voice) {
+            double t = at / (double) Audio.RATE;
+            double waver = t < 0.2 ? 0 : Math.min(1, (t - 0.2) / 0.3) * 0.009 * Math.sin(2 * Math.PI * 5.5 * t);   // it wavers once the note has settled
+            phase += 2 * Math.PI * hz * (1 + waver) / Audio.RATE;
+            double sum = 0;
+            for (int k = 0; k < tones; k++) sum += sung[k] * Math.sin(phase * (k + 1));
+            double breath = Math.min(1.0, t / 0.015) * Math.exp(-t / 1.1) * Math.min(1.0, (LENGTH - at) / Audio.samples(0.08));
+            if (++at >= LENGTH) at = -1;
+            return (float) (sum * breath * 0.16 * loud);
+        }
         double t = at / (double) Audio.RATE, sum = 0;
         for (int k = 0; k < PARTIAL.length; k++)
             sum += PARTIAL[k] * Math.sin(2 * Math.PI * hz * (k + 1) * t) * Math.exp(-t / (ring / (1 + 0.6 * k)));
@@ -67,5 +100,5 @@ public final class Bass implements Instrument {
         return (float) (sum * pluck * fadeOut * LEVEL * loud * 0.5);
     }
 
-    @Override public String describe() { return keys ? "a note on the keys (p) and, once it has earned it, the same note an octave up (n)" : "a low note (p) and, once it has earned it, the same note an octave up (n)"; }
+    @Override public String describe() { return voice ? "a sung note (p) and, once it has earned it, the same note an octave up (n)" : keys ? "a note on the keys (p) and, once it has earned it, the same note an octave up (n)" : "a low note (p) and, once it has earned it, the same note an octave up (n)"; }
 }

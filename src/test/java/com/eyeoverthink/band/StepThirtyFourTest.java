@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyThreeTest {
+class StepThirtyFourTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1358,5 +1358,68 @@ class StepThirtyThreeTest {
         List<String> life = Files.readAllLines(keys);
         assertTrue(life.stream().anyMatch(l -> l.startsWith("line from \"made up\": ")), "its line is in its life under the song's name");
         assertEquals(4, last.phraseBars(), "and it finds the tune is four bars long: " + last.phraseHeard());
+    }
+
+    @Test
+    void aSingerIsBornLearnsATuneAndLearnsToSingItInTune(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = songWithALine(drums, 40, LINE);
+        int[] tune = {67, 67, 70, 72,   67, 67, 70, 74,   72, 72, 70, 67,   65, 65, 69, 74};     // a tune above middle C, one note to the pulse, four bars long
+        double pulse = 60.0 / 92;
+        for (int k = 0; k < 40 * 4; k++) {
+            int at = (int) Audio.samples(0.25 + k * pulse);
+            double hz = LineEar.hzOf(tune[k % tune.length]);
+            for (int i = 0; i < 24000 && at + i < song.length; i++) {
+                double t = i / (double) Audio.RATE, fade = Math.min(1, i / 200.0) * Math.min(1, (24000 - i) / 800.0);
+                song[at + i] += (float) (0.25 * fade * Math.exp(-t / 0.5) * (Math.sin(2 * Math.PI * hz * t) + 0.5 * Math.sin(4 * Math.PI * hz * t)));
+            }
+        }
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        java.util.Set<String> inTheTune = new java.util.HashSet<>(List.of("."));
+        for (int note : tune) inTheTune.add(Musician.nameOf(note));
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2), singer = dir.resolve("singer.life");
+        Session.AlongPart first = null, last = null;
+        float peak = 0;
+        for (int s = 0; s < 12; s++) {
+            Session.Along take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), null, bass, null, singer, "made up", song, heard, bar, 5, 24, 1500 + s);
+            last = take.parts().get(2);
+            if (s == 0) first = last;
+            peak = Math.max(peak, take.peak());
+        }
+        int right = 0, believed = 0;
+        for (String note : last.line().replace("|", " ").trim().split("\\s+")) if (!note.equals(".")) { believed++; if (inTheTune.contains(note)) right++; }
+        System.out.printf(Locale.ROOT, "SINGER after twelve takes it sings %s, %d ticks to the pulse; it believes %d notes, %d of them the tune's; home note %s; %d on the song's note and %d not; out of tune by %.0f cents in its first take and %.0f in its last; unsteadiness %.1f ms%n",
+            last.patternAfter(), last.ticksAfter(), believed, right, last.home(), last.withTheSong(), last.againstTheSong(), first.outOfTuneCents(), last.outOfTuneCents(), last.unsteadyMs());
+        assertEquals("the singer", last.name());
+        assertTrue(last.plays().startsWith("a sung note"));
+        assertEquals("p...............", first.patternBefore(), "a newborn singer has one note, on the one");
+        assertTrue(believed >= 6, "it comes to believe notes of the tune: " + last.line());
+        assertTrue(right >= 0.8 * believed, "and they are the tune's: " + last.line());
+        assertTrue(last.withTheSong() > 2 * last.againstTheSong(), "most of what it sings is the note the tune is on: " + last.withTheSong() + " to " + last.againstTheSong());
+        assertTrue(first.outOfTuneCents() > 12, "a newborn singer is out of tune: " + first.outOfTuneCents());
+        assertTrue(last.outOfTuneCents() < first.outOfTuneCents(), "and gets better at it: " + first.outOfTuneCents() + " to " + last.outOfTuneCents());
+        assertTrue(peak < 1.0f);
+    }
+
+    @Test
+    void aVoiceHoldsItsNoteAndIsHeardAtThePitchItIsGiven() {
+        Bass voice = Bass.voice();
+        for (double hz : new double[] {261.63, 392.0, 523.25}) {
+            voice.tune(hz);
+            voice.detune(0);
+            voice.strike(Kit.POT, 1f);
+            float[] sound = new float[(int) Audio.samples(1.0)];
+            float peak = 0, late = 0;
+            for (int i = 0; i < sound.length; i++) { sound[i] = voice.next(); peak = Math.max(peak, Math.abs(sound[i])); if (i > Audio.samples(0.8)) late = Math.max(late, Math.abs(sound[i])); }
+            int crossings = 0, from = (int) Audio.samples(0.05), to = (int) Audio.samples(0.15);
+            double re = 0, im = 0;
+            for (int i = from; i < to; i++) { re += sound[i] * Math.cos(2 * Math.PI * hz * i / Audio.RATE); im += sound[i] * Math.sin(2 * Math.PI * hz * i / Audio.RATE); }
+            double atPitch = Math.hypot(re, im), re2 = 0, im2 = 0, off = hz * Math.pow(2, 0.5 / 12);
+            for (int i = from; i < to; i++) { re2 += sound[i] * Math.cos(2 * Math.PI * off * i / Audio.RATE); im2 += sound[i] * Math.sin(2 * Math.PI * off * i / Audio.RATE); }
+            assertTrue(peak > 0.05 && peak < 0.6, "a voice is neither silent nor too loud: " + peak);
+            assertTrue(late > 0.2 * peak, "it is still holding its note after most of a second: " + late + " of " + peak);
+            assertTrue(atPitch > 3 * Math.hypot(re2, im2), "its bottom tone is at the pitch it was given, not a quarter tone away");
+        }
     }
 }

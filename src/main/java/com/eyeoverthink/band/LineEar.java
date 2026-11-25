@@ -15,7 +15,8 @@ public final class LineEar {
     private static final int PIECE = (int) (Audio.RATE * 0.2 / EVERY);   // a fifth of a second
     private static final long SKIP = (long) Audio.samples(0.04);         // let the pluck, or the kick, go by
     private final int lowest, TRIES;
-    private static final double[] PART = {1.0, 0.7, 0.4};                // how much the bottom tone and the two above it count
+    private static final double[] THREE = {1.0, 0.7, 0.4}, TWO = {1.0, 0.7};   // how much the bottom tone and the ones above it count
+    private final double[] PART;
     /** A note is clear when it is this much of the clearest it has heard lately. */
     private static final double CLEAR = 0.35, LATELY = 0.97;
 
@@ -26,9 +27,13 @@ public final class LineEar {
     private long from = -1;
 
     public LineEar() { this(LOWEST, HIGHEST); }
+    /** High notes: it keeps too little of the sound to hear a third tone above them, so it listens for two. */
+    public static LineEar high(int lowest, int highest) { return new LineEar(lowest, highest, TWO); }
+    public LineEar(int lowest, int highest) { this(lowest, highest, THREE); }
 
     /** An ear for another part of the band: the notes from this key number up to that one. */
-    public LineEar(int lowest, int highest) {
+    private LineEar(int lowest, int highest, double[] parts) {
+        this.PART = parts;
         this.lowest = lowest; this.TRIES = (highest - lowest) * STEPS + 1;
         turnCos = new double[TRIES][PART.length]; turnSin = new double[TRIES][PART.length];
         for (int i = 0; i < PIECE; i++) {
