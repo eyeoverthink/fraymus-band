@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyFourTest {
+class StepThirtyFiveTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1400,6 +1400,8 @@ class StepThirtyFourTest {
         assertTrue(first.outOfTuneCents() > 12, "a newborn singer is out of tune: " + first.outOfTuneCents());
         assertTrue(last.outOfTuneCents() < first.outOfTuneCents(), "and gets better at it: " + first.outOfTuneCents() + " to " + last.outOfTuneCents());
         assertTrue(peak < 1.0f);
+        assertTrue(last.held() >= 10, "where the tune stays on a note, so does it: it held " + last.held() + " times");
+        System.out.println("SINGER held a note " + last.held() + " times in its last take and sang " + (last.withTheSong() + last.againstTheSong()) + " afresh");
     }
 
     @Test
@@ -1421,5 +1423,34 @@ class StepThirtyFourTest {
             assertTrue(late > 0.2 * peak, "it is still holding its note after most of a second: " + late + " of " + peak);
             assertTrue(atPitch > 3 * Math.hypot(re2, im2), "its bottom tone is at the pitch it was given, not a quarter tone away");
         }
+    }
+
+    @Test
+    void aHeldNoteCarriesOnWithoutABump() {
+        Bass voice = Bass.voice();
+        voice.tune(349.23);
+        voice.detune(0);
+        voice.strike(Kit.POT, 1f);
+        int second = (int) Audio.RATE;
+        float[] sound = new float[3 * second];
+        for (int i = 0; i < sound.length; i++) {
+            if (i == second / 2 || i == second || i == 3 * second / 2) voice.hold();     // the singer leans on the note three times
+            sound[i] = voice.next();
+        }
+        float before = 0, across = 0, late = 0, gone = 0;
+        for (int i = second / 2 - 2000; i < second / 2; i++) before = Math.max(before, Math.abs(sound[i] - sound[i - 1]));
+        for (int i = second / 2; i < second / 2 + 60; i++) across = Math.max(across, Math.abs(sound[i] - sound[i - 1]));   // just where it leans on the note
+        for (int i = 2 * second; i < 2 * second + 4000; i++) late = Math.max(late, Math.abs(sound[i]));
+        for (int i = 3 * second - 4000; i < 3 * second; i++) gone = Math.max(gone, Math.abs(sound[i]));
+        assertTrue(across < 1.15 * before, "holding on makes no jump in the sound: " + across + " against " + before);
+        assertTrue(late > 0.02, "half a second after it last leaned on it the note is still there: " + late);
+        assertEquals(0f, gone, 1e-6f, "and when the breath is gone, so is the note");
+        Bass keys = Bass.keys();
+        keys.strike(Kit.POT, 1f);
+        for (int i = 0; i < second / 2; i++) keys.next();
+        keys.hold();
+        float tail = 0;
+        for (int i = 0; i < second; i++) tail = Math.abs(keys.next());
+        assertEquals(0f, tail, 1e-6f, "keys cannot be held on: a struck note dies away");
     }
 }

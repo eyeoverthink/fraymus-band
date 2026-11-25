@@ -72,11 +72,18 @@ public final class Bass implements Instrument {
                 sung[k] = a / Math.sqrt(k + 1) + 0.03 / (k + 1); most = Math.max(most, sung[k]);
             }
             for (int k = 0; k < tones; k++) sung[k] /= most;
-            phase = 0;
+            phase = 0; since = 0; gain = 1;
         }
     }
 
-    private double phase;
+    private double phase, gain = 1;
+    private int since;                                   // samples since the note began, or since the singer last leaned on it
+
+    /** True while a note is still sounding. */
+    public boolean sounding() { return at >= 0; }
+
+    /** A singer already on the note it wants carries on with it: no new start, the breath behind it renewed. */
+    public void hold() { if (voice && at >= 0) since = 0; }
 
     @Override
     public float next() {
@@ -87,8 +94,10 @@ public final class Bass implements Instrument {
             phase += 2 * Math.PI * hz * (1 + waver) / Audio.RATE;
             double sum = 0;
             for (int k = 0; k < tones; k++) sum += sung[k] * Math.sin(phase * (k + 1));
-            double breath = Math.min(1.0, t / 0.015) * Math.exp(-t / 1.1) * Math.min(1.0, (LENGTH - at) / Audio.samples(0.08));
-            if (++at >= LENGTH) at = -1;
+            gain += (Math.exp(-since / (1.1 * Audio.RATE)) - gain) * 0.0008;   // it swells back gently when the note is held on, with no bump
+            double breath = Math.min(1.0, t / 0.015) * gain * Math.min(1.0, (LENGTH - since) / Audio.samples(0.08));
+            at++;
+            if (++since >= LENGTH) at = -1;
             return (float) (sum * breath * 0.16 * loud);
         }
         double t = at / (double) Audio.RATE, sum = 0;

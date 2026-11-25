@@ -155,7 +155,9 @@ import java.util.SplittableRandom;
  * say, it presses nothing. Without a song it has only the note its hand rests on.
  *
  * A singer is a keys player with a voice for an instrument: a sung "oh" with no words, higher up, held until
- * its next note. Unlike keys a voice can be out of tune, and a young one is, as a young bass player is.
+ * its next note. Unlike keys a voice can be out of tune, and a young one is, as a young bass player is. When
+ * the note it is to sing is the note it is already on, it holds it and sings nothing new, until its breath
+ * (three seconds) is gone.
  *
  * The ending. After its last bar it lands the one of the next bar and lets that hit ring for one pulse of
  * its own clock, whatever its tempo has become.
@@ -1164,12 +1166,16 @@ public final class Musician implements Player, Hits {
                     if (noNote) struckHz = bass.open();
                     bass.tune(struckHz);
                     bass.detune(keys && !voice ? 0 : chance.nextGaussian() * tuneSlip());   // keys are where they are; a voice has to find the note
-                    if (noNote) {                                    // the place goes by unplayed; the take still ends where it should
-                        struckAt = -1; strikeAt = -1; laidOut++;
+                    // A singer already on this note, with breath left, holds it and does not sing it again.
+                    boolean holds = voice && !noNote && bass.sounding() && strikeSound == sungSound && Math.abs(struckHz - sungHz) < 0.005 * sungHz && blockStart + i - sungSince < Audio.samples(BREATH);
+                    if (noNote || holds) {                           // the place goes by with no new note; the take still ends where it should
+                        if (holds) { bass.hold(); held++; } else laidOut++;
+                        struckAt = -1; strikeAt = -1;
                         if (landing) { lastPulse = clock.period(); endAt = blockStart + i + Math.round(lastPulse); }
                         out[i] += hands.next();
                         continue;
                     }
+                    sungHz = struckHz; sungSound = strikeSound; sungSince = blockStart + i;
                     struck = strikeSound; struckAt = strikeSlot / slots * SLOTS + strikeSlot % slots;   // the line is kept sixteen places to the bar, used or not
                 }
                 hands.strike(strikeSound, (float) (weightOf(strikeSlot % slots) * (0.88 + 0.12 * chance.nextDouble())));
@@ -1321,6 +1327,13 @@ public final class Musician implements Player, Hits {
     /** How many times a keys player left a place unplayed because it knew no note for it. */
     public int laidOut() { return laidOut; }
     private int laidOut;
+    /** How many times a singer held the note it was on in place of singing it again. A breath lasts this many seconds. */
+    public int held() { return held; }
+    static final double BREATH = 3.0;
+    private int held;
+    private double sungHz;
+    private byte sungSound;
+    private long sungSince;
     public int againstTheSong() { return againstTheSong; }
 
     /** Its feel, for its life: for each place, milliseconds after the tick, how hard, and how often heard. */
