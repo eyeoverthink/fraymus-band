@@ -149,12 +149,14 @@ import java.util.SplittableRandom;
  * the note the song was on at that moment. The line is written into its life.
  *
  * Keys. A keys player plays chords. It listens to the bottom of a song, as a bass player does, for which
- * note the bass is on, and keeps that line and its phrase the same way. Its chord changes on a set beat:
- * each half of a bar takes the chord for the bass note that half begins on. The chord is that note brought
- * up under the hand and two notes above it; which two, it settles by which notes it has heard most in the
- * middle of the song. It plays where the song's kick and snare are not: of the eighths in the bar, the ones
- * no heavy hit falls on, so that it lights up a different part of the beat from the drums. Until it has
- * found the bass it presses nothing. (A singer, below, still does what a keys player did before step 36:
+ * note the bass is on, and keeps that line and its phrase the same way. It holds each chord for two
+ * measures and then changes, and it does this a measure behind the song, the way a second voice comes in
+ * in a round: it strikes on the one of every other measure, counted from the song's first measure (the
+ * second, the fourth, ...), takes the chord for the bass note there, and lets it ring with the pedal down
+ * until its next. The chord is the bass's note brought up under the hand and two notes above it; which
+ * two, it settles by which notes it has heard most in the middle of the song. Until it has found the bass
+ * it presses nothing. (From step 36 to step 37 it changed every half bar and played on the eighths the
+ * kick and snare left free; it still works those places out, but no longer plays by them.) (A singer, below, still does what a keys player did before step 36:
  * it learns a line the same way a bass player does but from the middle of a song: neither the bottom nor the top.) Its keys are where they are, so
  * it cannot be out of tune, and it listens for a line from its first day. Where it does not yet know a note
  * for a place, it falls back on the note it has heard most in that song, and if it has not heard enough to
@@ -299,19 +301,20 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < 12 && i < parts.length; i++) if (!parts[i].isEmpty()) heardClass[i] = Integer.parseInt(parts[i]);
     }
 
-    /** The chords it would play, half a bar at a time through the phrase: a note name, m for the smaller third, a dot where it has not found the bass. */
+    /** The chords it holds, two measures each, through the phrase: which measures, then a note name, m for the smaller third; a dot where it has not found the bass. */
     public String chordsInWords() {
         if (!comps) return "";
         StringBuilder b = new StringBuilder();
         int bars = phraseBars();
-        for (int bar = 0; bar < bars; bar++)
-            for (int half = 0; half < 2; half++) {
-                if (bar + half > 0) b.append(half == 0 ? " | " : " ");
-                double hz = lineHz((bar * SLOTS + half * slots / 2) % (bars * SLOTS));
-                if (hz == 0) { b.append('.'); continue; }
-                int root = (int) Math.round(LineEar.midiOf(hz)) % 12;
-                b.append(NOTE_NAMES[root]).append(thirdAbove(root) == 3 ? "m" : "").append(fifthAbove(root) == 6 ? "(b5)" : "");
-            }
+        for (int bar = 0; bar < Math.max(2, bars); bar++) {
+            if (bar % 2 == 0) continue;                      // it comes in on every other measure, counted from the song's first: the second, the fourth
+            if (b.length() > 0) b.append(", ");
+            double hz = measureHz((bar % bars) * SLOTS);
+            b.append("measures ").append(bar + 1).append(" and ").append((bar + 1) % Math.max(2, bars) + 1).append(": ");
+            if (hz == 0) { b.append('.'); continue; }
+            int root = (int) Math.round(LineEar.midiOf(hz)) % 12;
+            b.append(NOTE_NAMES[root]).append(thirdAbove(root) == 3 ? "m" : "").append(fifthAbove(root) == 6 ? "(b5)" : "");
+        }
         return b.toString();
     }
     /** The notes a singer listens for: from middle C to the E an octave and a third above it. */
@@ -675,6 +678,24 @@ public final class Musician implements Player, Hits {
         int home = homeNote();                               // a keys player falls back on the note it has heard most in this song
         return home < 0 ? 0 : LineEar.hzOf(home);            // and if it has not heard enough to say, it presses nothing
     }
+
+    /**
+     * The note the bass is mostly on through this measure of the phrase: what a keys player builds its chord
+     * on. One place can mislead (a kick drum on the one has a pitch of its own); a whole measure seldom does.
+     * If it believes no note anywhere in the measure, the last note before it that it does believe.
+     */
+    private double measureHz(int cell) {
+        int bars = phraseBars(), from = Math.floorMod(cell, bars * SLOTS) / SLOTS * SLOTS, most = -1;
+        java.util.Arrays.fill(measureTally, 0);
+        for (int slot = 0; slot < slots; slot++) {
+            if (!believesTheNoteAt(from + slot, bars)) continue;
+            int note = Math.max(0, Math.min(127, pooledNote));
+            measureTally[note] += pooledSame;
+            if (most < 0 || measureTally[note] > measureTally[most]) most = note;
+        }
+        return most >= 0 ? LineEar.hzOf(most) : lineHz(from);
+    }
+    private final int[] measureTally = new int[128];
 
     /** The note a keys player has heard most in the middle of this song, over every place: somewhere safe to be when it is not sure. -1 until it has heard a dozen that agree. */
     private int homeNote() {
@@ -1212,13 +1233,18 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
                 if (oneNote) {
-                    int inBar = strikeSlot % slots, chordFrom = comps ? inBar - inBar % (slots / 2) : inBar;   // a keys player's chord is the one for this half of the bar
-                    struckHz = fullMix && (notes >= 2 || keys) ? lineHz((strikeSlot / slots * SLOTS + chordFrom + phraseFrom * SLOTS) % CELLS) : bass.open();
+                    int inBar = strikeSlot % slots, chordFrom = inBar;
+                    // A keys player comes in a measure behind, as a second voice does in a round: on the one of every other
+                    // measure, counted from the song's first, it takes the chord for the bass note there and holds it two measures.
+                    boolean itsMeasure = comps && fullMix && inBar == 0 && (strikeSlot / slots + phraseFrom) % 2 == 1;
+                    int lineCell = (strikeSlot / slots * SLOTS + chordFrom + phraseFrom * SLOTS) % CELLS;
+                    struckHz = !(fullMix && (notes >= 2 || keys)) ? bass.open() : comps ? measureHz(lineCell) : lineHz(lineCell);
                     if (comps && struckHz > 0) {                     // the bass's note, brought up under the hand, and two notes above it that the song has in it
                         while (struckHz < KEYS_FROM) struckHz *= 2;
                         while (struckHz >= 2 * KEYS_FROM) struckHz /= 2;
                         int root = (int) Math.round(LineEar.midiOf(struckHz)) % 12;
                         bass.chord(thirdAbove(root), fifthAbove(root));
+                        bass.sustain(2 * PULSES * clock.period() / Audio.RATE - 0.04);
                     }
                     boolean noNote = struckHz == 0;                  // a keys player that does not know a note for this song yet does not press one
                     if (noNote) struckHz = bass.open();
@@ -1226,8 +1252,9 @@ public final class Musician implements Player, Hits {
                     bass.detune(keys && !voice ? 0 : chance.nextGaussian() * tuneSlip());   // keys are where they are; a voice has to find the note
                     // A singer already on this note, with breath left, holds it and does not sing it again.
                     boolean holds = voice && !noNote && bass.sounding() && strikeSound == sungSound && Math.abs(struckHz - sungHz) < 0.005 * sungHz && blockStart + i - sungSince < Audio.samples(BREATH);
-                    if (noNote || holds) {                           // the place goes by with no new note; the take still ends where it should
-                        if (holds) { bass.hold(); held++; } else laidOut++;
+                    boolean ringsOn = comps && fullMix && !itsMeasure;     // the chord it struck is still ringing: it lets it
+                    if (noNote || holds || ringsOn) {                // the place goes by with no new note; the take still ends where it should
+                        if (holds) { bass.hold(); held++; } else if (ringsOn && !noNote) held++; else laidOut++;
                         struckAt = -1; strikeAt = -1;
                         if (landing) { lastPulse = clock.period(); endAt = blockStart + i + Math.round(lastPulse); }
                         out[i] += hands.next();

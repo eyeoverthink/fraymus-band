@@ -150,7 +150,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.36.0.jar
+    java -jar target/fraymus-band-0.37.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -158,28 +158,28 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.36.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.37.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.36.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.37.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.36.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.37.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.36.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.37.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
 after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
@@ -188,7 +188,7 @@ first with `--hear`, below.
 
 ## Ask a player for something
 
-    java -jar target/fraymus-band-0.36.0.jar --along songs/some-song.wav --bass lives/bass.life \
+    java -jar target/fraymus-band-0.37.0.jar --along songs/some-song.wav --bass lives/bass.life \
         --ask-bass ......n.......n. --in-words "grab the end of two and four on an up tick"
 
 The bandleader can ask a player for particular places in the bar: sixteen characters, `p` or `n` where
@@ -225,22 +225,22 @@ A bar can be counted in threes: twelve places, three to the pulse, as in a shuff
 has twelve places is in threes (`lessons/shuffle.lesson`). A newborn counts the way its first record does,
 for life. In threes it starts with one tick to the pulse and earns three; there is nothing between.
 
-    java -jar target/fraymus-band-0.36.0.jar --life lives/shuffle.life --name "the shuffle drummer" --lesson lessons/shuffle.lesson
+    java -jar target/fraymus-band-0.37.0.jar --life lives/shuffle.life --name "the shuffle drummer" --lesson lessons/shuffle.lesson
 
 Measured, twelve newborns on the shuffle: like it in 7.5 of 12 places after one session and 11.8 after
 thirty; all twelve had three ticks by the twentieth; 8 ms from the record, unsteadiness 7 ms.
 
 Players who count the same way can teach and play with each other; a pupil counts as its teacher does.
 
-    java -jar target/fraymus-band-0.36.0.jar --life lives/shuffle.life --teach lives/shuffle-second.life --name-pupil "the second shuffle drummer" --click on --tempo 92
-    java -jar target/fraymus-band-0.36.0.jar --life lives/shuffle.life --with lives/shuffle-second.life --click on --tempo 92
+    java -jar target/fraymus-band-0.37.0.jar --life lives/shuffle.life --teach lives/shuffle-second.life --name-pupil "the second shuffle drummer" --click on --tempo 92
+    java -jar target/fraymus-band-0.37.0.jar --life lives/shuffle.life --with lives/shuffle-second.life --click on --tempo 92
 
 Measured, six pupils: like their teacher's shuffle in 7.2 of 12 places after one session, 11.7 after 24, all
 with three ticks, 6 ms from the teacher.
 
 A bass can grow up in threes too; a newborn bass counts as the drummers it joins do.
 
-    java -jar target/fraymus-band-0.36.0.jar --life lives/shuffle.life --with lives/shuffle-second.life --bass lives/shuffle-bass.life --name-bass "the shuffle bass player" --click on --tempo 92
+    java -jar target/fraymus-band-0.37.0.jar --life lives/shuffle.life --with lives/shuffle-second.life --bass lives/shuffle-bass.life --name-bass "the shuffle bass player" --click on --tempo 92
 
 Measured, five basses with two shuffle drummers: 2.6 notes in the bar after one session, 7.8 after forty,
 all with three ticks and both notes, 12 ms from the first drummer.
@@ -249,8 +249,8 @@ The ear on a recording hears threes, and players who count in threes can play al
 hi-hat or bass. There is no real song in threes here yet, so there is a made-up one, written by hand: a
 kick, a snare, a hat and a four-bar bass line.
 
-    java -jar target/fraymus-band-0.36.0.jar --make-up-shuffle made-up/shuffle.wav --tempo 92
-    java -jar target/fraymus-band-0.36.0.jar --along made-up/shuffle.wav --from 5 --life lives/shuffle.life --hats lives/shuffle-second.life --bass lives/shuffle-bass.life
+    java -jar target/fraymus-band-0.37.0.jar --make-up-shuffle made-up/shuffle.wav --tempo 92
+    java -jar target/fraymus-band-0.37.0.jar --along made-up/shuffle.wav --from 5 --life lives/shuffle.life --hats lives/shuffle-second.life --bass lives/shuffle-bass.life
 
 Measured: the ear reads it as 92 to the minute in threes. After six takes the kit plays the kick and the
 snare (`p..n..p..n..`), the hi-hat the first and last of every three (`n.nn.nn.nn.n`), the bass the pulses
@@ -302,21 +302,23 @@ stretch). Measured on a made-up song that goes from 92 to 93: the whole of it re
 
 ## The keys player
 
-    java -jar target/fraymus-band-0.36.0.jar --along songs/some-song.wav --hats lives/second.life --bass lives/bass.life --keys lives/keys.life
+    java -jar target/fraymus-band-0.37.0.jar --along songs/some-song.wav --hats lives/second.life --bass lives/bass.life --keys lives/keys.life
 
 A keys player plays chords. It listens to the bottom of a song for the note the bass is on, the way a bass
-player does, and its chord changes on a set beat: each half of a bar takes the chord for the bass note that
-half begins on. The chord is that note brought up under the hand with two notes above it, a third and a
-fifth, chosen by which notes it has heard most in the middle of the song. It plays where the song's kick
-and snare are not: the eighths no heavy hit falls on. Until it has found the bass it presses nothing.
+player does. It holds each chord for two measures and then changes, and it does this a measure behind the
+song, the way a second voice comes in in a round: it strikes on the one of every other measure counted from
+the song's first, takes the chord for the note the bass is mostly on through that measure, and lets it
+ring with the pedal down until its next. The chord is that note brought up under the hand with a third and
+a fifth above it, chosen by which notes it has heard most in the middle of the song. Until it has found
+the bass it presses nothing.
 
-Measured on a made-up song whose bass goes A, C, D and E, G: its chords come out `Am(b5) Am(b5) | Cm Cm |
-Dm Em(b5) | Gm Gm`, the bass's notes in order with the thirds and fifths the tune over them has, and it
-leaves every place the drums play. On two real songs: `Cm Cm | Dm(b5) Eb | Eb Cm | Cm Cm`, and `Fm Fm`.
+Measured on a made-up song whose bass goes A, C, D and E, G, a measure each: it strikes 12 chords in 24
+measures, C minor held over the second and third measures and G minor over the fourth and first. On two
+real songs: D diminished and C minor on one, F minor on the other.
 
 ## The singer
 
-    java -jar target/fraymus-band-0.36.0.jar --along songs/some-song.wav --hats lives/second.life --bass lives/bass.life --keys lives/keys.life --singer lives/singer.life
+    java -jar target/fraymus-band-0.37.0.jar --along songs/some-song.wav --hats lives/second.life --bass lives/bass.life --keys lives/keys.life --singer lives/singer.life
 
 A singer is a keys player with a voice for an instrument: a sung "oh" with no words, above middle C, held
 until its next note. It learns its notes from the middle of a song the way the keys player does. Unlike
@@ -330,7 +332,7 @@ its breath, three seconds, is gone; so on those songs it holds one long note.
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.36.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.37.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,

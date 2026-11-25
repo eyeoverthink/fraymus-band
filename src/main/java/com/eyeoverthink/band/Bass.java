@@ -63,6 +63,8 @@ public final class Bass implements Instrument {
         hz = (sound == Kit.PAN ? 2 * low : low) * Math.pow(2, cents / 1200.0);
         at = 0;
         loud = loudness;
+        lengthNow = keys && pedal > 0 ? (int) Audio.samples(pedal) : LENGTH;      // with the pedal down a chord rings for as long as it is to be held
+        ringNow = keys && pedal > 0 ? 0.55 * pedal : ring;
         if (voice) {                                         // the mouth shapes the note: each tone is as loud as the mouth lets it be
             tones = (int) Math.min(sung.length, 5000 / hz);
             double most = 1e-9;
@@ -75,6 +77,12 @@ public final class Bass implements Instrument {
             phase = 0; since = 0; gain = 1;
         }
     }
+
+    private double pedal, ringNow;
+    private int lengthNow;
+
+    /** A keys player puts the pedal down: the next chord rings for this many seconds, dying away slowly, and is gone just before the one after it. Nothing, and a chord dies away as a struck note does. */
+    public void sustain(double seconds) { pedal = keys ? Math.max(0, seconds) : 0; }
 
     private double second, third;         // the other two notes of a chord, as so many times the pitch of the bottom one; nothing if it plays one note
 
@@ -113,11 +121,11 @@ public final class Bass implements Instrument {
             double of = tone == 0 ? 1 : tone == 1 ? second : third;
             if (of == 0) continue;
             for (int k = 0; k < PARTIAL.length; k++)
-                sum += (second == 0 ? 1 : 0.6) * PARTIAL[k] * Math.sin(2 * Math.PI * hz * of * (k + 1) * t) * Math.exp(-t / (ring / (1 + 0.6 * k)));
+                sum += (second == 0 ? 1 : 0.6) * PARTIAL[k] * Math.sin(2 * Math.PI * hz * of * (k + 1) * t) * Math.exp(-t / (ringNow / (1 + 0.6 * k)));
         }
         double pluck = Math.min(1.0, t / 0.003);
-        double fadeOut = Math.min(1.0, (LENGTH - at) / Audio.samples(0.02));
-        if (++at >= LENGTH) at = -1;
+        double fadeOut = Math.min(1.0, (lengthNow - at) / Audio.samples(0.02));
+        if (++at >= lengthNow) at = -1;
         return (float) (sum * pluck * fadeOut * LEVEL * loud * 0.5);
     }
 

@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtySixTest {
+class StepThirtySevenTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1315,7 +1315,7 @@ class StepThirtySixTest {
     }
 
     @Test
-    void aKeysPlayerPlaysChordsThatFollowTheBassAndFallWhereTheDrumsAreNot(@TempDir Path dir) throws Exception {
+    void aKeysPlayerHoldsEachChordTwoMeasuresAndComesInAMeasureBehind(@TempDir Path dir) throws Exception {
         String beat = "p...n...p.p.n...";
         Lesson drums = new Lesson("made up", 92, beat);
         float[] song = songWithALine(drums, 40, LINE);       // the bass: a bar of A, a bar of C, half a bar of D and half of E, a bar of G
@@ -1341,22 +1341,19 @@ class StepThirtySixTest {
             if (s == 0) first = last;
             peak = Math.max(peak, take.peak());
         }
-        System.out.printf(Locale.ROOT, "CHORDS the song's kick and snare are at %s; the keys player hears them at %s and plays %s; its chords, half a bar each: %s; phrase %d bars; %d chords on the bass's note of that moment and %d not; unsteadiness %.1f ms; first take it left %d places unplayed%n",
-            beat, last.taken(), last.patternAfter(), last.chords(), last.phraseBars(), last.withTheSong(), last.againstTheSong(), last.unsteadyMs(), first.laidOut());
+        System.out.printf(Locale.ROOT, "CHORDS over a bass that goes A, C, D and E, G a measure each, the keys player holds: %s; it struck %d chords in 24 measures and let them ring through %d places; phrase %d bars; first take it left %d places unplayed%n",
+            last.chords(), last.hits(), last.held(), last.phraseBars(), first.laidOut());
         assertEquals("the keys player", last.name());
         assertTrue(last.plays().startsWith("a chord on the keys"));
         assertEquals(4, last.phraseBars(), "it finds the bass line is four bars long: " + last.phraseHeard());
-        // The phrase may be heard starting at any of its four bars, so the chords are looked for as a round.
-        String round = (last.chords() + " | " + last.chords()).replace(" ", "");
-        assertTrue(round.contains("Am(b5)Am(b5)|CmCm|DmEm(b5)|GmGm"), "its chords change every half bar with the bass (A, A, C, C, D, E, G, G), with the third and the fifth the tune has (its Eb over A, its Bb over E): " + last.chords());
-        for (int p = 0; p < 16; p++) {
-            if (p == 0) continue;                                          // the one is always played
-            boolean drumsThere = beat.charAt(p) != '.';
-            if (drumsThere) assertEquals('.', last.patternAfter().charAt(p), "it leaves place " + (p + 1) + " to the drums: " + last.patternAfter());
-        }
-        int onFreeEighths = 0;
-        for (int p : new int[] {2, 6, 14}) if (last.patternAfter().charAt(p) == 'p') onFreeEighths++;
-        assertTrue(onFreeEighths >= 1, "and plays on an eighth they leave free: " + last.patternAfter());
+        assertTrue(last.hits() >= 11 && last.hits() <= 13, "it strikes one chord every two measures and holds it: " + last.hits() + " in 24 measures");
+        assertTrue(last.held() > 60, "and lets it ring through the places between: " + last.held());
+        // Which measure the ear counts as the song's first is its own affair, so the two chords it holds are either
+        // those of the second and fourth measures of the bass line as written, or those of the first and third.
+        String held = last.chords().replaceAll("measures \\d and \\d: ", "");
+        assertTrue(held.equals("Cm, Gm") || held.equals("Gm, Cm") || held.matches("Am\\(b5\\), (Dm|Em\\(b5\\))") || held.matches("(Dm|Em\\(b5\\)), Am\\(b5\\)"),
+            "two chords, each the bass's note for the measure it comes in on, with the third and fifth the tune has: " + last.chords());
+        assertTrue(last.chords().startsWith("measures 2 and 3: ") && last.chords().contains(", measures 4 and 1: "), "it comes in on the second measure and the fourth, a measure behind: " + last.chords());
         assertTrue(first.laidOut() > 0, "until it has found the bass it presses nothing");
         assertTrue(peak < 1.0f, "four players and a song without clipping: " + peak);
         assertTrue(Files.readAllLines(keys).stream().anyMatch(l -> l.startsWith("line from \"the bass of made up\": ")), "the bass's line, as it hears it, is in its life");
@@ -1458,5 +1455,38 @@ class StepThirtySixTest {
         float tail = 0;
         for (int i = 0; i < second; i++) tail = Math.abs(keys.next());
         assertEquals(0f, tail, 1e-6f, "keys cannot be held on: a struck note dies away");
+    }
+
+    @Test
+    void withThePedalDownAChordRingsForAsLongAsItIsHeld() {
+        Bass keys = Bass.keys();
+        keys.tune(130.81);
+        keys.chord(3, 7);
+        keys.sustain(5.0);
+        keys.strike(Kit.POT, 1f);
+        float[] sound = new float[(int) Audio.samples(5.5)];
+        float peak = 0, late = 0, after = 0;
+        for (int i = 0; i < sound.length; i++) {
+            sound[i] = keys.next();
+            peak = Math.max(peak, Math.abs(sound[i]));
+            if (i > Audio.samples(4.0) && i < Audio.samples(4.5)) late = Math.max(late, Math.abs(sound[i]));
+            if (i > Audio.samples(5.05)) after = Math.max(after, Math.abs(sound[i]));
+        }
+        assertTrue(peak < 0.9f, "three notes at once do not clip: " + peak);
+        assertTrue(late > 0.02f * peak, "four seconds on, the chord is still ringing: " + late + " of " + peak);
+        assertEquals(0f, after, 1e-6f, "and it is gone by the time the next one is due");
+        double[] there = new double[3];
+        double[] hz = {130.81, 130.81 * Math.pow(2, 3 / 12.0), 130.81 * Math.pow(2, 7 / 12.0)};
+        for (int n = 0; n < 3; n++) {
+            double re = 0, im = 0;
+            for (int i = (int) Audio.samples(0.1); i < Audio.samples(0.6); i++) { re += sound[i] * Math.cos(2 * Math.PI * hz[n] * i / Audio.RATE); im += sound[i] * Math.sin(2 * Math.PI * hz[n] * i / Audio.RATE); }
+            there[n] = Math.hypot(re, im);
+        }
+        assertTrue(there[1] > 0.5 * there[0] && there[2] > 0.5 * there[0], "all three notes of the chord are in it");
+        keys.sustain(0);
+        keys.strike(Kit.POT, 1f);
+        float tail = 0;
+        for (int i = 0; i < Audio.samples(1.5); i++) tail = Math.abs(keys.next());
+        assertEquals(0f, tail, 1e-6f, "with the pedal up a chord dies away as before");
     }
 }
