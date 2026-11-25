@@ -131,7 +131,8 @@ public final class Session {
         Metronome metronome = clickBpm > 0 ? new Metronome(clickBpm, 0.25) : null;
         double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
         float[] clicks = new float[Audio.BLOCK];
-        Life lifeA = Life.open(firstLife, "the drummer"), lifeB = Life.open(secondLife, "the second drummer");
+        Life lifeA = Life.open(firstLife, "the drummer"), lifeB = Life.open(secondLife, "the second drummer", firstPatternLike(lifeA));
+        countTheSame(lifeA, lifeB);
         Musician a = Musician.withAnother(lifeA.name(), 92.0, lifeA.hitsPlayed(), lifeA.listening(), lifeA.ticks(), lifeA.pattern(), bars, true, start, seed);
         Musician b = Musician.withAnother(lifeB.name(), 92.0, lifeB.hitsPlayed(), lifeB.listening(), lifeB.ticks(), lifeB.pattern(), bars, false, start, seed ^ 0x9E3779B97F4A7C15L);
         a.leaning(lifeA.leaning()); b.leaning(lifeB.leaning()); a.habits(lifeA.habits()); b.habits(lifeB.habits()); a.feel(lifeA.feel()); b.feel(lifeB.feel()); a.asked(lifeA.asked()); b.asked(lifeB.asked()); recall(a, lifeA, null); recall(b, lifeB, null);
@@ -158,7 +159,7 @@ public final class Session {
                 out.write(mix, Audio.BLOCK);
                 now += Audio.BLOCK;
             }
-            Apart bToA = apart(b, 0, a), aToB = apart(a, SLOTS_IN_A_BAR, b);   // the first drummer's opening bar is played alone
+            Apart bToA = apart(b, 0, a), aToB = apart(a, a.slots(), b);   // the first drummer's opening bar is played alone
             double uA = unsteadiness(a, 0, a.hitCount()), uB = unsteadiness(b, 0, b.hitCount());
             Part first = new Part(lifeA.name(), a.hitCount(), uA, lifeA.listening(), a.listening(), lifeA.ticks(), a.ticks(), a.pattern(), aToB.alone(), lifeA.leaning(), a.leaning());
             Part second = new Part(lifeB.name(), b.hitCount(), uB, lifeB.listening(), b.listening(), lifeB.ticks(), b.ticks(), b.pattern(), bToA.alone(), lifeB.leaning(), b.leaning());
@@ -192,7 +193,8 @@ public final class Session {
         Metronome metronome = clickBpm > 0 ? new Metronome(clickBpm, 0.25) : null;
         double start = metronome != null ? metronome.firstBarSeconds() : 0.25;
         float[] clicks = new float[Audio.BLOCK];
-        Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer");
+        Life lifeT = Life.open(teacherLife, "the drummer"), lifeL = Life.open(learnerLife, "the second drummer", firstPatternLike(lifeT));   // a pupil counts as its teacher does
+        countTheSame(lifeT, lifeL);
         Musician t = Musician.teaching(lifeT.name(), 92.0, lifeT.hitsPlayed(), lifeT.listening(), lifeT.ticks(), lifeT.pattern(), calls, barsTogether, start, seed);
         Musician l = new Musician(lifeL.name(), 92.0, lifeL.hitsPlayed(), lifeL.listening(), lifeL.ticks(), lifeL.pattern(), calls, barsTogether, seed ^ 0x9E3779B97F4A7C15L);
         t.leaning(lifeT.leaning()); l.leaning(lifeL.leaning()); t.habits(lifeT.habits()); l.habits(lifeL.habits()); t.feel(lifeT.feel()); l.feel(lifeL.feel()); t.asked(lifeT.asked()); l.asked(lifeL.asked()); recall(t, lifeT, null); recall(l, lifeL, null);
@@ -251,6 +253,15 @@ public final class Session {
     private static void keep(Musician m, Life life, String with) {
         if (with != null) life.heard(with, m.believes());
         life.own(m.own());
+    }
+
+    private static String firstPatternLike(Life other) { return other.pattern().length() == Musician.THREES ? Musician.FIRST_PATTERN_IN_THREES : Musician.FIRST_PATTERN; }
+
+    /** Players in one room have to count the same way. */
+    private static void countTheSame(Life... lives) {
+        for (Life life : lives)
+            if (life.pattern().length() != lives[0].pattern().length())
+                throw new IllegalArgumentException(lives[0].name() + " counts in " + (lives[0].pattern().length() == Musician.THREES ? "threes" : "fours") + " and " + life.name() + " does not. They cannot play together yet.");
     }
 
     public record AlongPart(String name, String plays, int hits, int landedWithIt, double apartMs, int heard, String believes,
@@ -383,6 +394,7 @@ public final class Session {
         String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
         for (int i = 0; i < n; i++) {
             lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN) : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            countTheSame(lives[0], lives[i]);
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
                 ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)

@@ -5,7 +5,7 @@ feel: 10.8/0.99/113 -0.8/0.57/1 1.1/0.52/208 -4.7/0.75/229 4.1/0.54/1 -6.8/0.52/
 heard from "shuffle": p.nn.np.nn.n
 its own: ............
 sounds: a pot (p) and a pan (n)
-listens to itself: 0.84
+listens to itself: 0.81
 ticks to the pulse: 3
 pattern: p.nn.np.nn.n
 session 1: heard "shuffle", answers=4, hits=59, tempo 92.0 to 87.3 bpm, unsteadiness 22.1 ms at the start, 69.0 ms by the end, listening 0.15, ticks to the pulse 1, pattern p..n..n..p.., like the lesson in 6 of 16 places, 8 bars with the record, 38 ms apart
@@ -39,3 +39,28 @@ session 28: heard "shuffle", answers=4, hits=128, tempo 92.0 to 91.8 bpm, unstea
 session 29: heard "shuffle", answers=4, hits=128, tempo 92.0 to 91.8 bpm, unsteadiness 7.1 ms at the start, 13.1 ms by the end, listening 0.80, ticks to the pulse 3, pattern p.nn.np.nn.n, like the lesson in 12 of 16 places, 8 bars with the record, 11 ms apart
 session 30: heard "shuffle", answers=4, hits=127, tempo 92.0 to 92.2 bpm, unsteadiness 7.5 ms at the start, 16.0 ms by the end, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, like the lesson in 12 of 16 places, 8 bars with the record, 11 ms apart
 session 31: heard "shuffle", answers=2, hits=160, tempo 92.0 to 92.0 bpm, unsteadiness 10.1 ms at the start, 8.6 ms by the end, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, like the lesson in 12 of 16 places, 16 bars with the record, 9 ms apart
+session 32: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.9 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 8 of 16 places
+session 33: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.7 ms, listening 0.95, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 8 of 16 places
+session 34: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.3 ms, listening 0.95, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 10 of 16 places
+session 35: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.4 ms, listening 0.95, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 36: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.7 ms, listening 0.83, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 37: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.3 ms, listening 0.94, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 38: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.5 ms, listening 0.94, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 39: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.5 ms, listening 0.94, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 40: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.7 ms, listening 0.90, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 41: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.6 ms, listening 0.83, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 42: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.1 ms, listening 0.80, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 43: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.8 ms, listening 0.90, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 11 of 16 places
+session 44: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 6.1 ms, listening 0.87, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 45: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 11.2 ms, listening 0.87, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 11 of 16 places
+session 46: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.4 ms, listening 0.84, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 11 of 16 places
+session 47: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.4 ms, listening 0.90, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 48: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.5 ms, listening 0.95, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 49: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.2 ms, listening 0.92, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 50: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.9 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 51: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.7 ms, listening 0.86, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 52: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 6.8 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 53: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 9.1 ms, listening 0.95, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 11 of 16 places
+session 54: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 7.6 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 55: played its pattern for the second shuffle drummer, 4 calls and 8 bars together, hits=129, unsteadiness 8.4 ms, listening 0.89, ticks to the pulse 3, pattern p.nn.np.nn.n, and the second shuffle drummer ended like it in 12 of 16 places
+session 56: played 16 bars with the second shuffle drummer, no record, hits=129, unsteadiness 7.9 ms, listening 0.81, ticks to the pulse 3, pattern p.nn.np.nn.n, 5 ms apart

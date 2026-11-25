@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentySevenTest {
+class StepTwentyEightTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1164,6 +1164,35 @@ class StepTwentySevenTest {
         Path fours = practised(dir, "fours.life", 4);
         assertThrows(IllegalArgumentException.class, () -> Session.run(dir.resolve("t.wav"), fours, shuffle, 4, 8, 1), "a player that counts in fours cannot sit with a record in threes yet");
         assertThrows(IllegalArgumentException.class, () -> Session.run(dir.resolve("t.wav"), dir.resolve("three0.life"), LESSON, 4, 8, 1), "nor one that counts in threes with a record in fours");
-        assertThrows(IllegalArgumentException.class, () -> Session.together(dir.resolve("t.wav"), dir.resolve("three0.life"), dir.resolve("three1.life"), 8, 1), "and two that count in threes cannot play together yet");
+    }
+
+    @Test
+    void playersWhoCountInThreesTeachAndPlayWithEachOther(@TempDir Path dir) throws Exception {
+        String shuffle = "p.nn.np.nn.n";
+        int pairs = 6, sessions = 24;
+        double likeFirst = 0, likeLast = 0, apartLast = 0;
+        int threeTicks = 0;
+        for (int k = 0; k < pairs; k++) {
+            Path teacher = practised(dir, "teacher" + k + ".life", 3, shuffle), pupil = dir.resolve("pupil" + k + ".life");
+            Session.Taught t = null;
+            for (int s = 0; s < sessions; s++) {
+                t = Session.teach(dir.resolve("t.wav"), teacher, pupil, 4, 8, 92, 3000L * k + s);
+                assertEquals(12, t.patternAfter().length(), "a pupil counts as its teacher does");
+                if (s == 0) likeFirst += t.matchesAfter() / (double) pairs;
+            }
+            likeLast += t.matchesAfter() / (double) pairs;
+            if (t.ticksAfter() == 3) threeTicks++;
+            Session.Duo duo = Session.together(dir.resolve("t.wav"), teacher, pupil, 8, 92, 77 + k);
+            assertTrue(duo.hitsTogether() > 20, "they play together: " + duo.hitsTogether());
+            apartLast += duo.apartMs() / pairs;
+        }
+        System.out.printf(Locale.ROOT, "THREES TAUGHT a pupil is like its teacher's shuffle in %.1f of 12 places after one session, %.1f after %d; %d of %d pupils have three ticks; together they are %.1f ms apart%n", likeFirst, likeLast, sessions, threeTicks, pairs, apartLast);
+        assertTrue(likeLast >= 9.5 && likeLast > likeFirst + 1, "pupils grow toward their teacher's shuffle: " + likeFirst + " to " + likeLast);
+        assertTrue(threeTicks >= pairs - 1, "and earn the triplet: " + threeTicks);
+        assertTrue(apartLast < 25, "and play it with their teacher: " + apartLast);
+
+        Path fours = practised(dir, "fours.life", 4);
+        assertThrows(IllegalArgumentException.class, () -> Session.together(dir.resolve("t.wav"), fours, dir.resolve("pupil0.life"), 8, 92, 1), "one who counts in fours and one who counts in threes cannot play together yet");
+        assertThrows(IllegalArgumentException.class, () -> Session.teach(dir.resolve("t.wav"), dir.resolve("teacher0.life"), fours, 4, 8, 92, 1));
     }
 }

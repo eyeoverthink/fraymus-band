@@ -150,7 +150,7 @@ drummer's life so far.
 Needs Java 21 and Maven.
 
     mvn package
-    java -jar target/fraymus-band-0.27.0.jar
+    java -jar target/fraymus-band-0.28.0.jar
 
 The record plays `lessons/first.lesson`, the drummer answers four times, then they play eight bars
 together. The take goes to `out/session.wav` and a line is added to `lives/drummer.life`.
@@ -158,28 +158,28 @@ Options: `--lesson FILE --answers N --together BARS --seed N --out FILE --life F
 
 To sit two drummers down together with no record:
 
-    java -jar target/fraymus-band-0.27.0.jar --with lives/second.life
+    java -jar target/fraymus-band-0.28.0.jar --with lives/second.life
 
 The drummer in `--life` starts and the one in `--with` comes in after a bar. They play 16 bars
 (`--together BARS` changes that). A life file that does not exist yet is a newborn.
 
 To have one drummer teach another its pattern:
 
-    java -jar target/fraymus-band-0.27.0.jar --teach lives/second.life
+    java -jar target/fraymus-band-0.28.0.jar --teach lives/second.life
 
 The drummer in `--life` gives the lesson and the one in `--teach` learns: four calls and answers, then
 eight bars together.
 
 To add the bass player to one or two drummers:
 
-    java -jar target/fraymus-band-0.27.0.jar --with lives/second.life --bass lives/bass.life --click on
+    java -jar target/fraymus-band-0.28.0.jar --with lives/second.life --bass lives/bass.life --click on
 
 Add `--click on` to any of these to put a click in the players' ears. With the record it runs at the
 lesson's tempo. With drummers only it runs at 92 bpm, or at `--tempo BPM`.
 
 ## Play along with a song
 
-    java -jar target/fraymus-band-0.27.0.jar --along songs/some-song.wav
+    java -jar target/fraymus-band-0.28.0.jar --along songs/some-song.wav
 
 The drummer in `--life` plays along for 24 bars (`--together BARS`), starting from the first one at or
 after 46 seconds in (`--from SECONDS`). Add `--with LIFE` for a second drummer at a kit, `--hats LIFE` for a hat player and `--bass LIFE` for the
@@ -188,7 +188,7 @@ first with `--hear`, below.
 
 ## Ask a player for something
 
-    java -jar target/fraymus-band-0.27.0.jar --along songs/some-song.wav --bass lives/bass.life \
+    java -jar target/fraymus-band-0.28.0.jar --along songs/some-song.wav --bass lives/bass.life \
         --ask-bass ......n.......n. --in-words "grab the end of two and four on an up tick"
 
 The bandleader can ask a player for particular places in the bar: sixteen characters, `p` or `n` where
@@ -221,11 +221,19 @@ A bar can be counted in threes: twelve places, three to the pulse, as in a shuff
 has twelve places is in threes (`lessons/shuffle.lesson`). A newborn counts the way its first record does,
 for life. In threes it starts with one tick to the pulse and earns three; there is nothing between.
 
-    java -jar target/fraymus-band-0.27.0.jar --life lives/shuffle.life --name "the shuffle drummer" --lesson lessons/shuffle.lesson
+    java -jar target/fraymus-band-0.28.0.jar --life lives/shuffle.life --name "the shuffle drummer" --lesson lessons/shuffle.lesson
 
 Measured, twelve newborns on the shuffle: like it in 7.5 of 12 places after one session and 11.8 after
-thirty; all twelve had three ticks by the twentieth; 8 ms from the record, unsteadiness 7 ms. So far a
-player in threes can only sit with a record: not with another player, the band or a song.
+thirty; all twelve had three ticks by the twentieth; 8 ms from the record, unsteadiness 7 ms.
+
+Players who count the same way can teach and play with each other; a pupil counts as its teacher does.
+
+    java -jar target/fraymus-band-0.28.0.jar --life lives/shuffle.life --teach lives/shuffle-second.life --name-pupil "the second shuffle drummer" --click on --tempo 92
+    java -jar target/fraymus-band-0.28.0.jar --life lives/shuffle.life --with lives/shuffle-second.life --click on --tempo 92
+
+Measured, six pupils: like their teacher's shuffle in 7.2 of 12 places after one session, 11.7 after 24, all
+with three ticks, 6 ms from the teacher. So far only drummers on kits count in threes: no bass, no hats, no
+playing along with a song, and one who counts in fours cannot play with one who counts in threes.
 
 ## Swing
 
@@ -267,7 +275,7 @@ no note in common, back on the first song 190 of 190 notes were on its note from
 
 ## What does the ear make of a recording?
 
-    java -jar target/fraymus-band-0.27.0.jar --hear songs/some-song.wav
+    java -jar target/fraymus-band-0.28.0.jar --hear songs/some-song.wav
 
 This plays a WAV (mono, 16-bit, 44,100 Hz; convert with `ffmpeg -i song.mp3 -ac 1 -ar 44100 -sample_fmt s16
 song.wav`) past the same ear the players use. It teaches nobody anything. It reports what the ear noticed,

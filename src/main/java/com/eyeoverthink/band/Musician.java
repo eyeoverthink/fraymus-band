@@ -118,7 +118,8 @@ import java.util.SplittableRandom;
  *
  * Threes. A bar can be counted in threes: twelve places, three to the pulse, as in a shuffle or a slow
  * blues. A player counts in fours or in threes for life, from the first record it meets. One that counts
- * in threes has one tick to the pulse, or three once its pulse is even; there is nothing between.
+ * in threes has one tick to the pulse, or three once its pulse is even; there is nothing between. Players
+ * who count the same way can play together and teach one another; a pupil counts as its teacher does.
  *
  * Swing. A place can sit as far behind its tick as the triplet, a third of a sixteenth, and a hit that far
  * behind a tick is still heard as that place. So a player that takes on a record's feel takes on its swing,
@@ -374,6 +375,7 @@ public final class Musician implements Player, Hits {
 
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
+        if (slots == THREES) throw new IllegalArgumentException(name + " counts in threes, and the ear on a recording only hears in fours so far.");
         if (oneNote) lineEar = new LineEar();
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
@@ -427,7 +429,6 @@ public final class Musician implements Player, Hits {
         this.upFirst = (seed & 2) == 0;
         this.slots = patternSoFar.length() == THREES ? THREES : SLOTS;   // a pattern of twelve places counts in threes
         this.per = slots / PULSES;
-        if (slots == THREES && !withARecord) throw new IllegalArgumentException(name + " counts in threes. So far a player that counts in threes can sit with a record, and nothing else.");
         this.ticks = ticksSoFar;
         for (int i = 0; i < SLOTS; i++) pattern[i] = Kit.read(i < patternSoFar.length() ? patternSoFar.charAt(i) : '.');
         if (hatsOnly) { for (int i = 0; i < SLOTS; i++) if (pattern[i] != REST) pattern[i] = PAN; pattern[0] = PAN; }   // every place it hit, it now hits the hat
@@ -442,6 +443,7 @@ public final class Musician implements Player, Hits {
         this.hitSlots = new int[hits.length];
         this.hitPushes = new double[hits.length];
         for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i, per);
+        if (slots == THREES && (oneNote || hatsOnly)) throw new IllegalArgumentException(name + " counts in threes. So far only a drummer on a kit can.");
     }
 
     @Override public String name() { return name; }
