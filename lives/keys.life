@@ -1,23 +1,29 @@
 name: the keys player
 age: 0
-leans on the others: 0.01
-habits: 9999990999699999
-feel: -12.4/0.99/515 49.0/0.70/27 -1.2/0.83/306 -2.8/0.82/92 -15.1/0.96/503 -13.1/0.68/41 2.7/0.94/289 29.2/0.86/119 -1.9/0.97/349 36.3/0.97/150 -11.3/0.96/335 27.6/0.86/108 -13.9/0.94/486 19.3/0.80/155 -5.9/0.92/243 25.2/0.91/186
+leans on the others: 0.00
+habits: 0999999929096999
+feel: 3.7/1.00/599 49.0/0.70/27 -4.3/0.96/378 -8.8/0.89/122 -15.2/0.97/567 -15.2/0.76/45 -12.5/0.99/365 27.5/0.94/138 -3.2/0.99/424 33.1/0.96/194 -3.5/1.00/423 16.2/0.86/116 -18.4/0.97/559 20.2/0.80/163 -15.2/0.98/334 35.1/0.93/243
 notes: 2
 line from "gleam of the prize": 48/11/21 - 53/1/2 - 55/1/3 - 48/31/31 - 51/17/21 - 55/13/26 - 54/3/3 - 53/16/31 - 50/14/28 - 50/16/25 - 48/14/28 - 53/13/25 - 51/33/36 - 55/4/8 - 54/14/21 - 51/17/25 - 53/23/30 - 51/26/26 - 50/22/39 - 48/30/31 - 53/35/35 - 48/16/20 - 53/21/23 - 53/17/25 - 53/32/37 - 48/25/25 - 53/1/2 - 53/1/1 - 48/36/36 - 48/1/1 - 53/1/4 - 53/17/25 - 51/1/2 - 48/21/21 - 48/24/36 - 48/15/26 - 53/21/31 - 50/14/21 - 53/20/23 - 50/17/26 - 53/17/33 - 52/1/2 - 48/1/3 - 53/15/20 - 51/1/2 - 48/16/19 - 52/2/4 - 51/31/31 - 51/6/11 - 53/16/26 - 50/14/23 - 53/18/32 - 56/16/17 - 52/12/16 - 53/23/38 - 53/16/16 - 49/4/7 - 53/17/17 - 50/6/12 - 53/16/31 - 48/17/26 - 53/1/2 - 67/16/32 - 48/16/31 -
 phrase from "gleam of the prize": 201/801 167/770 211/697 152/576
-heard from "gleam of the prize": p.p.p..p....p..p
-plays with "gleam of the prize": p.p.p.ppp.p.p.pp
-feel with "gleam of the prize": -6.5/0.97/397 18.0/0.69/44 21.3/0.78/239 14.8/0.69/12 -10.8/0.99/401 26.4/0.89/22 38.6/0.79/120 23.2/0.87/177 -10.5/0.91/240 15.9/0.93/98 -4.7/0.94/171 26.7/0.67/109 -9.2/0.96/348 0.0/0.52/0 25.5/0.74/162 17.0/0.99/222
-listens to itself: 0.83
+heard from "gleam of the prize": ......p.......p.
+plays with "gleam of the prize": p.p...p...p.p.p.
+feel with "gleam of the prize": -18.4/1.00/526 -19.5/0.87/52 -15.8/0.99/328 14.8/0.69/12 -22.3/0.98/508 -10.5/0.98/52 35.8/0.93/132 14.5/0.89/219 -15.8/0.99/320 2.0/0.93/170 -23.0/0.99/270 19.4/0.77/115 -25.4/1.00/430 -13.2/0.87/15 -9.9/0.95/192 19.8/0.92/330
+listens to itself: 0.63
 ticks to the pulse: 4
-pattern: p.p.p.ppp.p.p.pp
+pattern: p.....p.......p.
 line from "one two three": 53/8/15 - 53/16/24 - 56/30/40 - 56/30/39 - 55/15/21 - - - 58/15/30 - 64/7/13 - 53/21/24 - 53/24/24 - 65/10/19 - 56/15/16 - 63/9/18 - 52/15/30 - 67/1/5 - 67/1/5 - 65/2/5 - 65/2/5 - 56/2/5 - 56/1/2 - 60/15/15 - - - 48/1/2 - 53/27/40 - 53/16/24 - 65/2/5 - 65/2/5 - 65/1/2 - 64/2/5 - 48/15/30 - 64/2/5 - 61/1/2 - 65/2/5 - 65/1/2 - 62/1/3 - 65/7/13 - 64/2/5 - 48/4/8 - 63/10/19 - 53/1/3 - 48/16/24 - 53/24/24 - 60/2/5 - 62/15/30 - 55/3/5 - 58/10/10 - 59/15/30 - 58/15/30 - 63/2/5 - 57/15/30 - 56/8/15 - 57/15/30 - 63/15/30 - 61/15/15 - 62/2/5 - 53/2/5 - 48/24/40 - 53/24/24 - 56/30/30 - 56/16/24 - 62/16/24 - - - 55/14/15 - 62/29/30 -
 phrase from "one two three": 125/476 122/463 78/409 48/349
 heard from "one two three": p.p.p.p.p.p.p..p
-its own: ..p....p........
-plays with "one two three": p.p.p.ppp.p.p.pp
-feel with "one two three": -12.4/0.99/515 49.0/0.70/27 -1.2/0.83/306 -2.8/0.82/92 -15.1/0.96/503 -13.1/0.68/41 2.7/0.94/289 29.2/0.86/119 -1.9/0.97/349 36.3/0.97/150 -11.3/0.96/335 27.6/0.86/108 -13.9/0.94/486 19.3/0.80/155 -5.9/0.92/243 25.2/0.91/186
+its own: ......p.......p.
+plays with "one two three": p.....p.......p.
+feel with "one two three": 3.7/1.00/599 49.0/0.70/27 -4.3/0.96/378 -8.8/0.89/122 -15.2/0.97/567 -15.2/0.76/45 -12.5/0.99/365 27.5/0.94/138 -3.2/0.99/424 33.1/0.96/194 -3.5/1.00/423 16.2/0.86/116 -18.4/0.97/559 20.2/0.80/163 -15.2/0.98/334 35.1/0.93/243
+line from "the bass of gleam of the prize": 39/4/7 - 36/5/5 - 36/12/12 - 36/12/12 - 34/2/2 - 39/2/2 - - - 38/11/12 - 38/18/18 - 38/18/18 - - - 39/1/2 - 39/18/18 - - - - - 39/18/18 - 41/3/6 - 39/14/14 - 38/18/18 - 36/12/18 - 36/6/8 - 36/6/6 - - - 36/18/18 - 38/2/4 - 36/18/18 - 31/18/18 - 34/18/18 - 36/18/18 - - - - - 36/14/18 - 36/15/18 - 36/18/18 - 36/18/18 - 36/12/12 - 38/6/11 - 39/7/12 - - - 38/18/18 - 38/18/18 - 38/18/18 - - - - - 39/12/12 - 39/1/1 - - - 39/12/12 - 39/12/12 - 39/12/12 - 38/12/12 - 36/11/12 - 35/1/2 - 36/1/1 - - - 36/6/6 - 35/1/1 - 36/6/6 - 31/12/12 - 34/12/12 - 36/12/18 - 36/1/1 - - - 36/11/12 -
+phrase from "the bass of gleam of the prize": 63/465 41/466 378/476 296/376
+notes from "gleam of the prize": 212 19 94 129 53 241 49 88 6 0 0 0
+line from "the bass of one two three": 29/5/6 - - - - - - - 29/3/3 - 30/4/8 - - - 34/4/8 - 29/12/12 - 29/8/8 - - - - - - - 28/2/3 - - - - - 29/9/12 - 47/4/4 - 47/4/4 - - - - - 29/4/4 - 43/4/8 - 34/5/7 - 29/8/12 - 29/8/8 - - - - - - - 29/8/8 - - - - - 29/7/8 - - - 29/4/4 - - - 29/4/4 - 28/1/4 - 29/4/4 - 34/4/8 - 29/12/12 - 29/8/12 - - - - - - - 29/8/8 - - - - - 29/8/8 - 29/4/4 - - - - - - - 29/8/8 - - - 34/8/8 - 29/12/12 - 29/12/12 - - - - - - - 29/2/3 - - - - -
+phrase from "the bass of one two three": 89/142 99/155 114/159 71/115
+notes from "one two three": 75 21 59 56 47 149 10 25 62 12 26 27
 
 session 1: played along with "gleam of the prize" for 24 bars, hits=68, unsteadiness 18.7 ms, listening 0.02, ticks to the pulse 1, pattern p.......n...p..., 34 of its hits landed with a hit in the recording, 11 ms apart
 session 2: played along with "gleam of the prize" for 24 bars, hits=49, unsteadiness 24.5 ms, listening 0.02, ticks to the pulse 1, pattern p...........p..., 16 of its hits landed with a hit in the recording, 13 ms apart
@@ -53,3 +59,13 @@ session 31: played along with "gleam of the prize" for 24 bars, hits=241, unstea
 session 32: played along with "one two three" for 24 bars, hits=233, unsteadiness 8.0 ms, listening 0.74, ticks to the pulse 4, pattern p.p.p.ppp.p.p.pp, 159 of its hits landed with a hit in the recording, 11 ms apart
 session 33: played along with "one two three" for 24 bars, hits=233, unsteadiness 7.5 ms, listening 0.74, ticks to the pulse 4, pattern p.p.p.ppp.p.p.pp, 156 of its hits landed with a hit in the recording, 11 ms apart
 session 34: played along with "one two three" for 24 bars, hits=225, unsteadiness 8.1 ms, listening 0.83, ticks to the pulse 4, pattern p.p.p.ppp.p.p.pp, 158 of its hits landed with a hit in the recording, 11 ms apart
+session 35: played along with "gleam of the prize" for 24 bars, hits=167, unsteadiness 12.6 ms, listening 0.75, ticks to the pulse 4, pattern p.pnp.ppp.p.p.pp, 90 of its hits landed with a hit in the recording, 10 ms apart
+session 36: played along with "gleam of the prize" for 24 bars, hits=211, unsteadiness 10.6 ms, listening 0.61, ticks to the pulse 4, pattern p.p...p.p.p.p.p., 144 of its hits landed with a hit in the recording, 10 ms apart
+session 37: played along with "gleam of the prize" for 24 bars, hits=155, unsteadiness 7.3 ms, listening 0.66, ticks to the pulse 4, pattern p.p...p...p...p., 113 of its hits landed with a hit in the recording, 8 ms apart
+session 38: played along with "gleam of the prize" for 24 bars, hits=149, unsteadiness 8.2 ms, listening 0.63, ticks to the pulse 4, pattern p...p.p.p.p...p., 104 of its hits landed with a hit in the recording, 9 ms apart
+session 39: played along with "gleam of the prize" for 24 bars, hits=151, unsteadiness 7.7 ms, listening 0.71, ticks to the pulse 4, pattern p.p...p...p...p., 105 of its hits landed with a hit in the recording, 7 ms apart
+session 40: played along with "gleam of the prize" for 24 bars, hits=139, unsteadiness 8.3 ms, listening 0.63, ticks to the pulse 4, pattern p.p...p...p.p.p., 103 of its hits landed with a hit in the recording, 10 ms apart
+session 41: played along with "one two three" for 24 bars, hits=111, unsteadiness 8.4 ms, listening 0.63, ticks to the pulse 4, pattern p.....p...p....., 83 of its hits landed with a hit in the recording, 11 ms apart
+session 42: played along with "one two three" for 24 bars, hits=91, unsteadiness 14.3 ms, listening 0.65, ticks to the pulse 4, pattern p.....p...n...p., 75 of its hits landed with a hit in the recording, 10 ms apart
+session 43: played along with "one two three" for 24 bars, hits=91, unsteadiness 13.2 ms, listening 0.70, ticks to the pulse 4, pattern p.....p.......p., 77 of its hits landed with a hit in the recording, 10 ms apart
+session 44: played along with "one two three" for 24 bars, hits=97, unsteadiness 12.1 ms, listening 0.63, ticks to the pulse 4, pattern p.....p.......p., 80 of its hits landed with a hit in the recording, 10 ms apart

@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.35.0. 61 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.36.0. 61 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -107,6 +107,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 33 | A keys player (Vaughn: "Let's add a new musician, artist or vocalist"; the agent chose keys, he has an MPC Key 61). `Bass.keys()` is a struck tone in the middle of the band; `Musician.onKeys`; `--keys LIFE`. It takes its places from hits in the middle of a song (what is neither under 150 Hz nor over 5 kHz) and its notes from an ear on C3 to G4. It believes a place when two hearings in three agree; elsewhere it plays its home note, the note it has heard most in that song; until it has heard a dozen it presses nothing. On a made-up song with a tune in the middle: 29 of 32 believed notes are the tune's, 182 of 182 played notes on the note. `lives/keys.life` was born and played 8 takes of the first song and 6 of the second. |
 | 34 | A singer (the other thing Vaughn offered in step 33; he answered "Great job. Resume" to the keys). `Bass.voice()` is a sung "oh" with no words: the tones of a note shaped by a mouth (500, 900, 2500 Hz), held up to 1.3 s, wavering after 0.2 s. `Musician.onVoice`; `--singer LIFE`. It is a keys player with a voice: same middle of the song, an ear on C4 to E5 (`LineEar.high`, two tones), and unlike keys it can be out of tune. Before building it the agent measured which notes the ear hears most in the bottom and middle of both songs: all in one key each (C, D, Eb, F, G on the first; F, C, D, Ab, Eb on the second), so the keys player's F is in key. On a made-up song with a tune: 32 of 32 believed notes right, 152 of 158 sung notes on the note, 23 cents out of tune at first and 7 after twelve takes. `lives/singer.life` was born and sang 8 takes of the first song and 6 of the second. |
 | 35 | The singer holds a note it is already on (`Bass.hold`, a three-second breath) and does not sing it again. A held place is treated like an unplayed one, so the player's ear on itself is not asked to hear a note start that did not. On Vaughn's songs the singer went from about 120 sung notes a take to about 20, holding about 146 times: one long note, renewed every three seconds. |
+| 36 | Vaughn: "The piano needs to change chords on a timed sequence that highlights a different section of the beat." The agent's reading: the keys play chords; the chord changes on a set beat, every half bar, following the bass; and the keys play where the kick and snare are not. Built: `Bass.chord` (three notes); the keys player's line ear now listens to the bottom of the song (kept as `line from "the bass of SONG":`), and a second ear counts the notes in the middle (`notes from "SONG":`) to choose each chord's third and fifth; its places are the eighths with no heavy hit in at least half the bars. On his first song its chords are `Cm Cm | Dm(b5) Eb | Eb Cm | Cm Cm`; on his second `Fm Fm`, a one-bar phrase. On a made-up song with bass A, C, D, E, G: `Am(b5) Am(b5) | Cm Cm | Dm Em(b5) | Gm Gm`, as written. |
 
 ### The players that exist (do not reset these)
 
@@ -118,10 +119,10 @@ with a real life file. There is a record that plays lessons and a click track.
 - `lives/second.life`: "the second drummer". Born in step 5. Taught by the first. **Moved to the hi-hat in
   step 18** (Vaughn agreed to roles: one drummer on kick and snare, the other on the hats). Its life says
   `sounds: a hi-hat (n)`. Run it with `--hats lives/second.life`, not `--with`. Its name is unchanged.
-- `lives/keys.life`: "the keys player". Born in step 33 playing along with Vaughn's two songs, 14 takes.
-  Four ticks to the pulse, both notes. On the first song it plays `p.p.p.......p.p.` and believes C3, Eb3
-  and F3 at 13 of 32 places; on the second `p.p.p.p.p.p.p.pp`, nearly all on its home note. Its home note is
-  F3 on both songs. Run it with `--keys`.
+- `lives/keys.life`: "the keys player". Born in step 33; a chord player since step 36. Four ticks to the
+  pulse. On the first song it plays about five chords a bar (`p.p...p...p.p.p.`, still moving) on `Cm Cm |
+  Dm(b5) Eb | Eb Cm | Cm Cm`; on the second about three (`p.....p.......p.`) on Fm. Its life still holds the
+  single-note line it learned in step 33 (`line from "gleam of the prize":`), now unused. Run it with `--keys`.
 - `lives/singer.life`: "the singer". Born in step 34 with Vaughn's two songs, 14 takes. Two ticks to the
   pulse, both notes, 6 cents out of tune (23 at first). **On his songs it is sure of almost no places and
   sings its home note over and over**: F4 on the first song, Ab4 on the second. Run it with `--singer`.
@@ -156,11 +157,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.35.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.35.0.jar --click on
-    java -jar target/fraymus-band-0.35.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.35.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.35.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.36.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.36.0.jar --click on
+    java -jar target/fraymus-band-0.36.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.36.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.36.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -204,7 +205,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepThirtyFiveTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepThirtySixTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -438,14 +439,17 @@ Given, as fixed rules (be honest about these):
 - **The bass has four ticks to the pulse since step 32** (`pp.pp.npp.p.p.np`). The ear on the line only
   manages every other sixteenth, so on the odd ones it holds the note before, and nothing checks those notes.
   Its count of notes on the song's note fell from about 95 to 77 on the first song because fewer are compared.
-- **The keys player (step 33) is the least sure player in the band.** On Vaughn's songs only about a third of
-  its notes are on the note its own ear says the middle of the song is on (33 of 87, 31 of 110), because the
-  middle of a real song is voices and everything else and seldom lands twice on one note. Most of what it
-  plays is its home note, F3, on both songs; F is the root of the second song's bass line but the first
-  song's bass is on C, so F3 there may be wrong. On the second song it plays eighth notes of one pitch almost
-  throughout. Nobody has heard it. It plays one note at a time: no chords. Its instrument is the bass's code
-  with other numbers (`Bass.keys()`), and `oneNote` is true for it. It has no part without a song (its hand
-  rests on E3). A vocalist was the other thing Vaughn offered; not started.
+- **The keys player's chords (step 36) rest on the agent's reading of one sentence**, not confirmed by Vaughn:
+  chords change every half bar with the bass, and fall on the eighths the kick and snare leave free. If he
+  meant something else by "a timed sequence that highlights a different section of the beat" (each change
+  landing on a different part of the bar, say), it has to be redone. The half bar is given. Every chord is a
+  root, a third and a fifth with the root at the bottom: no sevenths, no inversions, no other voicing. The
+  third and fifth are chosen once per root from a count of notes over the whole song, so a chord cannot be
+  major in one bar and minor in another. `(b5)` chords come out wherever the song has more of the flat fifth
+  than the fifth; that may be right (D diminished in C minor) or an accident. Where the song has a heavy hit
+  on every eighth (his second song) the keys are left almost nothing to play. It still plays some places the
+  drums take, from ideas borrowed from before it was a chord player. The count of chords "on the note the
+  song was on" compares the chord's root with the bass at that instant. Nobody has heard it.
 - **The singer (steps 34 and 35) holds one note through real songs.** It is sure of 0 or 1 places, so nearly
   everything is its home note: F4 on the first song, Ab4 on the second, held and renewed every three seconds.
   That is a drone, not a tune. Both notes are in the song's key by the ear's own count. With so few new notes
@@ -465,8 +469,7 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-the bass's new sixteenths (does it sound busier, and right?); **the keys player and the singer** (do they belong; is the keys too busy; is the singer's one long note
-bearable); a way for the singer to find a tune in a busy mix (the vocal itself, if Vaughn has a stem);
+the bass's new sixteenths (does it sound busier, and right?); **whether step 36 is what Vaughn meant for the piano**; the singer (is its one long note bearable); a way for the singer to find a tune in a busy mix (the vocal itself, if Vaughn has a stem);
 a real song in threes from Vaughn; a player raised in fours learning threes so the two bands can meet; a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 

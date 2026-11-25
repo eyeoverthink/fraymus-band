@@ -148,8 +148,14 @@ import java.util.SplittableRandom;
  * it holds the last note it does. Its high note is the octave above. It counts how many of its notes were
  * the note the song was on at that moment. The line is written into its life.
  *
- * Keys. A keys player has the same kind of instrument as a bass player, higher up, and learns a line the
- * same way, but from the middle of a song: neither the bottom nor the top. Its keys are where they are, so
+ * Keys. A keys player plays chords. It listens to the bottom of a song, as a bass player does, for which
+ * note the bass is on, and keeps that line and its phrase the same way. Its chord changes on a set beat:
+ * each half of a bar takes the chord for the bass note that half begins on. The chord is that note brought
+ * up under the hand and two notes above it; which two, it settles by which notes it has heard most in the
+ * middle of the song. It plays where the song's kick and snare are not: of the eighths in the bar, the ones
+ * no heavy hit falls on, so that it lights up a different part of the beat from the drums. Until it has
+ * found the bass it presses nothing. (A singer, below, still does what a keys player did before step 36:
+ * it learns a line the same way a bass player does but from the middle of a song: neither the bottom nor the top.) Its keys are where they are, so
  * it cannot be out of tune, and it listens for a line from its first day. Where it does not yet know a note
  * for a place, it falls back on the note it has heard most in that song, and if it has not heard enough to
  * say, it presses nothing. Without a song it has only the note its hand rests on.
@@ -276,7 +282,38 @@ public final class Musician implements Player, Hits {
     private final boolean hatsOnly;       // a hat player: one bright sound; listens for the bright hits and the top of a track
     private final boolean oneNote;        // a bass player: listens for where to put its notes, and learns while it plays
     private final Bass bass;              // its instrument, if it is a bass player or a keys player
-    private final boolean keys, voice;
+    private final boolean keys, voice, comps;
+    /** A keys player's chords sit from the C below middle C upward. */
+    static final double KEYS_FROM = 130.81;
+    private LineEar colourEar;            // a keys player's ear on which notes are about in the middle of a song
+    private final int[] heardClass = new int[12];
+
+    /** The third of a chord on this note: the smaller one unless the song has more of the larger. The fifth: the usual one unless the song has more of the one below it. */
+    private int thirdAbove(int root) { return heardClass[(root + 4) % 12] > heardClass[(root + 3) % 12] ? 4 : 3; }
+    private int fifthAbove(int root) { return heardClass[(root + 6) % 12] > heardClass[(root + 7) % 12] ? 6 : 7; }
+
+    /** Which notes it has heard in the middle of this song, for its life: twelve counts, C first. */
+    public String colour() { StringBuilder b = new StringBuilder(); for (int c : heardClass) b.append(b.length() == 0 ? "" : " ").append(c); return b.toString(); }
+    public void colour(String soFar) {
+        String[] parts = soFar.trim().split("\\s+");
+        for (int i = 0; i < 12 && i < parts.length; i++) if (!parts[i].isEmpty()) heardClass[i] = Integer.parseInt(parts[i]);
+    }
+
+    /** The chords it would play, half a bar at a time through the phrase: a note name, m for the smaller third, a dot where it has not found the bass. */
+    public String chordsInWords() {
+        if (!comps) return "";
+        StringBuilder b = new StringBuilder();
+        int bars = phraseBars();
+        for (int bar = 0; bar < bars; bar++)
+            for (int half = 0; half < 2; half++) {
+                if (bar + half > 0) b.append(half == 0 ? " | " : " ");
+                double hz = lineHz((bar * SLOTS + half * slots / 2) % (bars * SLOTS));
+                if (hz == 0) { b.append('.'); continue; }
+                int root = (int) Math.round(LineEar.midiOf(hz)) % 12;
+                b.append(NOTE_NAMES[root]).append(thirdAbove(root) == 3 ? "m" : "").append(fifthAbove(root) == 6 ? "(b5)" : "");
+            }
+        return b.toString();
+    }
     /** The notes a singer listens for: from middle C to the E an octave and a third above it. */
     public static final int VOICE_LOWEST = 60, VOICE_HIGHEST = 76;
     /** The notes a keys player listens for in a song: from the C below middle C to the G above it. A keys player notices a hit in the middle of a song at this much of the loudest lately. */
@@ -404,7 +441,8 @@ public final class Musician implements Player, Hits {
 
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
-        if (oneNote) lineEar = voice ? LineEar.high(VOICE_LOWEST, VOICE_HIGHEST) : keys ? new LineEar(KEYS_LOWEST, KEYS_HIGHEST) : new LineEar();
+        if (oneNote) lineEar = voice ? LineEar.high(VOICE_LOWEST, VOICE_HIGHEST) : new LineEar();   // a keys player listens to the bass for its chords
+        if (comps) colourEar = new LineEar(KEYS_LOWEST, KEYS_HIGHEST);
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
         fullMix = true;
@@ -462,6 +500,7 @@ public final class Musician implements Player, Hits {
         this.oneNote = hands instanceof Bass;
         this.voice = oneNote && ((Bass) hands).isVoice();
         this.keys = oneNote && (((Bass) hands).isKeys() || voice);   // a singer takes the middle of a song as a keys player does
+        this.comps = keys && !voice;
         this.hatsOnly = hands instanceof Hats;
         this.learnsWhilePlaying = oneNote || hatsOnly;
         this.bass = oneNote ? (Bass) hands : null;
@@ -559,14 +598,18 @@ public final class Musician implements Player, Hits {
         // A drummer takes notice only of the heavy hits. In the bottom of a song the kick stands above the bass
         // line; in the top the snare stands above the hats. A bass player wants the whole of the bottom: that
         // is the bass line it has come to learn. A hat player wants the whole of the top and none of the bottom.
-        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (!hatsOnly && !keys && lowEar.hitLoud() >= (oneNote ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
-        if (keys) {                                          // a keys player wants the middle: neither the bass line nor the hats
+        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (!hatsOnly && !voice && lowEar.hitLoud() >= (oneNote && !comps ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        if (voice) {                                         // a singer wants the middle: neither the bass line nor the hats
             midEar.listen(midPart, n, blockStart);
             if (midEar.hitsEver() != midUsed) { midUsed = midEar.hitsEver(); if (midEar.hitLoud() >= MID_NOTICE) someoneElse(Math.round(midEar.hitTime() - earTakes), false, midEar.hitLoud(), true); }
         }
         if (lineEar != null && (notes >= 2 || keys)) hearTheLine(track, n, blockStart);
+        if (colourEar != null) {                             // a keys player also keeps count of which notes are about in the middle of the song
+            colourEar.listen(track, n, blockStart);
+            if (colourEar.ready(blockStart + n) && colourEar.hear()) heardClass[(int) Math.round(colourEar.midi()) % 12]++;
+        }
         highEar.listen(highPart, n, blockStart);
-        if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if (!oneNote && highEar.hitLoud() >= (hatsOnly ? HAT_NOTICE : HEAVY_HIGH)) someoneElse(Math.round(highEar.hitTime() - earTakes), true, highEar.hitLoud(), true); }
+        if (highEar.hitsEver() != highUsed) { highUsed = highEar.hitsEver(); if ((!oneNote || comps) && highEar.hitLoud() >= (hatsOnly ? HAT_NOTICE : HEAVY_HIGH)) someoneElse(Math.round(highEar.hitTime() - earTakes), true, highEar.hitLoud(), true); }
     }
 
     /** Which note is the bottom of the track on, at the place that just went by? */
@@ -619,14 +662,15 @@ public final class Musician implements Player, Hits {
             if (tally[t] > pooledSame) { pooledSame = tally[t]; pooledNote = lineNote[c]; }
         }
         // The middle of a song is busier than the bottom, with voices that never land twice on one note. A keys player wants two hearings in three to agree.
-        return pooledHeard >= LINE_BELIEVE && (keys ? pooledSame * 3 >= pooledHeard * 2 : pooledSame * 2 >= pooledHeard);
+        return pooledHeard >= LINE_BELIEVE && (voice ? pooledSame * 3 >= pooledHeard * 2 : pooledSame * 2 >= pooledHeard);
     }
 
     /** Where its hand goes for this place in the phrase: the note it believes is there, or the last one before it that it believes. */
     private double lineHz(int cell) {
         int bars = phraseBars(), places = bars * SLOTS;
-        for (int back = 0; back < (keys ? 1 : places); back++)   // a bass holds the last note it is sure of; a keys player only plays where it is sure
+        for (int back = 0; back < (voice ? 1 : places); back++)   // a bass holds the last note it is sure of; a keys player only plays where it is sure
             if (believesTheNoteAt(Math.floorMod(cell - back, places), bars)) return LineEar.hzOf(pooledNote);
+        if (comps) return 0;                                 // a keys player that has not found the bass yet presses nothing
         if (!keys) return Bass.LOW;                          // it knows no line yet: a bass plays its open string
         int home = homeNote();                               // a keys player falls back on the note it has heard most in this song
         return home < 0 ? 0 : LineEar.hzOf(home);            // and if it has not heard enough to say, it presses nothing
@@ -645,7 +689,7 @@ public final class Musician implements Player, Hits {
         return heard >= 12 ? most : -1;
     }
     /** That note by name, or a dot. */
-    public String homeInWords() { int home = keys ? homeNote() : -1; return home < 0 ? "." : nameOf(home);
+    public String homeInWords() { int home = voice ? homeNote() : -1; return home < 0 ? "." : nameOf(home);
     }
 
     /** A click in its ears. */
@@ -1043,9 +1087,14 @@ public final class Musician implements Player, Hits {
     private void believeByTheBar() {
         callsHeard += TURN;
         for (int s = 0; s < slots; s++) {
-            if (hearing[s] != REST && !(oneNote && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s] += Math.min(TURN, barsHeard[s]);
+            if (hearing[s] != REST && !(oneNote && !comps && notes < 2 && hearing[s] == PAN) && !(hatsOnly && hearing[s] == POT)) votes[hearing[s]][s] += Math.min(TURN, barsHeard[s]);
             byte likelier = votes[POT][s] >= votes[PAN][s] ? POT : PAN;
             lesson[s] = 2 * votes[likelier][s] >= callsHeard ? likelier : REST;
+            if (comps) {                                     // a keys player wants the eighths the kick and the snare leave free
+                boolean taken = 2 * (votes[POT][s] + votes[PAN][s]) >= callsHeard, anEighth = per == 4 ? s % 2 == 0 : s % 3 != 1;
+                takenBySong[s] = taken;
+                lesson[s] = !taken && anEighth ? POT : REST;
+            }
         }
         hasLesson = true;
     }
@@ -1069,6 +1118,7 @@ public final class Musician implements Player, Hits {
         if (askedFor[s] != REST && pattern[s] == askedFor[s]) return false;   // it was asked for this; it stays
         if (own[s] != REST && pattern[s] == own[s]) return false;             // this is its own; it stays
         if (lesson[s] == pattern[s]) return false;
+        if (comps) return callsHeard >= 4;                   // a keys player goes to the free eighths and leaves the rest, once it has listened a while
         if (!oneNote && !hatsOnly) return !(lesson[s] == REST && s % (per) == 0);
         // A bass player or a hat player adds a note where it believes there is one to follow, and takes one away
         // where it has listened at least four times and heard something there less than one time in four.
@@ -1144,6 +1194,7 @@ public final class Musician implements Player, Hits {
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
+            if (colourEar != null && fullMix && mode == TOGETHER && !last && !colourEar.busy()) colourEar.noteAt(Math.round(clock.nextBeat()));
             if (lineEar != null && (notes >= 2 || keys) && fullMix && mode == TOGETHER && !last && !lineEar.busy()) { lineEar.noteAt(Math.round(clock.nextBeat())); hearingAt = bar * SLOTS + slot; }
             if (sound != REST) {
                 strikePush = last ? 0 : feelOf(slot);
@@ -1161,7 +1212,14 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
                 if (oneNote) {
-                    struckHz = fullMix && (notes >= 2 || keys) ? lineHz((strikeSlot / slots * SLOTS + strikeSlot % slots + phraseFrom * SLOTS) % CELLS) : bass.open();
+                    int inBar = strikeSlot % slots, chordFrom = comps ? inBar - inBar % (slots / 2) : inBar;   // a keys player's chord is the one for this half of the bar
+                    struckHz = fullMix && (notes >= 2 || keys) ? lineHz((strikeSlot / slots * SLOTS + chordFrom + phraseFrom * SLOTS) % CELLS) : bass.open();
+                    if (comps && struckHz > 0) {                     // the bass's note, brought up under the hand, and two notes above it that the song has in it
+                        while (struckHz < KEYS_FROM) struckHz *= 2;
+                        while (struckHz >= 2 * KEYS_FROM) struckHz /= 2;
+                        int root = (int) Math.round(LineEar.midiOf(struckHz)) % 12;
+                        bass.chord(thirdAbove(root), fifthAbove(root));
+                    }
                     boolean noNote = struckHz == 0;                  // a keys player that does not know a note for this song yet does not press one
                     if (noNote) struckHz = bass.open();
                     bass.tune(struckHz);
@@ -1327,6 +1385,9 @@ public final class Musician implements Player, Hits {
     /** How many times a keys player left a place unplayed because it knew no note for it. */
     public int laidOut() { return laidOut; }
     private int laidOut;
+    private final boolean[] takenBySong = new boolean[SLOTS];
+    /** Where a keys player believes the song's kick and snare fall: x at each such place, a dot elsewhere. */
+    public String takenInWords() { char[] c = new char[slots]; for (int i = 0; i < slots; i++) c[i] = takenBySong[i] ? 'x' : '.'; return new String(c); }
     /** How many times a singer held the note it was on in place of singing it again. A breath lasts this many seconds. */
     public int held() { return held; }
     static final double BREATH = 3.0;

@@ -269,7 +269,7 @@ public final class Session {
                             double unsteadyMs, double listeningBefore, double listeningAfter, int ticksBefore, int ticksAfter, int notes,
                             int askedAndPlaying, int askedAndWaiting, String line, int linePlaces, int linePlacesInReach,
                             int withTheSong, int againstTheSong, double outOfTuneCents, int phraseBars, String phraseHeard,
-                            int borrowed, int borrowedKept, String borrowedFrom, String own, double swing, String home, int laidOut, int held) {}
+                            int borrowed, int borrowedKept, String borrowedFrom, String own, double swing, String home, int laidOut, int held, String chords, String taken) {}
 
     /** One drummer plays along. */
     public static Along playAlong(Path wav, Path lifeFile, String recordingName, float[] sound, Hearing.Heard heard, Hearing.Bar bar,
@@ -340,7 +340,9 @@ public final class Session {
                 : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], bars, start, chance);
             players[i].alongATrackFrom(start);
             players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feelWith(recordingName)); players[i].asked(lives[i].asked()); recall(players[i], lives[i], recordingName);
-            if (i == bassAt || i == keysAt || i == singerAt) { players[i].line(lives[i].line(recordingName)); players[i].phrase(lives[i].phrase(recordingName)); players[i].phraseFrom((int) Math.round((one - bar.aOneAtSeconds()) / barSeconds)); }
+            String lineOf = i == keysAt ? "the bass of " + recordingName : recordingName;   // a keys player's line is the bass's, for its chords
+            if (i == keysAt) players[i].colour(lives[i].notesFrom(recordingName));
+            if (i == bassAt || i == keysAt || i == singerAt) { players[i].line(lives[i].line(lineOf)); players[i].phrase(lives[i].phrase(lineOf)); players[i].phraseFrom((int) Math.round((one - bar.aOneAtSeconds()) / barSeconds)); }
             lives[i].plays(players[i].plays());
         }
         Room room = new Room(n, NEAR, ACROSS);
@@ -388,9 +390,10 @@ public final class Session {
                     began[i], d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
                     unsteady, lives[i].listening(), d.listening(), lives[i].ticks(), d.ticks(), d.notes(), d.askedAndPlaying(), d.askedAndWaiting(),
                     d.lineInWords(), d.linePlaces(), d.linePlacesInReach(), d.withTheSong(), d.againstTheSong(), d.outOfTuneCents(), d.phraseBars(), d.phrase(),
-                    d.borrowed(), d.borrowedKept(), d.borrowedFrom(), d.own(), d.swing(), d.homeInWords(), d.laidOut(), d.held()));
+                    d.borrowed(), d.borrowedKept(), d.borrowedFrom(), d.own(), d.swing(), d.homeInWords(), d.laidOut(), d.held(), d.chordsInWords(), d.takenInWords()));
                 lives[i].leaning(d.leaning()); lives[i].habits(d.habits()); lives[i].feel(d.feel());
-                if (i == bassAt || i == keysAt || i == singerAt) { lives[i].notes(d.notes()); if (d.notes() >= 2 || i == keysAt || i == singerAt) { lives[i].line(recordingName, d.line()); lives[i].phrase(recordingName, d.phrase()); } }
+                if (i == bassAt || i == keysAt || i == singerAt) { lives[i].notes(d.notes()); if (d.notes() >= 2 || i == keysAt || i == singerAt) { String lineOf = i == keysAt ? "the bass of " + recordingName : recordingName; lives[i].line(lineOf, d.line()); lives[i].phrase(lineOf, d.phrase()); } }
+                if (i == keysAt) lives[i].notesFrom(recordingName, d.colour());
                 keep(d, lives[i], recordingName);
                 lives[i].playsWith(recordingName, d.pattern(), d.feel());
                 lives[i].rememberAlong(recordingName, bars, hits, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);

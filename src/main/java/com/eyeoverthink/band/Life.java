@@ -28,6 +28,7 @@ public final class Life {
     private final java.util.Map<String, String> lineFrom = new java.util.LinkedHashMap<>(), phraseFrom = new java.util.LinkedHashMap<>();
     private final java.util.Map<String, String> heardFrom = new java.util.LinkedHashMap<>();
     private String own = "................";
+    private final java.util.Map<String, String> notesFrom = new java.util.LinkedHashMap<>();
     private final java.util.Map<String, String> patternWith = new java.util.LinkedHashMap<>(), feelWith = new java.util.LinkedHashMap<>();
     private String lineFromSomewhere = "", phraseFromSomewhere = "", lastSong;
     private String asked = "................";
@@ -53,6 +54,7 @@ public final class Life {
                 else if (s.startsWith("heard from \"") && s.indexOf("\":") > 0) life.heardFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("plays with \"") && s.indexOf("\":") > 0) life.patternWith.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("feel with \"") && s.indexOf("\":") > 0) life.feelWith.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("notes from \"") && s.indexOf("\":") > 0) life.notesFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("its own:")) life.own = s.substring(8).trim();
                 else if (s.startsWith("phrase from \"") && s.indexOf("\":") > 0) life.phraseFrom.put(s.substring(13, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("line from \"") && s.indexOf("\":") > 0) life.lineFrom.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
@@ -141,6 +143,10 @@ public final class Life {
         patternWith.put(song, bar); feelWith.put(song, itsFeel);
         set("plays with \"" + song + "\"", bar); set("feel with \"" + song + "\"", itsFeel);
     }
+
+    /** Which notes a keys player has heard in the middle of this song: twelve counts, C first. Nothing for a song it has not met. */
+    public String notesFrom(String song) { return notesFrom.getOrDefault(song, ""); }
+    public void notesFrom(String song, String counts) { notesFrom.put(song, counts); set("notes from \"" + song + "\"", counts); }
 
     /** The places it holds as its own: p or n at each, a dot elsewhere. */
     public String own() { return own; }

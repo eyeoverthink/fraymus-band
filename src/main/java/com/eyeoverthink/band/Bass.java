@@ -76,6 +76,14 @@ public final class Bass implements Instrument {
         }
     }
 
+    private double second, third;         // the other two notes of a chord, as so many times the pitch of the bottom one; nothing if it plays one note
+
+    /** A keys player's hand takes a chord: the note it is tuned to and two above it, so many semitones up. Nothing above, and it plays the one note. */
+    public void chord(int semitonesToTheSecond, int semitonesToTheThird) {
+        second = !keys || semitonesToTheSecond == 0 ? 0 : Math.pow(2, semitonesToTheSecond / 12.0);
+        third = !keys || semitonesToTheThird == 0 ? 0 : Math.pow(2, semitonesToTheThird / 12.0);
+    }
+
     private double phase, gain = 1;
     private int since;                                   // samples since the note began, or since the singer last leaned on it
 
@@ -101,13 +109,17 @@ public final class Bass implements Instrument {
             return (float) (sum * breath * 0.16 * loud);
         }
         double t = at / (double) Audio.RATE, sum = 0;
-        for (int k = 0; k < PARTIAL.length; k++)
-            sum += PARTIAL[k] * Math.sin(2 * Math.PI * hz * (k + 1) * t) * Math.exp(-t / (ring / (1 + 0.6 * k)));
+        for (int tone = 0; tone < 3; tone++) {               // one note, or the three of a chord under a keys player's hand
+            double of = tone == 0 ? 1 : tone == 1 ? second : third;
+            if (of == 0) continue;
+            for (int k = 0; k < PARTIAL.length; k++)
+                sum += (second == 0 ? 1 : 0.6) * PARTIAL[k] * Math.sin(2 * Math.PI * hz * of * (k + 1) * t) * Math.exp(-t / (ring / (1 + 0.6 * k)));
+        }
         double pluck = Math.min(1.0, t / 0.003);
         double fadeOut = Math.min(1.0, (LENGTH - at) / Audio.samples(0.02));
         if (++at >= LENGTH) at = -1;
         return (float) (sum * pluck * fadeOut * LEVEL * loud * 0.5);
     }
 
-    @Override public String describe() { return voice ? "a sung note (p) and, once it has earned it, the same note an octave up (n)" : keys ? "a note on the keys (p) and, once it has earned it, the same note an octave up (n)" : "a low note (p) and, once it has earned it, the same note an octave up (n)"; }
+    @Override public String describe() { return voice ? "a sung note (p) and, once it has earned it, the same note an octave up (n)" : keys ? "a chord on the keys (p) and, once it has earned it, the same note an octave up (n)" : "a low note (p) and, once it has earned it, the same note an octave up (n)"; }
 }
