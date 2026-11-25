@@ -1,13 +1,13 @@
 name: the shuffle drummer
 leans on the others: 0.00
-habits: 999999999999
-feel: 10.8/0.99/113 -0.8/0.57/1 1.1/0.52/208 -4.7/0.75/229 4.1/0.54/1 -6.8/0.52/207 0.6/0.75/223 -3.9/0.52/1 15.4/0.52/206 25.0/0.75/221 1.5/0.54/2 32.3/0.52/207
-heard from "shuffle": p.nn.np.nn.n
+habits: 999399999999
+feel: 1.2/1.00/263 -0.8/0.57/1 1.1/0.52/208 -2.1/1.00/367 4.1/0.54/1 -6.8/0.52/207 -0.9/1.00/367 -3.9/0.52/1 15.4/0.52/206 -3.2/0.99/365 1.5/0.54/2 32.3/0.52/207
+heard from "shuffle": p..n..p..n..
 its own: ............
 sounds: a pot (p) and a pan (n)
-listens to itself: 0.58
+listens to itself: 0.66
 ticks to the pulse: 3
-pattern: p.nn.np.nn.n
+pattern: p..n..p..n..
 session 1: heard "shuffle", answers=4, hits=59, tempo 92.0 to 87.3 bpm, unsteadiness 22.1 ms at the start, 69.0 ms by the end, listening 0.15, ticks to the pulse 1, pattern p..n..n..p.., like the lesson in 6 of 16 places, 8 bars with the record, 38 ms apart
 session 2: heard "shuffle", answers=4, hits=57, tempo 92.0 to 101.5 bpm, unsteadiness 27.2 ms at the start, 155.6 ms by the end, listening 0.15, ticks to the pulse 1, pattern p..n..p..n.., like the lesson in 8 of 16 places, 8 bars with the record, 43 ms apart
 session 3: heard "shuffle", answers=4, hits=66, tempo 92.0 to 91.4 bpm, unsteadiness 19.7 ms at the start, 16.1 ms by the end, listening 0.42, ticks to the pulse 1, pattern p..n..n..n.., like the lesson in 7 of 16 places, 8 bars with the record, 24 ms apart
@@ -105,3 +105,9 @@ session 94: played 16 bars with the second shuffle drummer and the shuffle bass 
 session 95: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 7.5 ms, listening 0.63, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart
 session 96: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 9.5 ms, listening 0.63, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
 session 97: played 16 bars with the second shuffle drummer and the shuffle bass player, no record, hits=129, unsteadiness 10.4 ms, listening 0.58, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart
+session 98: played along with "shuffle" for 24 bars, hits=113, unsteadiness 12.6 ms, listening 0.58, ticks to the pulse 3, pattern p..n..p..n.., 105 of its hits landed with a hit in the recording, 9 ms apart
+session 99: played along with "shuffle" for 24 bars, hits=101, unsteadiness 10.4 ms, listening 0.60, ticks to the pulse 3, pattern p..n..p..n.., 96 of its hits landed with a hit in the recording, 7 ms apart
+session 100: played along with "shuffle" for 24 bars, hits=97, unsteadiness 7.1 ms, listening 0.65, ticks to the pulse 3, pattern p..n..p..n.., 97 of its hits landed with a hit in the recording, 5 ms apart
+session 101: played along with "shuffle" for 24 bars, hits=97, unsteadiness 9.1 ms, listening 0.63, ticks to the pulse 3, pattern p..n..p..n.., 97 of its hits landed with a hit in the recording, 8 ms apart
+session 102: played along with "shuffle" for 24 bars, hits=97, unsteadiness 8.6 ms, listening 0.63, ticks to the pulse 3, pattern p..n..p..n.., 97 of its hits landed with a hit in the recording, 7 ms apart
+session 103: played along with "shuffle" for 24 bars, hits=97, unsteadiness 9.6 ms, listening 0.66, ticks to the pulse 3, pattern p..n..p..n.., 97 of its hits landed with a hit in the recording, 5 ms apart

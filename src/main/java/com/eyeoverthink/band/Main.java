@@ -10,6 +10,8 @@ public final class Main {
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
         String born = null, bornPupil = null, bornBass = null;
+        Path madeUp = null;
+        boolean inThrees = false;
         double from = 46;
         boolean click = false;
         double tempo = 92;
@@ -34,6 +36,8 @@ public final class Main {
                 case "--name" -> born = args[i + 1];
                 case "--name-pupil" -> bornPupil = args[i + 1];
                 case "--name-bass" -> bornBass = args[i + 1];
+                case "--make-up-shuffle" -> madeUp = Path.of(args[i + 1]);
+                case "--count" -> inThrees = args[i + 1].equals("threes");
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
@@ -41,8 +45,18 @@ public final class Main {
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (madeUp != null) {                                // write the made-up shuffle recording, for players in threes to play along with
+            float[] shuffle = MadeUp.shuffle(tempo, 64);
+            if (madeUp.getParent() != null) java.nio.file.Files.createDirectories(madeUp.getParent());
+            try (WavWriter w = new WavWriter(madeUp)) {
+                float[] block = new float[Audio.BLOCK];
+                for (int at = 0; at + Audio.BLOCK <= shuffle.length; at += Audio.BLOCK) { System.arraycopy(shuffle, at, block, 0, Audio.BLOCK); w.write(block, Audio.BLOCK); }
+            }
+            System.out.printf(Locale.ROOT, "Wrote a made-up shuffle, 64 bars at %.0f to the minute, to %s. It is nobody's music; it was written by hand for players to play along with.%n", tempo, madeUp);
+            return;
         }
         // A newborn can be given a name. One that already has a life keeps the name it has.
         if (born != null && !java.nio.file.Files.exists(life)) {
@@ -65,7 +79,8 @@ public final class Main {
         if (along != null) {                                 // the drummer plays along with a recording
             float[] song = Hearing.read(along);
             Hearing.Heard h = Hearing.listenLowAndHigh(song);
-            Hearing.Bar b = Hearing.oneBar(h);
+            boolean forThrees = java.nio.file.Files.exists(life) && Life.open(life, "the drummer").pattern().length() == Musician.THREES;   // a song is heard the way the players count
+            Hearing.Bar b = Hearing.oneBar(h, forThrees);
             String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
             java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
             Session.Along a = Session.playAlong(wav, drummers, hats, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
@@ -92,7 +107,7 @@ public final class Main {
             float[] song = Hearing.read(hear);
             Hearing.Heard split = Hearing.listenLowAndHigh(song);
             System.out.printf(Locale.ROOT, "With one ear on the bottom of the sound and one on the top: %d hits in the bottom, %d in the top.%n", split.dark(), split.bright());
-            Hearing.Bar b = Hearing.oneBar(split);
+            Hearing.Bar b = Hearing.oneBar(split, inThrees);
             System.out.printf(Locale.ROOT, "The hits line up best on a steady pulse of %.2f to the minute (%.2f, where 1 is perfectly and 0 is not at all), about %d bars.%n", b.bpm(), b.linesUp(), b.barsHeard());
             System.out.println(b.swing() < 0 ? "Nothing falls off the eighths, so there is no swing to measure." : String.format(Locale.ROOT, "The sixteenths swing %.0f%% (50 is straight, 67 is the triplet).", b.swing()));
             System.out.println("Folded onto one bar, taking the place where the dark hits weigh most as the one:");

@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepTwentyNineTest {
+class StepThirtyTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1229,5 +1229,44 @@ class StepTwentyNineTest {
         Files.write(fours, List.of("name: the bass player", "ticks to the pulse: 2", "notes: 2", "pattern: p...p...p...p..."));
         Path a0 = dir.resolve("a0.life"), b0 = dir.resolve("b0.life");
         assertThrows(IllegalArgumentException.class, () -> Session.band(dir.resolve("t.wav"), List.of(a0, b0), fours, 8, 92, 1), "a bass player that counts in fours cannot join drummers who count in threes");
+    }
+
+    @Test
+    void theEarHearsThreesInARecordingAndPlayersInThreesTakeDifferentPartsFromIt(@TempDir Path dir) throws Exception {
+        float[] song = MadeUp.shuffle(92, 40);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        assertEquals(12, Hearing.oneBar(heard, true).bar().length(), "heard for players who count in threes it is in threes, of course");
+        assertEquals(12, bar.bar().length(), "the ear hears the made-up shuffle in threes without being told: " + bar.bar());
+        assertEquals(92.0, bar.bpm(), 0.3, "at its own tempo, not at three quarters of it");
+        assertEquals(-1, bar.swing(), 1e-9, "and swing is not a question in threes");
+        Hearing.Bar straight = Hearing.oneBar(Hearing.listenLowAndHigh(madeUpSong(new Lesson("made up", 92, "p...n...p.p.n..."), 40)));
+        assertEquals(16, straight.bar().length(), "a recording in fours is still heard in fours");
+        assertEquals(16, Hearing.oneBar(Hearing.listenLowAndHigh(madeUpSong(new Lesson("made up", 92, "p...n...p.p.n..."), 40)), true).bar().length(), "and cannot be counted in threes even if asked");
+        assertEquals(92.0, straight.bpm(), 0.3);
+
+        String shuffle = "p.nn.np.nn.n";
+        Path kit = practised(dir, "kit.life", 3, shuffle), hats = practised(dir, "hats.life", 3, shuffle), bass = bassPlayer(dir, "bass.life", 3, 2);
+        Files.write(bass, List.of("name: the bass player", "listens to itself: 0.60", "ticks to the pulse: 3", "notes: 2", "pattern: " + "p..p..p..p..", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+        Session.Along take = null;
+        for (int s = 0; s < 4; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(kit), hats, bass, "made-up shuffle", song, heard, bar, 3, 24, 900 + s);
+        Session.AlongPart k = take.parts().get(0), h = take.parts().get(1), b = take.parts().get(2);
+        System.out.printf(Locale.ROOT, "THREES ROLES kit hears %s and plays %s; hat hears %s and plays %s; bass hears %s and plays %s, %d on the song's note and %d not, phrase %d bars, line %s%n",
+            k.believes(), k.patternAfter(), h.believes(), h.patternAfter(), b.believes(), b.patternAfter(), b.withTheSong(), b.againstTheSong(), b.phraseBars(), b.line());
+        for (Session.AlongPart p : take.parts()) assertEquals(12, p.patternAfter().length());
+        assertEquals("p..n..p..n..", k.believes(), "the drummer on the kit hears the kick and the snare");
+        assertEquals(-1, h.patternAfter().indexOf('p'), "the hat player plays nothing but its hat");
+        for (int place : new int[] {2, 5, 8, 11}) assertEquals('n', h.believes().charAt(place), "the hat player hears the hat on the last of every three: " + h.believes());
+        assertEquals(-1, b.believes().indexOf('n'), "the bass player hears the bottom and none of the top: " + b.believes());
+        assertTrue(b.withTheSong() >= 9 * b.againstTheSong() && b.withTheSong() >= 30, "and plays the song's notes: " + b.withTheSong() + " to " + b.againstTheSong());
+        java.util.Set<String> written = new java.util.HashSet<>(List.of("."));
+        for (int note : MadeUp.LINE) { written.add(Musician.nameOf(note)); written.add(Musician.nameOf(note - 2)); }
+        for (String note : b.line().replace("|", " ").trim().split("\\s+")) assertTrue(written.contains(note), note + " is not a note of the made-up line (the count above is by its own ear, so this is the check): " + b.line());
+        assertEquals(4, b.phraseBars(), "and it finds the line is four bars long: " + b.phraseHeard());
+        assertNotEquals(k.patternAfter(), h.patternAfter(), "they do not all play the same thing");
+        assertNotEquals(k.patternAfter(), b.patternAfter());
+
+        Path fours = practised(dir, "fours.life", 4);
+        assertThrows(IllegalArgumentException.class, () -> Session.playAlong(dir.resolve("t.wav"), fours, "made-up shuffle", song, heard, bar, 3, 8, 1), "a player that counts in fours cannot play along with a song in threes");
     }
 }

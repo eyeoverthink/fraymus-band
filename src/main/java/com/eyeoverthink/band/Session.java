@@ -305,9 +305,12 @@ public final class Session {
         Musician[] players = new Musician[n];
         String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
         for (int i = 0; i < n; i++) {
-            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", Musician.FIRST_BASS_PATTERN)
-                     : i == hatsAt ? Life.open(hatsLife, "the hat player", Musician.FIRST_HATS_PATTERN)
-                     : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)]);
+            boolean songInThrees = bar.bar().length() == Musician.THREES;
+            lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", songInThrees ? Musician.FIRST_BASS_PATTERN_IN_THREES : Musician.FIRST_BASS_PATTERN)
+                     : i == hatsAt ? Life.open(hatsLife, "the hat player", songInThrees ? Musician.FIRST_HATS_PATTERN_IN_THREES : Musician.FIRST_HATS_PATTERN)
+                     : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)], songInThrees ? Musician.FIRST_PATTERN_IN_THREES : Musician.FIRST_PATTERN);
+            if (lives[i].pattern().length() != bar.bar().length())
+                throw new IllegalArgumentException(lives[i].name() + " counts in " + (songInThrees ? "fours" : "threes") + " and \"" + recordingName + "\" is in " + (songInThrees ? "threes" : "fours") + ". It cannot play along with it yet.");
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
                 ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)

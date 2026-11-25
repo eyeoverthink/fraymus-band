@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.29.0. 54 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.30.0. 55 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -101,6 +101,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 27 | Threes (item 4, real triplets, first part). A bar can be counted in threes: twelve places, three to the pulse. A lesson with a twelve-place bar is in threes (`lessons/shuffle.lesson`, `p.nn.np.nn.n`). A newborn counts as its first record does, for life; in threes it has one tick to the pulse, then three. Inside `Musician` the bar is now `slots` places with `per` to the pulse; `SLOTS` is only the size of the arrays. Twelve newborns on the shuffle: 7.5 of 12 places like it in the first session, 11.8 by the thirtieth, all with three ticks, 8 ms from the record. A new player was raised: `lives/shuffle.life`, "the shuffle drummer" (`--name` names a newborn). |
 | 28 | Threes, second part: players who count in threes teach and play with each other. A pupil counts as its teacher does. Players in one room must count the same way, or the session refuses. Six pupils taught the shuffle: like it in 7.2 of 12 places after one session, 11.7 after 24, all with three ticks, 6 ms from their teacher. A second player was raised: `lives/shuffle-second.life`, "the second shuffle drummer", taught by the first (`--name-pupil` names a newborn pupil). |
 | 29 | Threes, third part: a bass in threes. A newborn bass counts as the drummers it joins do (`--name-bass` names it). Five made-up basses with two shuffle drummers: 2.6 notes in the bar after one session, 7.8 after forty, all with three ticks and both notes, 12 ms from the first drummer (after 24 sessions only three of five had the triplet and they were 27 ms apart). A third player in threes was raised: `lives/shuffle-bass.life`, "the shuffle bass player". |
+| 30 | Threes, fourth part: parts that differ. The ear on a recording hears threes (it is in threes if the loudness comes round 1.15 times better after twelve ticks than after sixteen), and prefers a tick twice as long when it fits as well. Players in threes can play along with a recording on kit, hi-hat or bass, with the bass line. `MadeUp.shuffle` (`--make-up-shuffle FILE`) writes a made-up shuffle recording with a kick, a snare, a hat and a four-bar bass line, written by the agent. The three shuffle players played along with it six times: kit `p..n..p..n..`, hi-hat `n.nn.nn.nn.n` (the second shuffle drummer moved to the hi-hat), bass `p..p..p..p.p` on the written line. |
 
 ### The players that exist (do not reset these)
 
@@ -116,11 +117,13 @@ with a real life file. There is a record that plays lessons and a click track.
   31 sessions with that record and nothing else. Three ticks to the pulse, pattern `p.nn.np.nn.n`, listening
   0.89. It cannot play with the first three (they count in fours).
 - `lives/shuffle-second.life`, "the second shuffle drummer": born in step 28, taught by the shuffle drummer in
-  24 sessions with a click. Three ticks, the same pattern, listening 0.95. Together, with a click, the two are
-  5 ms apart. They play the same part on the same kind of kit; no roles in threes yet.
+  24 sessions with a click. Three ticks, the same pattern, listening 0.95. Together, with a click, the two were
+  5 ms apart. **Moved to the hi-hat in step 30** (`sounds: a hi-hat (n)`, pattern `n.nn.nn.nn.n`); run it with
+  `--hats`.
 - `lives/shuffle-bass.life`, "the shuffle bass player": born in step 29 with the two shuffle drummers, 41
   sessions with a click. Three ticks, both notes, pattern `p.nn.np.nn.n`: low E where they have a pot, high E
-  where they have a pan. 17 ms from the first drummer in its last take, looser than the drummers are.
+  where they have a pan. Since step 30 it plays `p..p..p..p.p` and the made-up shuffle's line
+  (`line from "shuffle":`). The shuffle drummer now plays `p..n..p..n..`.
 - `lives/bass.life`: "the bass player". Born in step 9. Earned its second note in step 10. Two ticks to the
   pulse. Low notes on the drummers' pots, high notes on their pans, plus ideas of its own. **In step 20
   Vaughn asked it for the up tick at the end of two and of four**; its life has `asked for: ......n.......n.`
@@ -141,11 +144,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.29.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.29.0.jar --click on
-    java -jar target/fraymus-band-0.29.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.29.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.29.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.30.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.30.0.jar --click on
+    java -jar target/fraymus-band-0.30.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.30.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.30.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -189,7 +192,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepTwentyNineTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepThirtyTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -315,6 +318,17 @@ Given, as fixed rules (be honest about these):
   (`itGrowsIntoTheLesson`) after touching how a player sets its clock.
 - A session line in a life written for a player in threes says "like the lesson in 12 of 16 places"; it means
   12 of its 12. The wording is in `Life` and in lives already written; left alone.
+- **The count of bass notes "on the song's note" hid a wrong line (step 30).** In a first balance of the
+  made-up shuffle the bass learned F#1, the pitch of the kick's tail, and scored 42 of 42, because the same ear
+  judges both. With a made-up recording the written notes are known: the test now checks the learned line
+  against them. With a real song only Vaughn's ear can.
+- **A shuffle with nothing on the middle of its three is the same sounds as swung eighths**, and any tick fits
+  a tick twice as fast. The ear went from 92 in threes to 184 and to 92 in fours as the balance of the made-up
+  recording changed. Fixed by preferring the slower tick; an attempt to force a reading in threes made a
+  straight song read as threes and was removed.
+- The made-up shuffle's balance was tuned until each player heard its own part (kick 0.8, snare 0.15, hat
+  0.6, bass 0.2; a kick that is gone in 45 ms; a snare of hiss with no bottom). That is fitting the recording
+  to the players' thresholds, which were set on one real song.
 
 ---
 
@@ -393,11 +407,11 @@ Given, as fixed rules (be honest about these):
   with the middle one played, are still out of reach (no triplet ticks). The ear's 56% for Vaughn's song is
   an average over everything in the mix, some of which may be played straight. The two-thirds rule for tempo
   was checked on one real song.
-- **Threes (steps 27 to 29):** two drummers on kits and a bass. All three play the same rhythm (the bass
-  follows every drum hit, low for a pot and high for a pan, on E): one part three times over, no roles. No
-  hats, no playing along with a song (the ear on a recording only folds onto sixteen), so no bass line and no
-  song's feel in threes. A player counts in fours or in threes for life, so the first three players and the
-  three shuffle players cannot share a room. Only measured with a click. No six to the pulse.
+- **Threes (steps 27 to 30):** the only recording in threes is one the agent wrote, balanced so that each
+  player hears its part. No real song in threes has been tried. The parts the three shuffle players have are
+  the parts written into it. A player counts in fours or in threes for life, so the first three players and
+  the three shuffle players cannot share a room. No six to the pulse. Whether a recording is in threes is
+  one threshold (1.15) checked on one made-up shuffle, one made-up straight song and Vaughn's song.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -411,8 +425,7 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-the rest of threes (parts that differ: a hat in threes and roles without a song; hearing a recording in
-threes; a player raised in fours learning threes so the two bands can meet), a way for the hat and bass players to sit with a record alone;
+a real song in threes from Vaughn; a player raised in fours learning threes so the two bands can meet; a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 
 **Vaughn's direction, 2026-11-20: the players should study artists' style, as he did. "I grew up with people

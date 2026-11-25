@@ -121,6 +121,7 @@ public final class Hearing {
      * is played off the eighths, or nothing on them.
      */
     public static double swing(String bar, double[] afterTheTickMs, double bpm) {
+        if (bar.length() != Musician.SLOTS) return -1;       // swing is a matter of sixteenths
         double on = 0, off = 0;
         int ons = 0, offs = 0;
         for (int i = 0; i < bar.length() && i < afterTheTickMs.length; i++) {
@@ -148,7 +149,24 @@ public final class Hearing {
     /** Two thirds of the best tempo is taken instead if the hits line up on it at least this well against the best. */
     static final double SWUNG_NOT_FASTER = 0.6;
 
-    public static Bar oneBar(Heard h) {
+    /** A recording is in threes if it comes round this much better after twelve ticks than after sixteen. */
+    static final double THREES_CLEARLY = 1.15;
+
+    /** How alike the loudness at each tick is to the loudness this many ticks later: 1 if it comes round exactly. */
+    private static double comesRound(double[] loudAt, int after) {
+        double same = 0, all = 0;
+        for (int k = 0; k + after < loudAt.length; k++) { same += loudAt[k] * loudAt[k + after]; all += (loudAt[k] * loudAt[k] + loudAt[k + after] * loudAt[k + after]) / 2; }
+        return all == 0 ? 0 : same / all;
+    }
+
+    public static Bar oneBar(Heard h) { return oneBar(h, false); }
+
+    /**
+     * The same, for players who count in threes if asked: then hits that could be sixteenths swung hard are not
+     * taken for that. If the music does not come round after twelve ticks the bar still comes back with
+     * sixteen places, and it is not for them.
+     */
+    public static Bar oneBar(Heard h, boolean forThrees) {
         double[] t = h.hitTimes();
         double bestBpm = 0, bestScore = -1, bestAngle = 0;
         for (double bpm = 60; bpm <= 180; bpm += 0.01) {     // which tempo do the hits line up on best?
@@ -159,6 +177,17 @@ public final class Hearing {
             }
             double score = w == 0 ? 0 : Math.hypot(re, im) / w;
             if (score > bestScore) { bestScore = score; bestBpm = bpm; bestAngle = Math.atan2(im, re); }
+        }
+        // Any hits that line up on a tick line up on one twice as fast. If the tick twice as long does as well, that is the tick.
+        while (bestBpm / 2 >= 60) {
+            double tick = 60.0 / (bestBpm / 2) / 4, re = 0, im = 0, w = 0;
+            for (int i = 0; i < t.length; i++) {
+                double angle = 2 * Math.PI * (t[i] % tick) / tick;
+                re += h.hitLoud()[i] * Math.cos(angle); im += h.hitLoud()[i] * Math.sin(angle); w += h.hitLoud()[i];
+            }
+            double score = w == 0 ? 0 : Math.hypot(re, im) / w;
+            if (score < 0.97 * bestScore) break;
+            bestBpm /= 2; bestScore = score; bestAngle = Math.atan2(im, re);
         }
         // Sixteenths that swing hard sit near the triplet, and then the hits line up even better on a grid half
         // as fast again, which is not the tempo. If two thirds of the best tempo lines up nearly as well, that is
@@ -173,9 +202,21 @@ public final class Hearing {
             double score = w == 0 ? 0 : Math.hypot(re, im) / w;
             if (score > swungScore) { swungScore = score; swungBpm = bpm; swungAngle = Math.atan2(im, re); }
         }
-        if (swungScore >= SWUNG_NOT_FASTER * bestScore) { bestBpm = swungBpm; bestScore = swungScore; bestAngle = swungAngle; }
+        boolean swung = swungScore >= SWUNG_NOT_FASTER * bestScore;
+        if (swung && !forThrees) { bestBpm = swungBpm; bestScore = swungScore; bestAngle = swungAngle; }
         double tick = 60.0 / bestBpm / 4, first = (bestAngle < 0 ? bestAngle + 2 * Math.PI : bestAngle) / (2 * Math.PI) * tick;
-        int n = Musician.SLOTS;
+        // Fours or threes? The ticks are the same either way; what differs is how many of them go round before
+        // the music comes round. It is in threes only if it comes round clearly better after twelve than after sixteen.
+        long firstTick = Math.round((t.length == 0 ? 0 : t[0] - first) / tick), lastTick = Math.round((t.length == 0 ? 0 : t[t.length - 1] - first) / tick);
+        double[] loudAt = new double[(int) (lastTick - firstTick) + 1];
+        for (int i = 0; i < t.length; i++) {
+            long which = Math.round((t[i] - first) / tick);
+            if (Math.abs(t[i] - (first + which * tick)) <= Musician.REACH * tick) loudAt[(int) (which - firstTick)] += h.hitLoud()[i];
+        }
+        double afterTwelve = comesRound(loudAt, Musician.THREES), afterSixteen = comesRound(loudAt, Musician.SLOTS);
+        boolean inThrees = afterTwelve > THREES_CLEARLY * afterSixteen;
+        if (inThrees) bestBpm = bestBpm * 4 / 3;             // the same ticks, three to the pulse
+        int n = inThrees ? Musician.THREES : Musician.SLOTS;
         double[] dark = new double[n], bright = new double[n], darkLoud = new double[n], brightLoud = new double[n], darkOff = new double[n], brightOff = new double[n];
         for (int i = 0; i < t.length; i++) {
             long which = Math.round((t[i] - first) / tick);

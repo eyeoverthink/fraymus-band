@@ -1,12 +1,12 @@
 name: the second shuffle drummer
-leans on the others: 0.02
-habits: 999999799999
-feel: -3.4/0.97/96 0.0/0.52/0 -10.2/0.49/180 -11.6/0.71/191 0.0/0.52/0 -10.8/0.50/180 -13.8/0.72/192 0.0/0.52/0 4.3/0.50/179 14.6/0.71/190 0.0/0.52/0 22.4/0.49/179
+leans on the others: 0.01
+habits: 999999994599
+feel: -1.6/0.67/246 0.0/0.52/0 -1.5/0.62/324 -1.2/0.99/335 0.0/0.52/0 -2.6/0.53/324 -1.1/0.68/336 0.0/0.52/0 -1.3/0.63/323 -0.6/0.99/334 0.0/0.52/0 -0.2/0.53/323
 its own: ............
-sounds: a pot (p) and a pan (n)
+sounds: a hi-hat (n)
 listens to itself: 0.76
 ticks to the pulse: 3
-pattern: p.nn.np.nn.n
+pattern: n.nn.nn.nn.n
 session 1: heard "the shuffle drummer", answers=4, hits=65, tempo 92.0 to 92.4 bpm, unsteadiness 18.1 ms at the start, 11.1 ms by the end, listening 0.44, ticks to the pulse 1, pattern p..n..p..n.., like the lesson in 8 of 16 places, 8 bars with the record, 11 ms apart
 session 2: heard "the shuffle drummer", answers=4, hits=65, tempo 92.0 to 90.4 bpm, unsteadiness 13.3 ms at the start, 12.5 ms by the end, listening 0.58, ticks to the pulse 3, pattern p..n..p..n.., like the lesson in 8 of 16 places, 8 bars with the record, 16 ms apart
 session 3: heard "the shuffle drummer", answers=4, hits=93, tempo 92.0 to 92.0 bpm, unsteadiness 24.0 ms at the start, 16.9 ms by the end, listening 0.71, ticks to the pulse 3, pattern p.nn..p..n.n, like the lesson in 10 of 16 places, 8 bars with the record, 12 ms apart
@@ -73,3 +73,10 @@ session 63: played 16 bars with the shuffle drummer and the shuffle bass player,
 session 64: played 16 bars with the shuffle drummer and the shuffle bass player, no record, hits=121, unsteadiness 8.8 ms, listening 0.78, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart
 session 65: played 16 bars with the shuffle drummer and the shuffle bass player, no record, hits=121, unsteadiness 9.7 ms, listening 0.76, ticks to the pulse 3, pattern p.nn.np.nn.n, 6 ms apart
 session 66: played 16 bars with the shuffle drummer and the shuffle bass player, no record, hits=121, unsteadiness 9.2 ms, listening 0.76, ticks to the pulse 3, pattern p.nn.np.nn.n, 9 ms apart
+heard from "shuffle": n.nn.nn.nn.n
+session 67: played along with "shuffle" for 24 bars, hits=191, unsteadiness 8.6 ms, listening 0.76, ticks to the pulse 3, pattern n.nn.nn.nn.n, 191 of its hits landed with a hit in the recording, 6 ms apart
+session 68: played along with "shuffle" for 24 bars, hits=189, unsteadiness 8.0 ms, listening 0.81, ticks to the pulse 3, pattern n.nn.nn.nn.n, 189 of its hits landed with a hit in the recording, 3 ms apart
+session 69: played along with "shuffle" for 24 bars, hits=191, unsteadiness 8.3 ms, listening 0.79, ticks to the pulse 3, pattern n.nn.nn.nn.n, 191 of its hits landed with a hit in the recording, 4 ms apart
+session 70: played along with "shuffle" for 24 bars, hits=193, unsteadiness 8.3 ms, listening 0.70, ticks to the pulse 3, pattern n.nn.nn.n..n, 191 of its hits landed with a hit in the recording, 7 ms apart
+session 71: played along with "shuffle" for 24 bars, hits=185, unsteadiness 7.1 ms, listening 0.76, ticks to the pulse 3, pattern n.nn.nn..n.n, 183 of its hits landed with a hit in the recording, 4 ms apart
+session 72: played along with "shuffle" for 24 bars, hits=185, unsteadiness 8.5 ms, listening 0.76, ticks to the pulse 3, pattern n.nn.nn.nn.n, 184 of its hits landed with a hit in the recording, 4 ms apart

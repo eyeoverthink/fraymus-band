@@ -119,7 +119,8 @@ import java.util.SplittableRandom;
  * Threes. A bar can be counted in threes: twelve places, three to the pulse, as in a shuffle or a slow
  * blues. A player counts in fours or in threes for life, from the first record it meets. One that counts
  * in threes has one tick to the pulse, or three once its pulse is even; there is nothing between. Players
- * who count the same way can play together and teach one another; a pupil counts as its teacher does.
+ * who count the same way can play together and teach one another; a pupil counts as its teacher does. A
+ * recording in threes can be played along with by players who count in threes, on any instrument.
  *
  * Swing. A place can sit as far behind its tick as the triplet, a third of a sixteenth, and a hit that far
  * behind a tick is still heard as that place. So a player that takes on a record's feel takes on its swing,
@@ -223,6 +224,7 @@ public final class Musician implements Player, Hits {
     public static final String FIRST_BASS_PATTERN_IN_THREES = "p...........";
     /** A newborn hat player: one hat, on the one. */
     public static final String FIRST_HATS_PATTERN = "n...............";
+    public static final String FIRST_HATS_PATTERN_IN_THREES = "n...........";
 
     private static final byte REST = Kit.REST, POT = Kit.POT, PAN = Kit.PAN;
     private static final long READY = Math.round(Audio.samples(0.012));
@@ -376,7 +378,6 @@ public final class Musician implements Player, Hits {
 
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
-        if (slots == THREES) throw new IllegalArgumentException(name + " counts in threes, and the ear on a recording only hears in fours so far.");
         if (oneNote) lineEar = new LineEar();
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
@@ -444,7 +445,6 @@ public final class Musician implements Player, Hits {
         this.hitSlots = new int[hits.length];
         this.hitPushes = new double[hits.length];
         for (int i = 0; i < SLOTS; i++) feelWeight[i] = Kit.weight(i, per);
-        if (slots == THREES && hatsOnly) throw new IllegalArgumentException(name + " counts in threes. So far a drummer on a kit can, and a bass player, but not a hat player.");
     }
 
     @Override public String name() { return name; }
@@ -1091,10 +1091,10 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < n; i++) {
             if (strikeAt >= 0 && blockStart + i >= strikeAt) {
                 if (oneNote) {
-                    struckHz = fullMix && notes >= 2 ? lineHz((strikeSlot + phraseFrom * SLOTS) % CELLS) : Bass.LOW;
+                    struckHz = fullMix && notes >= 2 ? lineHz((strikeSlot / slots * SLOTS + strikeSlot % slots + phraseFrom * SLOTS) % CELLS) : Bass.LOW;
                     bass.tune(struckHz);
                     bass.detune(chance.nextGaussian() * tuneSlip());
-                    struck = strikeSound; struckAt = strikeSlot;
+                    struck = strikeSound; struckAt = strikeSlot / slots * SLOTS + strikeSlot % slots;   // the line is kept sixteen places to the bar, used or not
                 }
                 hands.strike(strikeSound, (float) (weightOf(strikeSlot % slots) * (0.88 + 0.12 * chance.nextDouble())));
                 if (hitCount < hits.length) { hits[hitCount] = blockStart + i; hitPushes[hitCount] = strikePush; hitSlots[hitCount++] = strikeSlot; }
@@ -1225,16 +1225,21 @@ public final class Musician implements Player, Hits {
     /** The line as it believes it, bar by bar for as many bars as it believes the phrase has, at the places its ticks reach: a note name, or a dot where it is not sure. */
     public String lineInWords() {
         StringBuilder b = new StringBuilder();
-        int step = SLOTS / PULSES / ticks, bars = phraseBars();
-        for (int c = 0; c < bars * SLOTS; c += step) {
-            if (c > 0) b.append(c % slots == 0 ? " | " : " ");
-            b.append(believesTheNoteAt(c, bars) ? nameOf(pooledNote) : ".");
-        }
+        int bars = phraseBars();
+        for (int bar = 0; bar < bars; bar++)
+            for (int slot = 0; slot < slots; slot += per / ticks) {
+                if (bar + slot > 0) b.append(slot == 0 ? " | " : " ");
+                b.append(believesTheNoteAt(bar * SLOTS + slot, bars) ? nameOf(pooledNote) : ".");
+            }
         return b.toString();
     }
     /** How many places in the phrase it believes it knows the note for, of how many its ticks reach. */
-    public int linePlaces() { int k = 0, bars = phraseBars(); for (int c = 0; c < bars * SLOTS; c += SLOTS / PULSES / ticks) if (believesTheNoteAt(c, bars)) k++; return k; }
-    public int linePlacesInReach() { return phraseBars() * SLOTS / (SLOTS / PULSES / ticks); }
+    public int linePlaces() {
+        int k = 0, bars = phraseBars();
+        for (int bar = 0; bar < bars; bar++) for (int slot = 0; slot < slots; slot += per / ticks) if (believesTheNoteAt(bar * SLOTS + slot, bars)) k++;
+        return k;
+    }
+    public int linePlacesInReach() { return phraseBars() * PULSES * ticks; }
     /** Of the notes it played while the song's note was clear: how many were that note, and how many were not. */
     public int withTheSong() { return withTheSong; }
     public int againstTheSong() { return againstTheSong; }
