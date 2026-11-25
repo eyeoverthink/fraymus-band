@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.32.0. 57 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
+Version 0.33.0. 58 tests pass (`mvn test`, about four minutes). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -104,6 +104,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 30 | Threes, fourth part: parts that differ. The ear on a recording hears threes (it is in threes if the loudness comes round 1.15 times better after twelve ticks than after sixteen), and prefers a tick twice as long when it fits as well. Players in threes can play along with a recording on kit, hi-hat or bass, with the bass line. `MadeUp.shuffle` (`--make-up-shuffle FILE`) writes a made-up shuffle recording with a kick, a snare, a hat and a four-bar bass line, written by the agent. The three shuffle players played along with it six times: kit `p..n..p..n..`, hi-hat `n.nn.nn.nn.n` (the second shuffle drummer moved to the hi-hat), bass `p..p..p..p.p` on the written line. |
 | 31 | Vaughn's second song, "1,2-3" (`songs/one-two-three.wav`, not committed). The ear: 88.81 to the minute, in fours, sixteenths swing 55%, but the tempo wanders between 88.5 and 89.3 from one quarter of the song to the next (his first song holds 92.1). So the click is now set from the stretch being played (`Hearing.near`), not the whole song. The first three players played along five times from 0:29: 150 to 190 of about 200 to 250 hits each within 25 ms of the song, unsteadiness 5.6 to 8.4 ms; the bass hears a one-bar line on F; all three now borrow places from his first song into his second. |
 | 32 | What a player plays with a song, and its feel for it, are kept under the song's name (`plays with "song":`, `feel with "song":`) and picked up again when that song comes back. Its own places and asked places go with it to every song. With the real band: three takes of the first song, three of the second, then the first again began exactly where its third take ended (`p.n.n.n.ppp.n..n`, hats `n.n.n.n.n.n.nnn.`). Vaughn answered "Perfect" to the pulse-marked clip of "1,2-3". During these takes the bass earned four ticks to the pulse. |
+| 33 | A keys player (Vaughn: "Let's add a new musician, artist or vocalist"; the agent chose keys, he has an MPC Key 61). `Bass.keys()` is a struck tone in the middle of the band; `Musician.onKeys`; `--keys LIFE`. It takes its places from hits in the middle of a song (what is neither under 150 Hz nor over 5 kHz) and its notes from an ear on C3 to G4. It believes a place when two hearings in three agree; elsewhere it plays its home note, the note it has heard most in that song; until it has heard a dozen it presses nothing. On a made-up song with a tune in the middle: 29 of 32 believed notes are the tune's, 182 of 182 played notes on the note. `lives/keys.life` was born and played 8 takes of the first song and 6 of the second. |
 
 ### The players that exist (do not reset these)
 
@@ -115,6 +116,10 @@ with a real life file. There is a record that plays lessons and a click track.
 - `lives/second.life`: "the second drummer". Born in step 5. Taught by the first. **Moved to the hi-hat in
   step 18** (Vaughn agreed to roles: one drummer on kick and snare, the other on the hats). Its life says
   `sounds: a hi-hat (n)`. Run it with `--hats lives/second.life`, not `--with`. Its name is unchanged.
+- `lives/keys.life`: "the keys player". Born in step 33 playing along with Vaughn's two songs, 14 takes.
+  Four ticks to the pulse, both notes. On the first song it plays `p.p.p.......p.p.` and believes C3, Eb3
+  and F3 at 13 of 32 places; on the second `p.p.p.p.p.p.p.pp`, nearly all on its home note. Its home note is
+  F3 on both songs. Run it with `--keys`.
 - `lives/shuffle.life`, "the shuffle drummer": born in step 27 on `lessons/shuffle.lesson`, counts in threes.
   31 sessions with that record and nothing else. Three ticks to the pulse, pattern `p.nn.np.nn.n`, listening
   0.89. It cannot play with the first three (they count in fours).
@@ -146,11 +151,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.32.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.32.0.jar --click on
-    java -jar target/fraymus-band-0.32.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.32.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.32.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.33.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.33.0.jar --click on
+    java -jar target/fraymus-band-0.33.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.33.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.33.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -194,7 +199,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepThirtyTwoTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepThirtyThreeTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -428,6 +433,14 @@ Given, as fixed rules (be honest about these):
 - **The bass has four ticks to the pulse since step 32** (`pp.pp.npp.p.p.np`). The ear on the line only
   manages every other sixteenth, so on the odd ones it holds the note before, and nothing checks those notes.
   Its count of notes on the song's note fell from about 95 to 77 on the first song because fewer are compared.
+- **The keys player (step 33) is the least sure player in the band.** On Vaughn's songs only about a third of
+  its notes are on the note its own ear says the middle of the song is on (33 of 87, 31 of 110), because the
+  middle of a real song is voices and everything else and seldom lands twice on one note. Most of what it
+  plays is its home note, F3, on both songs; F is the root of the second song's bass line but the first
+  song's bass is on C, so F3 there may be wrong. On the second song it plays eighth notes of one pitch almost
+  throughout. Nobody has heard it. It plays one note at a time: no chords. Its instrument is the bass's code
+  with other numbers (`Bass.keys()`), and `oneNote` is true for it. It has no part without a song (its hand
+  rests on E3). A vocalist was the other thing Vaughn offered; not started.
 - Without a click, three players do not hold together.
 - The drummers take nothing from the bass but time.
 - Mono.
@@ -441,7 +454,8 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-the bass's new sixteenths (does it sound busier, and right?);
+the bass's new sixteenths (does it sound busier, and right?); **the keys player's notes** (is F3 right on
+either song; is it too busy on the second);
 a real song in threes from Vaughn; a player raised in fours learning threes so the two bands can meet; a way for the hat and bass players to sit with a record alone;
 **a second song from Vaughn would make this audible**; a line per section; note lengths; the drummer telling a bass note from a kick by pitch.
 

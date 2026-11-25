@@ -10,7 +10,7 @@ public final class Main {
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
         String born = null, bornPupil = null, bornBass = null;
-        Path madeUp = null;
+        Path madeUp = null, keysLife = null;
         boolean inThrees = false;
         double from = 46;
         boolean click = false;
@@ -39,13 +39,14 @@ public final class Main {
                 case "--make-up-shuffle" -> madeUp = Path.of(args[i + 1]);
                 case "--count" -> inThrees = args[i + 1].equals("threes");
                 case "--hats" -> hats = Path.of(args[i + 1]);
+                case "--keys" -> keysLife = Path.of(args[i + 1]);
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         if (madeUp != null) {                                // write the made-up shuffle recording, for players in threes to play along with
@@ -86,12 +87,13 @@ public final class Main {
             Hearing.Bar whole = b;
             b = Hearing.near(song, whole, from, together < 0 ? 24 : together);   // the click is set from the stretch they play, not from the whole song
             if (Math.abs(b.bpm() - whole.bpm()) >= 0.05) System.out.printf(Locale.ROOT, "The whole song is %.2f to the minute; this stretch of it is %.2f, and the click is set to that.%n", whole.bpm(), b.bpm());
-            Session.Along a = Session.playAlong(wav, drummers, hats, bass, title, song, h, b, from, together < 0 ? 24 : together, seed);
+            Session.Along a = Session.playAlong(wav, drummers, hats, bass, keysLife, title, song, h, b, from, together < 0 ? 24 : together, seed);
             System.out.printf(Locale.ROOT, "Played along with \"%s\" (%.2f to the minute) for %d bars, starting on the one at %.1f s. %.1f s in all.%n", a.recording(), a.tempo(), a.bars(), a.fromSeconds(), a.seconds());
             if (b.swing() >= 0) System.out.printf(Locale.ROOT, "The song's sixteenths swing %.0f%% (50 is straight, 67 is the triplet).%n", b.swing());
             for (Session.AlongPart p : a.parts()) {
                 System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
                 System.out.println(p.swing() < 0 ? "   It plays nothing off the eighths, so it has no swing to speak of." : String.format(Locale.ROOT, "   Its sixteenths swing %.0f%% (50 is straight, 67 is the triplet).", p.swing()));
+                if (!p.home().equals(".") || p.laidOut() > 0) System.out.printf(Locale.ROOT, "   Where it is not sure of the note it plays %s, the note it has heard most in this song. It left %d places unplayed for want of a note.%n", p.home().equals(".") ? "nothing" : p.home(), p.laidOut());
                 if (p.borrowed() > 0 || !p.own().matches("\\.*")) System.out.printf(Locale.ROOT, "   Ideas borrowed from other records: %d tried, %d held%s. Places that are its own: %s%n", p.borrowed(), p.borrowedKept(), p.borrowedKept() > 0 ? " (the last from \"" + p.borrowedFrom() + "\")" : "", p.own());
                 if (p.askedAndPlaying() + p.askedAndWaiting() > 0) System.out.printf(Locale.ROOT, "   It is playing %d of the places it was asked for; %d are waiting until it can reach them.%n", p.askedAndPlaying(), p.askedAndWaiting());
                 if (p.withTheSong() + p.againstTheSong() > 0) System.out.printf(Locale.ROOT, "   It believes a phrase is %d bars (the line came round, of the times it compared, after 1, 2, 4 and 8 bars: %s). The line: %s (%d of %d places). %d of its notes were on the note the song was on, %d were not. Out of tune by %.0f cents.%n", p.phraseBars(), p.phraseHeard(), p.line(), p.linePlaces(), p.linePlacesInReach(), p.withTheSong(), p.againstTheSong(), p.outOfTuneCents());

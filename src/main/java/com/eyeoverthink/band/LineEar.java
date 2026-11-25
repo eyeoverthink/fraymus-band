@@ -14,24 +14,29 @@ public final class LineEar {
     private static final int STEPS = 4;                                  // it tries four pitches to the semitone
     private static final int PIECE = (int) (Audio.RATE * 0.2 / EVERY);   // a fifth of a second
     private static final long SKIP = (long) Audio.samples(0.04);         // let the pluck, or the kick, go by
-    private static final int TRIES = (HIGHEST - LOWEST) * STEPS + 1;
+    private final int lowest, TRIES;
     private static final double[] PART = {1.0, 0.7, 0.4};                // how much the bottom tone and the two above it count
     /** A note is clear when it is this much of the clearest it has heard lately. */
     private static final double CLEAR = 0.35, LATELY = 0.97;
 
     private final float[] slow = new float[1024];
     private final double[] soft = new double[PIECE];
-    private final double[][] turnCos = new double[TRIES][PART.length], turnSin = new double[TRIES][PART.length];
+    private final double[][] turnCos, turnSin;
     private double sum, clearestLately, midi;
     private long from = -1;
 
-    public LineEar() {
+    public LineEar() { this(LOWEST, HIGHEST); }
+
+    /** An ear for another part of the band: the notes from this key number up to that one. */
+    public LineEar(int lowest, int highest) {
+        this.lowest = lowest; this.TRIES = (highest - lowest) * STEPS + 1;
+        turnCos = new double[TRIES][PART.length]; turnSin = new double[TRIES][PART.length];
         for (int i = 0; i < PIECE; i++) {
             double x = 2 * Math.PI * i / (PIECE - 1);
             soft[i] = 0.42 - 0.5 * Math.cos(x) + 0.08 * Math.cos(2 * x);
         }
         for (int c = 0; c < TRIES; c++) {
-            double hz = hzOf(LOWEST + c / (double) STEPS);
+            double hz = hzOf(lowest + c / (double) STEPS);
             for (int h = 0; h < PART.length; h++) {
                 double w = 2 * Math.PI * hz * (h + 1) * EVERY / Audio.RATE;
                 turnCos[c][h] = Math.cos(w); turnSin[c][h] = Math.sin(w);
@@ -81,7 +86,7 @@ public final class LineEar {
             if (there > best) { best = there; bestAt = c; }
         }
         clearestLately = Math.max(clearestLately * LATELY, best);
-        midi = LOWEST + bestAt / (double) STEPS;
+        midi = lowest + bestAt / (double) STEPS;
         return best >= CLEAR * clearestLately && best > 0;
     }
 

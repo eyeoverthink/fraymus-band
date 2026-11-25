@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyTwoTest {
+class StepThirtyThreeTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1312,5 +1312,51 @@ class StepThirtyTwoTest {
         for (int p = 0; p < 16; p++) if (back.patternBefore().charAt(p) != a.patternAfter().charAt(p)) { differ++; assertEquals(own.charAt(p), back.patternBefore().charAt(p), "it comes back to the first song with what it played there, and anything that has become its own since: " + back.patternBefore()); }
         System.out.printf(Locale.ROOT, "EACH SONG with the first %s, with the second %s; back to the first it begins with %s (%d places its own since)%n", a.patternAfter(), b.patternAfter(), back.patternBefore(), differ);
         assertTrue(differ <= 2);
+    }
+
+    @Test
+    void aKeysPlayerIsBornAndLearnsNotesFromTheMiddleOfASong(@TempDir Path dir) throws Exception {
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = songWithALine(drums, 40, LINE);
+        int[] tune = {60, 60, 63, 65,   60, 60, 63, 67,   65, 65, 63, 60,   58, 58, 62, 67};     // a tune in the middle, one note to the pulse, four bars long
+        double pulse = 60.0 / 92;
+        for (int k = 0; k < 40 * 4; k++) {
+            int at = (int) Audio.samples(0.25 + k * pulse);
+            double hz = LineEar.hzOf(tune[k % tune.length]);
+            for (int i = 0; i < 24000 && at + i < song.length; i++) {
+                double t = i / (double) Audio.RATE, fade = Math.min(1, i / 200.0) * Math.min(1, (24000 - i) / 800.0);
+                song[at + i] += (float) (0.25 * fade * Math.exp(-t / 0.5) * (Math.sin(2 * Math.PI * hz * t) + 0.5 * Math.sin(4 * Math.PI * hz * t) + 0.2 * Math.sin(6 * Math.PI * hz * t)));
+            }
+        }
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        java.util.Set<String> inTheTune = new java.util.HashSet<>(List.of("."));
+        for (int note : tune) inTheTune.add(Musician.nameOf(note));
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2), keys = dir.resolve("keys.life");
+        Session.AlongPart first = null, last = null;
+        float peak = 0;
+        for (int s = 0; s < 8; s++) {
+            Session.Along take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), null, bass, keys, "made up", song, heard, bar, 5, 24, 1400 + s);
+            last = take.parts().get(2);
+            if (s == 0) first = last;
+            peak = Math.max(peak, take.peak());
+            assertEquals("the bass player", take.parts().get(1).name());
+        }
+        int right = 0, believed = 0;
+        for (String note : last.line().replace("|", " ").trim().split("\\s+")) if (!note.equals(".")) { believed++; if (inTheTune.contains(note)) right++; }
+        System.out.printf(Locale.ROOT, "KEYS born with %s; after eight takes it plays %s, %d ticks to the pulse; it believes %d notes of the tune's four bars, %d of them notes the tune has; home note %s; %d on the song's note and %d not; unsteadiness %.1f ms; first take it left %d places unplayed%n",
+            first.patternBefore(), last.patternAfter(), last.ticksAfter(), believed, right, last.home(), last.withTheSong(), last.againstTheSong(), last.unsteadyMs(), first.laidOut());
+        assertEquals("the keys player", last.name());
+        assertEquals("p...............", first.patternBefore(), "a newborn keys player has one note, on the one");
+        assertTrue(first.laidOut() > 0, "until it has heard some of the song it presses nothing");
+        assertTrue(last.plays().startsWith("a note on the keys"));
+        assertTrue(believed >= 6, "it comes to believe notes in the middle of the song: " + last.line());
+        assertTrue(right >= 0.8 * believed, "and they are the tune's notes, not the bass line's: " + last.line());
+        assertTrue(inTheTune.contains(last.home()), "the note it falls back on is one of the tune's: " + last.home());
+        assertTrue(last.withTheSong() > 2 * last.againstTheSong(), "most of what it plays is the note the tune is on: " + last.withTheSong() + " to " + last.againstTheSong());
+        assertTrue(peak < 1.0f, "four players and a song without clipping: " + peak);
+        List<String> life = Files.readAllLines(keys);
+        assertTrue(life.stream().anyMatch(l -> l.startsWith("line from \"made up\": ")), "its line is in its life under the song's name");
+        assertEquals(4, last.phraseBars(), "and it finds the tune is four bars long: " + last.phraseHeard());
     }
 }
