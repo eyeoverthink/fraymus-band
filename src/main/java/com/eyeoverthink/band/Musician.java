@@ -162,6 +162,12 @@ import java.util.SplittableRandom;
  * for a place, it falls back on the note it has heard most in that song, and if it has not heard enough to
  * say, it presses nothing. Without a song it has only the note its hand rests on.
  *
+ * Figures. Playing along with a record, a keys player also listens on each eighth for which note of the
+ * chord the middle of the record is on, or whether it is the whole chord at once. If it comes to be sure
+ * of every eighth, that is the record's figure, and it keeps it under the record's name. With another
+ * record it plays its chords out in the figures it knows, one figure for each chord it holds, turn and
+ * turn about; the chords, the two measures and the measure behind stay as they were.
+ *
  * A singer is a keys player with a voice for an instrument: a sung "oh" with no words, higher up, held until
  * its next note. Unlike keys a voice can be out of tune, and a young one is, as a young bass player is. When
  * the note it is to sing is the note it is already on, it holds it and sings nothing new, until its breath
@@ -299,6 +305,82 @@ public final class Musician implements Player, Hits {
     public void colour(String soFar) {
         String[] parts = soFar.trim().split("\\s+");
         for (int i = 0; i < 12 && i < parts.length; i++) if (!parts[i].isEmpty()) heardClass[i] = Integer.parseInt(parts[i]);
+    }
+
+    // ---- figures: how a chord is played out over a bar, learned by ear from one record and used with another ----
+    private static final char[] TONE = {'.', 'r', '3', '5', 'R', 'T', 'F', 'c'};
+    private static final int MOST_FIGURES = 4;
+    private LineEar figureEar;
+    private int figureHearing = -1, figureCell, figuresKnown;
+    private final int[][] figureVotes = new int[TONE.length][SLOTS];
+    private final int[] figureHeard = new int[SLOTS];
+    private final byte[][] knownFigure = new byte[MOST_FIGURES][SLOTS];
+    private final String[] knownFigureFrom = new String[MOST_FIGURES];
+
+    /** On an eighth of the bar: which note of the chord is the middle of the record playing, if any? Or the whole chord at once? */
+    private void hearTheFigure() {
+        boolean clear = figureEar.hear();
+        int slot = figureHearing;
+        figureHearing = -1;
+        if (slot < 0) return;
+        double rootHz = measureHz(figureCell);
+        if (rootHz == 0) return;                             // it has not found the bass of this measure yet, so it cannot say which note of the chord this is
+        while (rootHz < KEYS_FROM) rootHz *= 2;
+        while (rootHz >= 2 * KEYS_FROM) rootHz /= 2;
+        int root = (int) Math.round(LineEar.midiOf(rootHz)), third = thirdAbove(root % 12), fifth = fifthAbove(root % 12), heardAs = 0;
+        if (clear) {
+            int up = (int) Math.round(figureEar.midi()) - root;
+            while (up < 0) up += 12;
+            int in = up % 12, tone = in == 0 ? 1 : in == 3 || in == 4 ? 2 : in == 6 || in == 7 ? 3 : -1;
+            if (tone < 0) return;                            // a note that is not of the chord: no part of the figure
+            boolean whole = figureEar.strong(root) && (figureEar.strong(root + 3) || figureEar.strong(root + 4)) && (figureEar.strong(root + 7) || figureEar.strong(root + 6));   // either third, either fifth: this record's chords are its own
+            heardAs = whole ? 7 : tone + (up >= 12 ? 3 : 0);
+        }
+        figureVotes[heardAs][slot]++; figureHeard[slot]++;
+    }
+
+    /** What it makes of this record's figure, eighth by eighth: a note of the chord, the whole chord (c), nothing (.), or not sure (?). */
+    public String figureInWords() {
+        if (figureEar == null) return "";
+        char[] c = new char[slots];
+        for (int s = 0; s < slots; s++) {
+            c[s] = '.';
+            if (per != 4 || s % 2 != 0) continue;
+            int most = 0;
+            for (int t = 1; t < TONE.length; t++) if (figureVotes[t][s] > figureVotes[most][s]) most = t;
+            c[s] = figureHeard[s] >= 4 && 2 * figureVotes[most][s] >= figureHeard[s] ? TONE[most] : '?';
+        }
+        return new String(c);
+    }
+
+    /** The same, for its life, if it is sure of every eighth and there are at least three notes in it. Otherwise nothing: not every record has a figure to be learned. */
+    public String figure() {
+        String f = figureInWords();
+        int notes = 0;
+        for (int i = 0; i < f.length(); i++) if (f.charAt(i) != '.' && f.charAt(i) != '?') notes++;
+        return f.indexOf('?') >= 0 || notes < 3 ? "" : f;
+    }
+
+    /** A figure it learned from another record. */
+    public void figure(String from, String eighths) {
+        if (figuresKnown == MOST_FIGURES || eighths.length() != slots) return;
+        knownFigureFrom[figuresKnown] = from;
+        for (int s = 0; s < slots; s++) { knownFigure[figuresKnown][s] = 0; for (byte t = 1; t < TONE.length; t++) if (TONE[t] == eighths.charAt(s)) knownFigure[figuresKnown][s] = t; }
+        figuresKnown++;
+    }
+
+    /** The records whose figures it knows, in the order it uses them: one for each chord it holds, turn and turn about. */
+    public String figuresInWords() {
+        StringBuilder b = new StringBuilder();
+        for (int k = 0; k < figuresKnown; k++) b.append(k == 0 ? "" : ", ").append(knownFigureFrom[k]);
+        return b.toString();
+    }
+
+    /** Which note of the chord its figure has at this place of this measure of the take; nothing while it waits to come in. */
+    private int figureToneAt(int measure, int slot) {
+        int cameIn = (measure + phraseFrom) % 2 == 1 ? measure : measure - 1;
+        if (cameIn < 0 || figuresKnown == 0) return 0;
+        return knownFigure[((cameIn + phraseFrom) / 2) % figuresKnown][slot];
     }
 
     /** The chords it holds, two measures each, through the phrase: which measures, then a note name, m for the smaller third; a dot where it has not found the bass. */
@@ -445,7 +527,7 @@ public final class Musician implements Player, Hits {
     /** It will play along with a track in its headphones, from the top, counted in by the click with everyone else. */
     public void alongATrackFrom(double startSeconds) {
         if (oneNote) lineEar = voice ? LineEar.high(VOICE_LOWEST, VOICE_HIGHEST) : new LineEar();   // a keys player listens to the bass for its chords
-        if (comps) colourEar = new LineEar(KEYS_LOWEST, KEYS_HIGHEST);
+        if (comps) { colourEar = new LineEar(KEYS_LOWEST, KEYS_HIGHEST); figureEar = LineEar.high(KEYS_LOWEST, 76); }
         clock.startAt(Audio.samples(startSeconds));
         mode = TOGETHER;
         fullMix = true;
@@ -607,6 +689,10 @@ public final class Musician implements Player, Hits {
             if (midEar.hitsEver() != midUsed) { midUsed = midEar.hitsEver(); if (midEar.hitLoud() >= MID_NOTICE) someoneElse(Math.round(midEar.hitTime() - earTakes), false, midEar.hitLoud(), true); }
         }
         if (lineEar != null && (notes >= 2 || keys)) hearTheLine(track, n, blockStart);
+        if (figureEar != null) {
+            figureEar.listen(track, n, blockStart);
+            if (figureEar.ready(blockStart + n)) hearTheFigure();
+        }
         if (colourEar != null) {                             // a keys player also keeps count of which notes are about in the middle of the song
             colourEar.listen(track, n, blockStart);
             if (colourEar.ready(blockStart + n) && colourEar.hear()) heardClass[(int) Math.round(colourEar.midi()) % 12]++;
@@ -1215,6 +1301,11 @@ public final class Musician implements Player, Hits {
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
+            boolean figuredHere = comps && fullMix && figuresKnown > 0 && !last;
+            if (figuredHere) sound = figureToneAt(bar, slot) != 0 ? POT : REST;  // a keys player with a figure plays where the figure has a note
+            if (figureEar != null && fullMix && mode == TOGETHER && !last && per == 4 && slot % 2 == 0 && !figureEar.busy()) {
+                figureEar.noteAt(Math.round(clock.nextBeat())); figureHearing = slot; figureCell = (bar * SLOTS + phraseFrom * SLOTS) % CELLS;
+            }
             if (colourEar != null && fullMix && mode == TOGETHER && !last && !colourEar.busy()) colourEar.noteAt(Math.round(clock.nextBeat()));
             if (lineEar != null && (notes >= 2 || keys) && fullMix && mode == TOGETHER && !last && !lineEar.busy()) { lineEar.noteAt(Math.round(clock.nextBeat())); hearingAt = bar * SLOTS + slot; }
             if (sound != REST) {
@@ -1246,13 +1337,30 @@ public final class Musician implements Player, Hits {
                         bass.chord(thirdAbove(root), fifthAbove(root));
                         bass.sustain(2 * PULSES * clock.period() / Audio.RATE - 0.04);
                     }
+                    boolean figured = comps && fullMix && figuresKnown > 0 && !landing;
+                    if (figured) {                                   // the chord of the measure it came in on, played out in a figure it learned elsewhere
+                        int measure = strikeSlot / slots, cameIn = (measure + phraseFrom) % 2 == 1 ? measure : measure - 1;
+                        struckHz = cameIn < 0 ? 0 : measureHz((cameIn * SLOTS + phraseFrom * SLOTS) % CELLS);
+                        int tone = figureToneAt(measure, inBar);
+                        if (struckHz > 0 && tone != 0) {
+                            while (struckHz < KEYS_FROM) struckHz *= 2;
+                            while (struckHz >= 2 * KEYS_FROM) struckHz /= 2;
+                            int root = (int) Math.round(LineEar.midiOf(struckHz)) % 12, third = thirdAbove(root), fifth = fifthAbove(root);
+                            if (tone == 7) { bass.chord(third, fifth); bass.sustain(1.5 * clock.period() / Audio.RATE); }
+                            else {
+                                int up = (tone == 1 || tone == 4 ? 0 : tone == 2 || tone == 5 ? third : fifth) + (tone >= 4 ? 12 : 0);
+                                struckHz *= Math.pow(2, up / 12.0);
+                                bass.chord(0, 0); bass.sustain(2.0 * clock.period() / Audio.RATE);
+                            }
+                        } else struckHz = 0;
+                    }
                     boolean noNote = struckHz == 0;                  // a keys player that does not know a note for this song yet does not press one
                     if (noNote) struckHz = bass.open();
                     bass.tune(struckHz);
                     bass.detune(keys && !voice ? 0 : chance.nextGaussian() * tuneSlip());   // keys are where they are; a voice has to find the note
                     // A singer already on this note, with breath left, holds it and does not sing it again.
                     boolean holds = voice && !noNote && bass.sounding() && strikeSound == sungSound && Math.abs(struckHz - sungHz) < 0.005 * sungHz && blockStart + i - sungSince < Audio.samples(BREATH);
-                    boolean ringsOn = comps && fullMix && !itsMeasure;     // the chord it struck is still ringing: it lets it
+                    boolean ringsOn = comps && fullMix && !itsMeasure && !figured;   // the chord it struck is still ringing: it lets it
                     if (noNote || holds || ringsOn) {                // the place goes by with no new note; the take still ends where it should
                         if (holds) { bass.hold(); held++; } else if (ringsOn && !noNote) held++; else laidOut++;
                         struckAt = -1; strikeAt = -1;

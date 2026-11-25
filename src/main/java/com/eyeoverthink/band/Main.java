@@ -10,7 +10,8 @@ public final class Main {
         Path with = null, teach = null, bass = null, hear = null, along = null, hats = null;
         String askBass = null, askHats = null, askDrummer = null, askWords = "";
         String born = null, bornPupil = null, bornBass = null;
-        Path madeUp = null, keysLife = null, singerLife = null;
+        Path madeUp = null, keysLife = null, singerLife = null, classics = null;
+        boolean noDrummer = false;
         boolean inThrees = false;
         double from = 46;
         boolean click = false;
@@ -41,14 +42,28 @@ public final class Main {
                 case "--hats" -> hats = Path.of(args[i + 1]);
                 case "--keys" -> keysLife = Path.of(args[i + 1]);
                 case "--singer" -> singerLife = Path.of(args[i + 1]);
+                case "--write-classics" -> classics = Path.of(args[i + 1]);
+                case "--no-drummer" -> { noDrummer = true; i--; }
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --singer LIFE --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --singer LIFE --no-drummer --write-classics FOLDER --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
+        }
+        if (classics != null) {                              // write the three practice recordings for a keys player
+            java.nio.file.Files.createDirectories(classics);
+            for (String piece : Classics.PIECES) {
+                float[] sound = Classics.render(piece, tempo);
+                try (WavWriter w = new WavWriter(classics.resolve(piece + ".wav"))) {
+                    float[] block = new float[Audio.BLOCK];
+                    for (int at = 0; at + Audio.BLOCK <= sound.length; at += Audio.BLOCK) { System.arraycopy(sound, at, block, 0, Audio.BLOCK); w.write(block, Audio.BLOCK); }
+                }
+            }
+            System.out.printf(Locale.ROOT, "Wrote three practice recordings to %s: bach.wav, mozart.wav, chopin.wav. They are studies written by hand from pieces long out of copyright.%n", classics);
+            return;
         }
         if (madeUp != null) {                                // write the made-up shuffle recording, for players in threes to play along with
             float[] shuffle = MadeUp.shuffle(tempo, 64);
@@ -84,7 +99,7 @@ public final class Main {
             boolean forThrees = java.nio.file.Files.exists(life) && Life.open(life, "the drummer").pattern().length() == Musician.THREES;   // a song is heard the way the players count
             Hearing.Bar b = Hearing.oneBar(h, forThrees);
             String title = along.getFileName().toString().replaceFirst("\\.[^.]+$", "").replace('-', ' ');
-            java.util.List<Path> drummers = with == null ? java.util.List.of(life) : java.util.List.of(life, with);
+            java.util.List<Path> drummers = noDrummer ? java.util.List.<Path>of() : with == null ? java.util.List.of(life) : java.util.List.of(life, with);
             Hearing.Bar whole = b;
             b = Hearing.near(song, whole, from, together < 0 ? 24 : together);   // the click is set from the stretch they play, not from the whole song
             if (Math.abs(b.bpm() - whole.bpm()) >= 0.05) System.out.printf(Locale.ROOT, "The whole song is %.2f to the minute; this stretch of it is %.2f, and the click is set to that.%n", whole.bpm(), b.bpm());
@@ -95,6 +110,7 @@ public final class Main {
                 System.out.printf(Locale.ROOT, "%s, on %s: went from %s to %s. It believes it heard %s.%n", p.name(), p.plays(), p.patternBefore(), p.patternAfter(), p.believes());
                 System.out.println(p.swing() < 0 ? "   It plays nothing off the eighths, so it has no swing to speak of." : String.format(Locale.ROOT, "   Its sixteenths swing %.0f%% (50 is straight, 67 is the triplet).", p.swing()));
                 if (!p.home().equals(".") || p.laidOut() > 0) System.out.printf(Locale.ROOT, "   Where it is not sure of the note it plays %s, the note it has heard most in this song. It left %d places unplayed for want of a note.%n", p.home().equals(".") ? "nothing" : p.home(), p.laidOut());
+                if (!p.figure().isEmpty()) System.out.printf(Locale.ROOT, "   The figure it hears in this record, an eighth at a time: %s. Figures it knows from other records: %s.%n", p.figure(), p.figuresKnown().isEmpty() ? "none" : p.figuresKnown());
                 if (!p.chords().isEmpty()) System.out.printf(Locale.ROOT, "   It holds each chord two measures and comes in a measure behind: %s.%n", p.chords());
                 if (p.held() > 0) System.out.printf(Locale.ROOT, "   %d times it held the note it was on and did not sing it again.%n", p.held());
                 if (p.borrowed() > 0 || !p.own().matches("\\.*")) System.out.printf(Locale.ROOT, "   Ideas borrowed from other records: %d tried, %d held%s. Places that are its own: %s%n", p.borrowed(), p.borrowedKept(), p.borrowedKept() > 0 ? " (the last from \"" + p.borrowedFrom() + "\")" : "", p.own());

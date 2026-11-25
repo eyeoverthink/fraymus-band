@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtySevenTest {
+class StepThirtyEightTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1488,5 +1488,43 @@ class StepThirtySevenTest {
         float tail = 0;
         for (int i = 0; i < Audio.samples(1.5); i++) tail = Math.abs(keys.next());
         assertEquals(0f, tail, 1e-6f, "with the pedal up a chord dies away as before");
+    }
+
+    @Test
+    void aKeysPlayerLearnsFiguresFromThreeStudiesAndPlaysAHipHopSongsChordsInThem(@TempDir Path dir) throws Exception {
+        Path keys = dir.resolve("keys.life");
+        Files.write(keys, List.of("name: the keys player", "listens to itself: 0.60", "ticks to the pulse: 4", "notes: 2", "pattern: p...p...p...p...", "", "session 1: played 400 bars, hits=2000, made up for a test"));
+        String[] heardAs = new String[3];
+        for (int p = 0; p < Classics.PIECES.length; p++) {
+            String piece = Classics.PIECES[p];
+            float[] study = Classics.render(piece, 92);
+            Hearing.Heard heard = Hearing.listenLowAndHigh(study);
+            Hearing.Bar bar = Hearing.oneBar(heard);
+            assertEquals(16, bar.bar().length(), piece + " is heard in fours");
+            assertEquals(92.0, bar.bpm(), 0.3);
+            Session.AlongPart part = null;
+            for (int s = 0; s < 3; s++) part = Session.playAlong(dir.resolve("t.wav"), List.of(), null, null, keys, piece, study, heard, bar, 0.3, 24, 1600 + 10 * p + s).parts().get(0);
+            heardAs[p] = part.figure();
+            String written = Classics.figureOf(piece), spread = "";
+            for (char tone : written.toCharArray()) spread += tone + ".";
+            assertEquals(spread, part.figure(), "by ear, the figure of the " + piece + " study, an eighth at a time");
+        }
+        Life life = Life.open(keys, "the keys player", Musician.FIRST_KEYS_PATTERN);
+        assertEquals(List.of("bach", "mozart", "chopin"), List.copyOf(life.figures().keySet()), "each figure is in its life under the name of the study it came from");
+
+        Lesson drums = new Lesson("made up", 92, "p...n...p.p.n...");
+        float[] song = songWithALine(drums, 40, LINE);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4), bass = bassPlayer(dir, "b.life", 2, 2);
+        Session.Along take = null;
+        for (int s = 0; s < 4; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), null, bass, keys, "made up", song, heard, bar, 5, 24, 1700 + s);
+        Session.AlongPart k = take.parts().get(2);
+        System.out.printf(Locale.ROOT, "FIGURES by ear: bach %s, mozart %s, chopin %s. With a hip-hop song it knows figures from %s, holds %s, and plays %d notes in 24 measures (13 when it only held chords); %d landed with the song; unsteadiness %.1f ms; this song's own figure, as it hears it: %s%n",
+            heardAs[0], heardAs[1], heardAs[2], k.figuresKnown(), k.chords(), k.hits(), k.landedWithIt(), k.unsteadyMs(), k.figure());
+        assertEquals("bach, mozart, chopin", k.figuresKnown());
+        assertTrue(k.hits() > 80, "it plays its chords out, note by note: " + k.hits());
+        assertTrue(k.chords().startsWith("measures 2 and 3: "), "the chords, the two measures and the measure behind are as they were: " + k.chords());
+        assertTrue(take.peak() < 1.0f);
     }
 }

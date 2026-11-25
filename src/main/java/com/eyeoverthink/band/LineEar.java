@@ -36,6 +36,7 @@ public final class LineEar {
         this.PART = parts;
         this.lowest = lowest; this.TRIES = (highest - lowest) * STEPS + 1;
         turnCos = new double[TRIES][PART.length]; turnSin = new double[TRIES][PART.length];
+        was = new double[TRIES];
         for (int i = 0; i < PIECE; i++) {
             double x = 2 * Math.PI * i / (PIECE - 1);
             soft[i] = 0.42 - 0.5 * Math.cos(x) + 0.08 * Math.cos(2 * x);
@@ -88,12 +89,22 @@ public final class LineEar {
                 }
                 there += PART[h] * Math.sqrt(re * re + im * im);
             }
+            was[c] = there;
             if (there > best) { best = there; bestAt = c; }
         }
+        bestWas = best;
         clearestLately = Math.max(clearestLately * LATELY, best);
         midi = lowest + bestAt / (double) STEPS;
         return best >= CLEAR * clearestLately && best > 0;
     }
+
+    /** In what it last heard, was this note there too, at least two fifths as much as the clearest one? How it tells a chord from a single note. */
+    public boolean strong(double midi) {
+        int c = (int) Math.round((midi - lowest) * STEPS);
+        return c >= 0 && c < TRIES && bestWas > 0 && was[c] >= 0.4 * bestWas;
+    }
+    private double[] was;
+    private double bestWas;
 
     /** The note it last heard, as a piano key number, to a quarter of a semitone. */
     public double midi() { return midi; }
