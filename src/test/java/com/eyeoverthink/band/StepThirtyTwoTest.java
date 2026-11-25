@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyOneTest {
+class StepThirtyTwoTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1290,5 +1290,27 @@ class StepThirtyOneTest {
         double bar = 4 * 60.0 / steady.bpm(), apart = Math.abs(same.aOneAtSeconds() - steady.aOneAtSeconds()) % bar;
         assertTrue(Math.min(apart, bar - apart) < 0.02, "and its one is in the same place: " + apart);
         assertSame(steady, Hearing.near(slow, steady, 8, 2), "too short a stretch to say: the whole song's pulse is kept");
+    }
+
+    @Test
+    void aPlayerPicksUpWhereItLeftOffWithEachSong(@TempDir Path dir) throws Exception {
+        float[] songA = madeUpSong(new Lesson("made up", 92, "p...n...p.p.n..."), 40), songB = madeUpSong(new Lesson("made up", 92, "p.p.n..p..p.n.n."), 40);
+        Hearing.Heard heardA = Hearing.listenLowAndHigh(songA), heardB = Hearing.listenLowAndHigh(songB);
+        Hearing.Bar barA = Hearing.oneBar(heardA), barB = Hearing.oneBar(heardB);
+        Path drummer = practised(dir, "d.life", 4);
+        Session.AlongPart a = null, b = null;
+        for (int s = 0; s < 4; s++) a = Session.playAlong(dir.resolve("t.wav"), drummer, "song a", songA, heardA, barA, 5, 24, 1100 + s).parts().get(0);
+        for (int s = 0; s < 4; s++) b = Session.playAlong(dir.resolve("t.wav"), drummer, "song b", songB, heardB, barB, 5, 24, 1200 + s).parts().get(0);
+        assertNotEquals(a.patternAfter(), b.patternAfter(), "the two songs left it playing different things: " + a.patternAfter() + " and " + b.patternAfter());
+        Life life = Life.open(drummer, "the drummer");
+        assertEquals(b.patternAfter(), life.pattern(), "what it plays now is what it played last");
+        assertEquals(a.patternAfter(), life.playsWith("song a"), "but what it played with the first song is still in its life");
+        assertEquals(life.pattern(), life.playsWith("a song it has never met"));
+        Session.AlongPart back = Session.playAlong(dir.resolve("t.wav"), drummer, "song a", songA, heardA, barA, 5, 24, 1300).parts().get(0);
+        String own = Life.open(drummer, "the drummer").own();
+        int differ = 0;
+        for (int p = 0; p < 16; p++) if (back.patternBefore().charAt(p) != a.patternAfter().charAt(p)) { differ++; assertEquals(own.charAt(p), back.patternBefore().charAt(p), "it comes back to the first song with what it played there, and anything that has become its own since: " + back.patternBefore()); }
+        System.out.printf(Locale.ROOT, "EACH SONG with the first %s, with the second %s; back to the first it begins with %s (%d places its own since)%n", a.patternAfter(), b.patternAfter(), back.patternBefore(), differ);
+        assertTrue(differ <= 2);
     }
 }

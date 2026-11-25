@@ -1,15 +1,19 @@
 name: the second drummer
 age: 0
 sounds: a hi-hat (n)
-listens to itself: 0.71
+listens to itself: 0.72
 ticks to the pulse: 4
-pattern: n.n.n.n.n.n.nnn.
-leans on the others: 0.21
-habits: 2959999999999194
-feel: -22.6/0.74/446 -7.4/0.70/324 -4.3/0.89/966 12.6/0.67/296 -9.1/0.93/985 -5.0/0.87/232 -6.6/0.76/941 21.9/0.64/446 -4.1/0.74/709 12.6/0.76/345 -13.0/0.78/738 11.5/0.65/325 -18.0/0.97/823 -11.7/0.68/301 -11.5/0.78/938 16.6/0.73/284
+pattern: n.n.n.n.n.n.n.n.
+leans on the others: 0.19
+habits: 9999999990999794
+feel: -16.9/0.66/539 4.6/0.65/358 -7.2/0.91/1110 12.3/0.71/349 -10.2/0.85/1129 -9.8/0.86/262 -8.5/0.94/1087 25.8/0.73/502 -9.3/0.89/833 23.0/0.70/372 -4.8/0.66/857 18.3/0.61/367 -14.2/0.92/960 0.1/0.68/336 -17.0/0.91/1085 27.6/0.80/330
 heard from "gleam of the prize": ..n.n.n.n.n.n.n.
 heard from "one two three": n.n.n.n.n.n.n.n.
 its own: ........n.n.....
+plays with "gleam of the prize": n.n.n.n.n.n.nnn.
+feel with "gleam of the prize": -25.0/0.83/484 -10.6/0.74/365 -8.0/0.89/1046 14.0/0.63/321 -13.8/0.94/1065 1.4/0.89/259 -11.6/0.71/1019 19.3/0.60/490 -10.0/0.71/768 7.6/0.80/376 -13.2/0.81/795 4.2/0.69/355 -18.0/0.98/891 -6.8/0.68/342 -9.9/0.76/1006 3.0/0.65/308
+plays with "one two three": n.n.n.n.n.n.n.n.
+feel with "one two three": -16.9/0.66/539 4.6/0.65/358 -7.2/0.91/1110 12.3/0.71/349 -10.2/0.85/1129 -9.8/0.86/262 -8.5/0.94/1087 25.8/0.73/502 -9.3/0.89/833 23.0/0.70/372 -4.8/0.66/857 18.3/0.61/367 -14.2/0.92/960 0.1/0.68/336 -17.0/0.91/1085 27.6/0.80/330
 
 session 1: played 16 bars with the drummer, no record, hits=61, unsteadiness 14.8 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 15 ms apart
 session 2: played 16 bars with the drummer, no record, hits=61, unsteadiness 15.1 ms, listening 0.45, ticks to the pulse 2, pattern p...p...p...p..., 14 ms apart
@@ -145,3 +149,11 @@ session 131: played along with "one two three" for 24 bars, hits=185, unsteadine
 session 132: played along with "one two three" for 24 bars, hits=191, unsteadiness 9.9 ms, listening 0.70, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 158 of its hits landed with a hit in the recording, 10 ms apart
 session 133: played along with "one two three" for 24 bars, hits=195, unsteadiness 8.4 ms, listening 0.72, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 153 of its hits landed with a hit in the recording, 10 ms apart
 session 134: played along with "gleam of the prize" for 24 bars, hits=199, unsteadiness 8.0 ms, listening 0.71, ticks to the pulse 4, pattern n.n.n.n.n.n.nnn., 143 of its hits landed with a hit in the recording, 11 ms apart
+session 135: played along with "gleam of the prize" for 24 bars, hits=197, unsteadiness 8.0 ms, listening 0.69, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 132 of its hits landed with a hit in the recording, 13 ms apart
+session 136: played along with "gleam of the prize" for 24 bars, hits=205, unsteadiness 7.7 ms, listening 0.68, ticks to the pulse 4, pattern n.n.n.n.n.n.nnn., 131 of its hits landed with a hit in the recording, 13 ms apart
+session 137: played along with "gleam of the prize" for 24 bars, hits=217, unsteadiness 8.5 ms, listening 0.67, ticks to the pulse 4, pattern n.n.n.n.n.n.nnn., 123 of its hits landed with a hit in the recording, 14 ms apart
+session 138: played along with "one two three" for 24 bars, hits=203, unsteadiness 8.1 ms, listening 0.66, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 133 of its hits landed with a hit in the recording, 11 ms apart
+session 139: played along with "one two three" for 24 bars, hits=195, unsteadiness 6.7 ms, listening 0.70, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 160 of its hits landed with a hit in the recording, 11 ms apart
+session 140: played along with "one two three" for 24 bars, hits=197, unsteadiness 7.8 ms, listening 0.72, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 155 of its hits landed with a hit in the recording, 11 ms apart
+session 141: played along with "gleam of the prize" for 24 bars, hits=215, unsteadiness 8.2 ms, listening 0.73, ticks to the pulse 4, pattern n.n.n.n.n.n.nnn., 121 of its hits landed with a hit in the recording, 14 ms apart
+session 142: played along with "one two three" for 24 bars, hits=207, unsteadiness 8.2 ms, listening 0.72, ticks to the pulse 4, pattern n.n.n.n.n.n.n.n., 159 of its hits landed with a hit in the recording, 10 ms apart

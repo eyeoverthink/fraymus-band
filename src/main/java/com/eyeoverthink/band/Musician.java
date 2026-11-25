@@ -116,6 +116,9 @@ import java.util.SplittableRandom;
  * for: it does not give it back to what it hears. It can hold two at once; a third pushes out the oldest.
  * With nothing to borrow it tries a place by chance, as before, and that is not kept as its own.
  *
+ * What it plays with a song, and its feel for it, it keeps under that song's name, and picks up again when
+ * the song comes back. The places that are its own, and the places it was asked for, go with it everywhere.
+ *
  * Threes. A bar can be counted in threes: twelve places, three to the pulse, as in a shuffle or a slow
  * blues. A player counts in fours or in threes for life, from the first record it meets. One that counts
  * in threes has one tick to the pulse, or three once its pulse is even; there is nothing between. Players
@@ -1321,11 +1324,12 @@ public final class Musician implements Player, Hits {
 
     /** The places it holds as its own, for its life: p or n at each, a dot elsewhere. */
     public String own() { return write(own); }
-    /** Where its life says they were. Only those it still plays count. */
+    /** Where its life says they were. */
     public void own(String places) {
         for (int i = 0; i < slots && i < places.length(); i++) {
             byte was = Kit.read(places.charAt(i));
-            if (was != REST && pattern[i] == was) { own[i] = was; ownSince[i] = ++ownClock; }
+            if (was == REST || i % (per / ticks) != 0) continue;
+            pattern[i] = was; own[i] = was; ownSince[i] = ++ownClock;   // what is its own goes with it to every song
         }
     }
     /** How many ideas it borrowed this session, how many of them it held, and which record the last one it held came from. */

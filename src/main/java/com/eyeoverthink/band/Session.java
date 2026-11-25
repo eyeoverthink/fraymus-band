@@ -303,7 +303,7 @@ public final class Session {
         Recording recording = new Recording(sound, one - start, 1f / loudest);
         Life[] lives = new Life[n];
         Musician[] players = new Musician[n];
-        String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"};
+        String[] nameIfNew = {"the drummer", "the second drummer", "the third drummer"}, began = new String[n];
         for (int i = 0; i < n; i++) {
             boolean songInThrees = bar.bar().length() == Musician.THREES;
             lives[i] = i == bassAt ? Life.open(bassLife, "the bass player", songInThrees ? Musician.FIRST_BASS_PATTERN_IN_THREES : Musician.FIRST_BASS_PATTERN)
@@ -311,14 +311,15 @@ public final class Session {
                      : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)], songInThrees ? Musician.FIRST_PATTERN_IN_THREES : Musician.FIRST_PATTERN);
             if (lives[i].pattern().length() != bar.bar().length())
                 throw new IllegalArgumentException(lives[i].name() + " counts in " + (songInThrees ? "fours" : "threes") + " and \"" + recordingName + "\" is in " + (songInThrees ? "threes" : "fours") + ". It cannot play along with it yet.");
+            began[i] = lives[i].playsWith(recordingName);    // what it played with this song last time, if it has met it; else what it plays now
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == bassAt
-                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), lives[i].notes(), bars, chance)
+                ? Musician.onBass(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], lives[i].notes(), bars, chance)
                 : i == hatsAt
-                ? Musician.onHats(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, chance)
-                : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), lives[i].pattern(), bars, start, chance);
+                ? Musician.onHats(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], bars, chance)
+                : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], bars, start, chance);
             players[i].alongATrackFrom(start);
-            players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feel()); players[i].asked(lives[i].asked()); recall(players[i], lives[i], recordingName);
+            players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feelWith(recordingName)); players[i].asked(lives[i].asked()); recall(players[i], lives[i], recordingName);
             if (i == bassAt) { players[i].line(lives[i].line(recordingName)); players[i].phrase(lives[i].phrase(recordingName)); players[i].phraseFrom((int) Math.round((one - bar.aOneAtSeconds()) / barSeconds)); }
             lives[i].plays(players[i].plays());
         }
@@ -364,13 +365,14 @@ public final class Session {
                 }
                 double unsteady = unsteadiness(d, 0, hits);
                 parts.add(new AlongPart(lives[i].name(), d.plays(), hits, landed, landed == 0 ? 0 : apart / landed, d.heardWhilePlaying(), d.believes(),
-                    lives[i].pattern(), d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
+                    began[i], d.pattern(), d.copied(), d.ownIdeas(), d.changesKept(), d.changesTakenBack(),
                     unsteady, lives[i].listening(), d.listening(), lives[i].ticks(), d.ticks(), d.notes(), d.askedAndPlaying(), d.askedAndWaiting(),
                     d.lineInWords(), d.linePlaces(), d.linePlacesInReach(), d.withTheSong(), d.againstTheSong(), d.outOfTuneCents(), d.phraseBars(), d.phrase(),
                     d.borrowed(), d.borrowedKept(), d.borrowedFrom(), d.own(), d.swing()));
                 lives[i].leaning(d.leaning()); lives[i].habits(d.habits()); lives[i].feel(d.feel());
                 if (i == bassAt) { lives[i].notes(d.notes()); if (d.notes() >= 2) { lives[i].line(recordingName, d.line()); lives[i].phrase(recordingName, d.phrase()); } }
                 keep(d, lives[i], recordingName);
+                lives[i].playsWith(recordingName, d.pattern(), d.feel());
                 lives[i].rememberAlong(recordingName, bars, hits, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);
             }
             return new Along(recordingName, bar.bpm(), one, bars, Audio.seconds(out.samples()), parts, out.peak(), wav);

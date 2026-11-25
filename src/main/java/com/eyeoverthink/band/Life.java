@@ -28,6 +28,7 @@ public final class Life {
     private final java.util.Map<String, String> lineFrom = new java.util.LinkedHashMap<>(), phraseFrom = new java.util.LinkedHashMap<>();
     private final java.util.Map<String, String> heardFrom = new java.util.LinkedHashMap<>();
     private String own = "................";
+    private final java.util.Map<String, String> patternWith = new java.util.LinkedHashMap<>(), feelWith = new java.util.LinkedHashMap<>();
     private String lineFromSomewhere = "", phraseFromSomewhere = "", lastSong;
     private String asked = "................";
     private String sounds = "a pot (p) and a pan (n)";
@@ -50,6 +51,8 @@ public final class Life {
                 else if (s.startsWith("leans on the others:")) life.leaning = Double.parseDouble(s.substring(20).trim());
                 else if (s.startsWith("asked for:")) life.asked = s.substring(10).trim();
                 else if (s.startsWith("heard from \"") && s.indexOf("\":") > 0) life.heardFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("plays with \"") && s.indexOf("\":") > 0) life.patternWith.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("feel with \"") && s.indexOf("\":") > 0) life.feelWith.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("its own:")) life.own = s.substring(8).trim();
                 else if (s.startsWith("phrase from \"") && s.indexOf("\":") > 0) life.phraseFrom.put(s.substring(13, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("line from \"") && s.indexOf("\":") > 0) life.lineFrom.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
@@ -126,6 +129,18 @@ public final class Life {
     public java.util.Map<String, String> heard() { return java.util.Collections.unmodifiableMap(heardFrom); }
     /** Note what it now believes this record plays. It is written with the next session. */
     public void heard(String record, String bar) { if (bar.matches("\\.*")) return; heardFrom.put(record, bar); set("heard from \"" + record + "\"", bar); }
+
+    /**
+     * What it played with this song when it last played along with it, and the feel it had for it. A player
+     * that goes from one song to another and back picks up where it left off with each. For a song it has not
+     * met, what it plays now.
+     */
+    public String playsWith(String song) { String was = patternWith.get(song); return was != null && was.length() == pattern.length() ? was : pattern; }
+    public String feelWith(String song) { return feelWith.getOrDefault(song, feel); }
+    public void playsWith(String song, String bar, String itsFeel) {
+        patternWith.put(song, bar); feelWith.put(song, itsFeel);
+        set("plays with \"" + song + "\"", bar); set("feel with \"" + song + "\"", itsFeel);
+    }
 
     /** The places it holds as its own: p or n at each, a dot elsewhere. */
     public String own() { return own; }
