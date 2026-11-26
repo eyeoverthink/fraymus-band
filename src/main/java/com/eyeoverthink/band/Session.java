@@ -264,6 +264,9 @@ public final class Session {
                 throw new IllegalArgumentException(lives[0].name() + " counts in " + (lives[0].pattern().length() == Musician.THREES ? "threes" : "fours") + " and " + life.name() + " does not. They cannot play together yet.");
     }
 
+    /** Set for a session in which every player is to study its own part of the record and play nothing of its own. See {@link Musician#study}. */
+    public static boolean STUDY = false;
+
     public record AlongPart(String name, String plays, int hits, int landedWithIt, double apartMs, int heard, String believes,
                             String patternBefore, String patternAfter, int copied, int ownIdeas, int kept, int takenBack,
                             double unsteadyMs, double listeningBefore, double listeningAfter, int ticksBefore, int ticksAfter, int notes,
@@ -327,7 +330,9 @@ public final class Session {
                      : Life.open(drummerLives.get(i), nameIfNew[Math.min(i, 2)], songInThrees ? Musician.FIRST_PATTERN_IN_THREES : Musician.FIRST_PATTERN);
             if (lives[i].pattern().length() != bar.bar().length())
                 throw new IllegalArgumentException(lives[i].name() + " counts in " + (songInThrees ? "fours" : "threes") + " and \"" + recordingName + "\" is in " + (songInThrees ? "threes" : "fours") + ". It cannot play along with it yet.");
-            began[i] = lives[i].playsWith(recordingName);    // what it played with this song last time, if it has met it; else what it plays now
+            String partOf = (STUDY ? "study of " : "") + recordingName;   // a study of a song is kept apart from playing along with it
+            began[i] = !STUDY || lives[i].hasPlayedWith(partOf) ? lives[i].playsWith(partOf)
+                     : i == keysAt || i == singerAt ? Musician.FIRST_KEYS_PATTERN : i == bassAt ? Musician.FIRST_BASS_PATTERN : i == hatsAt ? Musician.FIRST_HATS_PATTERN : Musician.FIRST_PATTERN;   // a study begins with the one and nothing else    // what it played with this song last time, if it has met it; else what it plays now
             long chance = seed + 0x9E3779B97F4A7C15L * i;
             players[i] = i == singerAt
                 ? Musician.onVoice(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], lives[i].notes(), bars, chance)
@@ -339,6 +344,7 @@ public final class Session {
                 ? Musician.onHats(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], bars, chance)
                 : Musician.alongARecording(lives[i].name(), 92.0, lives[i].hitsPlayed(), lives[i].listening(), lives[i].ticks(), began[i], bars, start, chance);
             players[i].alongATrackFrom(start);
+            players[i].study(STUDY);
             players[i].leaning(lives[i].leaning()); players[i].habits(lives[i].habits()); players[i].feel(lives[i].feelWith(recordingName)); players[i].asked(lives[i].asked()); recall(players[i], lives[i], recordingName);
             String lineOf = i == keysAt ? "the bass of " + recordingName : recordingName;   // a keys player's line is the bass's, for its chords
             if (i < drummerLives.size()) for (var fill : lives[i].fills().entrySet()) players[i].fill(fill.getKey(), fill.getValue());
@@ -400,7 +406,7 @@ public final class Session {
                 if (i < drummerLives.size() && d.fillFrom().equals("this record")) lives[i].fill(recordingName, d.fill());
                 if (i == keysAt) { lives[i].notesFrom(recordingName, d.colour()); if (!d.figure().isEmpty()) lives[i].figure(recordingName, d.figure()); }
                 keep(d, lives[i], recordingName);
-                lives[i].playsWith(recordingName, d.pattern(), d.feel());
+                lives[i].playsWith((STUDY ? "study of " : "") + recordingName, d.pattern(), d.feel());
                 lives[i].rememberAlong(recordingName, bars, hits, unsteady, d.listening(), d.ticks(), d.pattern(), landed, landed == 0 ? 0 : apart / landed);
             }
             return new Along(recordingName, bar.bpm(), one, bars, Audio.seconds(out.samples()), parts, out.peak(), wav);

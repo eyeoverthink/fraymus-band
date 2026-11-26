@@ -314,6 +314,26 @@ public final class Musician implements Player, Hits {
         for (int i = 0; i < 12 && i < parts.length; i++) if (!parts[i].isEmpty()) heardClass[i] = Integer.parseInt(parts[i]);
     }
 
+    // ---- study: taking its own part from a record and nothing else ----
+    private boolean study;
+    /** Studying, a bass player takes a hit in the bottom of the song only if it is this much of the loudest lately. */
+    static final double STUDY_NOTICE = 0.35;
+    /**
+     * It is to study its part of this record: play what it hears its own kind of instrument play there, and
+     * nothing of its own. No ideas of its own and nothing borrowed; no fill; a bass or a singer plays a note
+     * only where it is sure of it, and a bass takes only the firmer hits in the bottom; a keys player plays the
+     * record's own figure, as far as it is sure of it, on the chord of the measure it is in.
+     */
+    public void study(boolean on) { study = on; }
+
+    /** Which note of the chord this record's own figure has on this eighth, if it is sure by now; nothing otherwise. */
+    private int sureToneAt(int slot) {
+        if (per != 4 || slot % 2 != 0 || figureHeard[slot] < 4) return 0;
+        int most = 0;
+        for (int t = 1; t < TONE.length; t++) if (figureVotes[t][slot] > figureVotes[most][slot]) most = t;
+        return 2 * figureVotes[most][slot] >= figureHeard[slot] ? most : 0;
+    }
+
     // ---- fills: a bar in which the drums of a record let go, learned by ear and played at the end of a phrase ----
     private final boolean kit;
     /** A bar is a fill if it has this many more hits in the middle of the song than bars usually have. It plays one every this many bars. */
@@ -443,6 +463,7 @@ public final class Musician implements Player, Hits {
 
     /** Which note of the chord its figure has at this place of this measure of the take; nothing while it waits to come in. */
     private int figureToneAt(int measure, int slot) {
+        if (study) return sureToneAt(slot);
         int cameIn = (measure + phraseFrom) % 2 == 1 ? measure : measure - 1;
         if (cameIn < 0 || figuresKnown == 0) return 0;
         return knownFigure[((cameIn + phraseFrom) / 2) % figuresKnown][slot];
@@ -749,7 +770,7 @@ public final class Musician implements Player, Hits {
         // A drummer takes notice only of the heavy hits. In the bottom of a song the kick stands above the bass
         // line; in the top the snare stands above the hats. A bass player wants the whole of the bottom: that
         // is the bass line it has come to learn. A hat player wants the whole of the top and none of the bottom.
-        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver();  if (!hatsOnly && !voice && lowEar.hitLoud() >= (oneNote && !comps ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver();  if (!hatsOnly && !voice && lowEar.hitLoud() >= (oneNote && !comps ? (study ? STUDY_NOTICE : 0) : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
         if (kit) {                                           // a drummer listens to the middle for the drums that are neither kick nor cymbal: where fills are
             midEar.listen(midPart, n, blockStart);
             if (midEar.hitsEver() != midUsed) { midUsed = midEar.hitsEver(); if (midEar.hitLoud() >= FILL_NOTICE) inThisBar(Math.round(midEar.hitTime() - earTakes), POT); }
@@ -827,9 +848,9 @@ public final class Musician implements Player, Hits {
     /** Where its hand goes for this place in the phrase: the note it believes is there, or the last one before it that it believes. */
     private double lineHz(int cell) {
         int bars = phraseBars(), places = bars * SLOTS;
-        for (int back = 0; back < (voice ? 1 : places); back++)   // a bass holds the last note it is sure of; a keys player only plays where it is sure
+        for (int back = 0; back < (voice || study ? 1 : places); back++)   // a bass holds the last note it is sure of; a keys player only plays where it is sure
             if (believesTheNoteAt(Math.floorMod(cell - back, places), bars)) return LineEar.hzOf(pooledNote);
-        if (comps) return 0;                                 // a keys player that has not found the bass yet presses nothing
+        if (comps || (study && !voice)) return 0;            // a keys player that has not found the bass yet presses nothing; nor does a bass player that is studying
         if (!keys) return Bass.LOW;                          // it knows no line yet: a bass plays its open string
         int home = homeNote();                               // a keys player falls back on the note it has heard most in this song
         return home < 0 ? 0 : LineEar.hzOf(home);            // and if it has not heard enough to say, it presses nothing
@@ -1304,6 +1325,7 @@ public final class Musician implements Player, Hits {
 
     /** Change one place its ticks can reach, for no reason but to try it. The one stays on the pot. */
     private boolean ownIdea() {
+        if (study) return false;                             // studying its part of a record, it keeps its own ideas to itself
         int step = per / ticks;
         int found = 0, at = -1, from = -1;                   // first, something to borrow from another record it has lived with
         for (int k = 0; k < influences; k++)
@@ -1372,11 +1394,11 @@ public final class Musician implements Player, Hits {
             if (kit && fullMix && slot == 0) { if (mode == TOGETHER) endOfHeardBar(bar - 1); barBeganAt = clock.nextBeat(); }
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
-            if (kit && fullMix && fillHits > 0 && !last && mode == TOGETHER && isFillBar(bar)) {   // the bar where it lets go: the fill it has heard, as far as its ticks reach
+            if (kit && fullMix && fillHits > 0 && !study && !last && mode == TOGETHER && isFillBar(bar)) {   // the bar where it lets go: the fill it has heard, as far as its ticks reach
                 sound = fill[slot];
                 if (slot == 0) { fillsPlayed++; sound = POT; }
             }
-            boolean figuredHere = comps && fullMix && figuresKnown > 0 && !last;
+            boolean figuredHere = comps && fullMix && (figuresKnown > 0 || study) && !last;
             if (figuredHere) sound = figureToneAt(bar, slot) != 0 ? POT : REST;  // a keys player with a figure plays where the figure has a note
             if (figureEar != null && fullMix && mode == TOGETHER && !last && per == 4 && slot % 2 == 0 && !figureEar.busy()) {
                 figureEar.noteAt(Math.round(clock.nextBeat())); figureHearing = slot; figureCell = (bar * SLOTS + phraseFrom * SLOTS) % CELLS;
@@ -1412,9 +1434,9 @@ public final class Musician implements Player, Hits {
                         bass.chord(thirdAbove(root), fifthAbove(root));
                         bass.sustain(2 * PULSES * clock.period() / Audio.RATE - 0.04);
                     }
-                    boolean figured = comps && fullMix && figuresKnown > 0 && !landing;
+                    boolean figured = comps && fullMix && (figuresKnown > 0 || study) && !landing;
                     if (figured) {                                   // the chord of the measure it came in on, played out in a figure it learned elsewhere
-                        int measure = strikeSlot / slots, cameIn = (measure + phraseFrom) % 2 == 1 ? measure : measure - 1;
+                        int measure = strikeSlot / slots, cameIn = study || (measure + phraseFrom) % 2 == 1 ? measure : measure - 1;
                         struckHz = cameIn < 0 ? 0 : measureHz((cameIn * SLOTS + phraseFrom * SLOTS) % CELLS);
                         int tone = figureToneAt(measure, inBar);
                         if (struckHz > 0 && tone != 0) {

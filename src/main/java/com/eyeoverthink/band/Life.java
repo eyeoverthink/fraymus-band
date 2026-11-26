@@ -139,6 +139,8 @@ public final class Life {
      * that goes from one song to another and back picks up where it left off with each. For a song it has not
      * met, what it plays now.
      */
+    /** True if it has played along with this song before and kept what it played. */
+    public boolean hasPlayedWith(String song) { String was = patternWith.get(song); return was != null && was.length() == pattern.length(); }
     public String playsWith(String song) { String was = patternWith.get(song); return was != null && was.length() == pattern.length() ? was : pattern; }
     public String feelWith(String song) { return feelWith.getOrDefault(song, feel); }
     public void playsWith(String song, String bar, String itsFeel) {

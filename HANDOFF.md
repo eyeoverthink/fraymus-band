@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.39.0. 64 tests pass (`mvn test`, four to fifteen minutes depending on the machine; a ten-minute limit on the command is not enough, run it in the background). Two drummers and a bass player exist, each
+Version 0.40.0. 65 tests pass (`mvn test`, four to fifteen minutes depending on the machine; a ten-minute limit on the command is not enough, run it in the background). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -111,6 +111,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 37 | Vaughn, after hearing step 36: "Now. The piano needs to hold, for 2 measures, then change chords, 2 measures on the counter measure sync. Similar to singing in rounds". The agent's reading: the piano holds each chord two measures, then changes, and its two-measure blocks start a measure behind the song's, the way a second voice enters in a round. Built: the keys strike on the one of every other measure counted from the song's first (the second, the fourth, ...), take the chord for the note the bass is mostly on through that measure (`measureHz`), and let it ring with the pedal down until the next (`Bass.sustain`). On his first song: D diminished for measures 2 and 3, C minor for 4 and 1. On his second: F minor, struck again every two measures. 12 chords in 24 measures. |
 | 38 | Vaughn: "Train the pianist on Chopin. Bach, Amadeus etc. then mix it with hip hop swag. Drummer have it study Travis barker and quest love." **The pianist:** `Classics` writes three practice recordings by hand from works long out of copyright (the first eight chords of Bach's Prelude in C, the opening of Mozart's K. 545, the first eight chords of Chopin's Prelude Op. 28 No. 20), slowed to eighth notes, one chord to a bar (`--write-classics FOLDER`, then `--along FOLDER/bach.wav --no-drummer --keys LIFE`). Playing along, the keys player now also listens on each eighth for which note of the chord the middle of the record is on, or the whole chord (`hearTheFigure`, `LineEar.strong`), and keeps a record's figure once it is sure of every eighth (`figure from "bach":`). It learned all three by ear exactly as written: `r.3.5.R.T.5.R.T.`, `r.5.3.5.r.5.3.5.`, `c...c...c...c...`. With another record it plays its chords out in the figures it knows, one figure per two-measure chord, turn and turn about. **The drummer:** not started; the agent cannot fetch recordings and asked Vaughn to send Travis Barker and Questlove tracks as files. |
 | 39 | Vaughn sent a 58-second jazz recording (`songs/jazz.wav`, not committed): "Here's a section for each musician to study. Drummer can learn fills and timings". The ear: 87.0 to the minute, steady, in fours, straight eighths; three sparse bars at the start, a groove from bar 4, a bar where everything stops (bar 10), groove to bar 18, three sparse bars to end. All five players played along with bars 4 to 18 (`--from 9 --together 15`). **Fills:** a kit drummer now notes the louder hits in the middle of a record bar by bar; a bar with three more than usual is a fill; it keeps the fullest (`fill from "record": places @bar-of-eight`) and plays it in that bar of every eight with any record. It also counts bars where the record all but stops, and does nothing with them yet. On a made-up record with a written fill every eighth bar it hears all four in 32 bars and plays them. **In the jazz recording it heard no fill**, and one stop. |
+| 40 | Vaughn, on the step 39 take: "The metronome is on beat. The music that they are vibing with is crazy. Have each agent absorb the proper stem of my original track." He sent the same file again (byte for byte: one stereo mix, no separate stems). Read as: the pulse is right, what the band plays over it is wrong, and each player should take its own instrument's part from his track. **`--study`** (`Session.STUDY`, `Musician.study`): each player plays only what it hears its own kind of instrument play in the record. No ideas of its own, nothing borrowed, no fill; it starts from the one alone; the bass takes only the firmer hits in the bottom (`STUDY_NOTICE = 0.35`) and plays a note only where it is sure of it; the pianist plays the record's own figure where it is sure of it, on the chord of the measure it is in (no classical figures, no round); what it studied is kept in its life as `plays with "study of SONG"`, apart from playing along. Its "stem" is still a frequency band of the one mix, not a real stem. | Made-up song with a written sparse bass: the bass ends on `p.....p.p.......`, all three of the written bass places and nothing else (playing along it had `p...p.p.p.p.....`); the drummer `p...n.p.p.n.n...`, the record's drums plus one bass note it takes for a kick. Six study takes of the jazz recording (bars from 0:09, 15 bars): drummer `p.n.n...n.p.n...` 87 of 99 hits with the record, hat every eighth 109 of 121, bass `p.p...n...p...np` 26 of 31 (it was about 12 notes a bar), pianist `p.p.p.p...p.p.p.` 6 of 8 in the last take and 19 of 20 before, singer every eighth 28 of 39 with 9 notes on the song's note and 14 off. |
 
 ### The players that exist (do not reset these)
 
@@ -356,6 +357,8 @@ Given, as fixed rules (be honest about these):
 - **Looking for fills in the bottom of a song found nothing (step 39):** to the player's low ear a walking
   bass is twelve hits a bar, every bar. The middle of the sound is where a kit's snare and toms are, and a
   written fill stands out there. But so does a busy vocal.
+- **Step 40: "crazy".** For twenty steps the players were built to add to a record: ideas of their own, borrowed bars, fills, figures from other records, a bass holding guessed notes. Over Vaughn's own jazz track that came out as a band playing something else. When he gives a track to learn from, the first thing is to play what is there and nothing more (`--study`). Adding comes after he says the part is right.
+- **Step 40: he asked for stems and the file has none.** The same stereo mix was sent twice. Left and right are nearly the same below 500 Hz (alike +0.91), so stereo cannot part the bass from the kick; above 2 kHz they differ (alike +0.31 to +0.06). The players still hear a frequency band each. Say so; do not call a band a stem.
 
 ---
 
@@ -490,10 +493,14 @@ Given, as fixed rules (be honest about these):
 - The drummers take nothing from the bass but time.
 - Mono.
 - The repository is public and has no license file. Vaughn has been told.
+- **Studying (step 40):** a player's part is a frequency band of one mix. The drummer takes a low bass note for a kick; the bass takes a kick for a bass note where both are firm; the pianist hears everything in the middle (guitar, horns, voice) as its part; the singer has no vocal to follow in the jazz track and sings on every eighth with most notes off the song's note. Real stems from Vaughn (one file per instrument) would replace all of this guessing.
+- Studying uses the mono mixdown; the stereo difference above 2 kHz is not used.
 
 ---
 
 ## 8. What comes next
+
+**Step 40 is waiting on Vaughn's ear (2026-11-25):** is the study take of his jazz track (`--study`) closer to his parts, player by player? Ask him for real stems (drums, bass, keys, voice as separate files) if he has them: `--study` could then give each player its own file, which is the next thing to build. Leave the singer out of a study take if it still sings off the song.
 
 **Steps 20 and 21 are waiting on Vaughn's ear (2026-11-22).** Step 20: is the bass's up tick at the end of
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four

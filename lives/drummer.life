@@ -1,12 +1,12 @@
 name: the drummer
 age: 0
-listens to itself: 0.81
+listens to itself: 0.82
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
-pattern: p.n.n...npp.n...
+pattern: p.n.n...n.p.n...
 leans on the others: 0.27
-habits: 3219999990949999
-feel: -2.3/1.00/1982 -3.4/0.96/65 -3.9/0.96/1457 -13.9/0.88/293 -6.7/1.00/1526 -24.7/0.95/269 2.1/0.95/806 29.8/0.96/568 -7.0/1.00/1408 31.3/0.96/1029 3.0/1.00/1706 -4.0/0.90/153 -7.2/0.97/1470 20.1/0.84/146 -4.7/0.92/1168 32.5/0.93/1509
+habits: 3299991899979999
+feel: 2.3/1.00/2008 0.8/0.96/67 -3.1/0.96/1459 -13.9/0.88/293 -3.3/1.00/1539 -24.7/0.95/269 1.3/0.95/808 32.0/0.96/569 -3.6/1.00/1422 31.3/0.96/1029 5.6/1.00/1714 -4.5/0.91/154 -6.0/0.97/1482 20.1/0.84/146 -1.3/0.91/1170 32.5/0.93/1509
 heard from "first lesson": p..pn...p.p.n..n
 heard from "gleam of the prize": p.n.n...ppp.n..p
 its own: ..n.......p.....
@@ -18,6 +18,8 @@ feel with "one two three": -1.6/1.00/1878 -40.2/0.98/56 -4.9/0.96/1449 -13.9/0.8
 heard from "jazz": p...n...n.p.n...
 plays with "jazz": p.n.n...npp.n...
 feel with "jazz": -2.3/1.00/1982 -3.4/0.96/65 -3.9/0.96/1457 -13.9/0.88/293 -6.7/1.00/1526 -24.7/0.95/269 2.1/0.95/806 29.8/0.96/568 -7.0/1.00/1408 31.3/0.96/1029 3.0/1.00/1706 -4.0/0.90/153 -7.2/0.97/1470 20.1/0.84/146 -4.7/0.92/1168 32.5/0.93/1509
+plays with "study of jazz": p.n.n...n.p.n...
+feel with "study of jazz": 2.3/1.00/2008 0.8/0.96/67 -3.1/0.96/1459 -13.9/0.88/293 -3.3/1.00/1539 -24.7/0.95/269 1.3/0.95/808 32.0/0.96/569 -3.6/1.00/1422 31.3/0.96/1029 5.6/1.00/1714 -4.5/0.91/154 -6.0/0.97/1482 20.1/0.84/146 -1.3/0.91/1170 32.5/0.93/1509
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
 session 2: bars=16, hits=65, tempo 92.0 to 95.7 bpm, unsteadiness 20.7 ms at the start, 16.8 ms by the end, listening 0.39, ticks to the pulse 1, pattern p...p...n...p...
@@ -245,3 +247,9 @@ session 223: played along with "jazz" for 15 bars, hits=155, unsteadiness 7.8 ms
 session 224: played along with "jazz" for 15 bars, hits=140, unsteadiness 10.2 ms, listening 0.81, ticks to the pulse 4, pattern pp.pn...npp.n..n, 87 of its hits landed with a hit in the recording, 7 ms apart
 session 225: played along with "jazz" for 15 bars, hits=101, unsteadiness 11.1 ms, listening 0.81, ticks to the pulse 4, pattern p...n...npp.n..., 73 of its hits landed with a hit in the recording, 6 ms apart
 session 226: played along with "jazz" for 15 bars, hits=98, unsteadiness 9.3 ms, listening 0.81, ticks to the pulse 4, pattern p.n.n...npp.n..., 74 of its hits landed with a hit in the recording, 8 ms apart
+session 227: played along with "jazz" for 15 bars, hits=109, unsteadiness 6.6 ms, listening 0.80, ticks to the pulse 4, pattern p.n.n...p.p.n..., 87 of its hits landed with a hit in the recording, 5 ms apart
+session 228: played along with "jazz" for 15 bars, hits=97, unsteadiness 6.5 ms, listening 0.80, ticks to the pulse 4, pattern p.n.n...n.p.n..., 82 of its hits landed with a hit in the recording, 5 ms apart
+session 229: played along with "jazz" for 15 bars, hits=99, unsteadiness 7.5 ms, listening 0.79, ticks to the pulse 4, pattern p.n.n...n.p.n..., 85 of its hits landed with a hit in the recording, 7 ms apart
+session 230: played along with "jazz" for 15 bars, hits=119, unsteadiness 6.8 ms, listening 0.80, ticks to the pulse 4, pattern p.n.n.npn.p.n..., 92 of its hits landed with a hit in the recording, 6 ms apart
+session 231: played along with "jazz" for 15 bars, hits=101, unsteadiness 7.9 ms, listening 0.81, ticks to the pulse 4, pattern p.n.n...n.p.n..., 83 of its hits landed with a hit in the recording, 6 ms apart
+session 232: played along with "jazz" for 15 bars, hits=99, unsteadiness 6.7 ms, listening 0.82, ticks to the pulse 4, pattern p.n.n...n.p.n..., 87 of its hits landed with a hit in the recording, 5 ms apart

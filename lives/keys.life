@@ -1,8 +1,8 @@
 name: the keys player
 age: 0
-leans on the others: 0.04
-habits: 0999199979990999
-feel: 4.1/1.00/830 30.5/0.84/35 -2.4/0.96/492 -10.1/0.89/171 -2.6/1.00/714 -16.2/0.84/52 0.3/0.96/488 32.7/0.96/177 -4.0/1.00/593 36.3/0.96/256 5.2/1.00/587 -1.8/0.90/132 -2.3/0.96/719 25.9/0.80/175 -0.8/0.92/479 36.1/0.94/322
+leans on the others: 0.06
+habits: 0999999949999999
+feel: 2.5/1.00/856 28.8/0.86/37 -1.2/0.96/494 -10.1/0.89/171 -3.4/1.00/727 -16.2/0.84/52 0.3/0.96/490 34.1/0.96/178 -3.1/1.00/607 27.0/0.96/257 6.6/1.00/595 -2.1/0.91/133 -2.3/0.96/731 25.9/0.80/175 3.6/0.91/481 36.1/0.94/322
 notes: 2
 line from "gleam of the prize": 48/11/21 - 53/1/2 - 55/1/3 - 48/31/31 - 51/17/21 - 55/13/26 - 54/3/3 - 53/16/31 - 50/14/28 - 50/16/25 - 48/14/28 - 53/13/25 - 51/33/36 - 55/4/8 - 54/14/21 - 51/17/25 - 53/23/30 - 51/26/26 - 50/22/39 - 48/30/31 - 53/35/35 - 48/16/20 - 53/21/23 - 53/17/25 - 53/32/37 - 48/25/25 - 53/1/2 - 53/1/1 - 48/36/36 - 48/1/1 - 53/1/4 - 53/17/25 - 51/1/2 - 48/21/21 - 48/24/36 - 48/15/26 - 53/21/31 - 50/14/21 - 53/20/23 - 50/17/26 - 53/17/33 - 52/1/2 - 48/1/3 - 53/15/20 - 51/1/2 - 48/16/19 - 52/2/4 - 51/31/31 - 51/6/11 - 53/16/26 - 50/14/23 - 53/18/32 - 56/16/17 - 52/12/16 - 53/23/38 - 53/16/16 - 49/4/7 - 53/17/17 - 50/6/12 - 53/16/31 - 48/17/26 - 53/1/2 - 67/16/32 - 48/16/31 -
 phrase from "gleam of the prize": 201/801 167/770 211/697 152/576
@@ -11,7 +11,7 @@ plays with "gleam of the prize": p.....p.p.p...pp
 feel with "gleam of the prize": -18.1/1.00/626 -27.7/0.95/76 -13.3/0.99/409 10.1/0.88/32 -16.9/0.98/598 -4.5/0.97/81 17.4/0.99/162 9.8/0.90/252 -19.5/0.99/384 5.1/0.94/231 -16.5/0.99/334 14.7/0.92/135 -18.9/1.00/501 -4.3/0.95/35 -13.3/0.97/228 18.9/0.92/406
 listens to itself: 0.84
 ticks to the pulse: 4
-pattern: p.p.p.p.p.p.p.p.
+pattern: p.p.p.p...p.p.p.
 line from "one two three": 53/8/15 - 53/16/24 - 56/30/40 - 56/30/39 - 55/15/21 - - - 58/15/30 - 64/7/13 - 53/21/24 - 53/24/24 - 65/10/19 - 56/15/16 - 63/9/18 - 52/15/30 - 67/1/5 - 67/1/5 - 65/2/5 - 65/2/5 - 56/2/5 - 56/1/2 - 60/15/15 - - - 48/1/2 - 53/27/40 - 53/16/24 - 65/2/5 - 65/2/5 - 65/1/2 - 64/2/5 - 48/15/30 - 64/2/5 - 61/1/2 - 65/2/5 - 65/1/2 - 62/1/3 - 65/7/13 - 64/2/5 - 48/4/8 - 63/10/19 - 53/1/3 - 48/16/24 - 53/24/24 - 60/2/5 - 62/15/30 - 55/3/5 - 58/10/10 - 59/15/30 - 58/15/30 - 63/2/5 - 57/15/30 - 56/8/15 - 57/15/30 - 63/15/30 - 61/15/15 - 62/2/5 - 53/2/5 - 48/24/40 - 53/24/24 - 56/30/30 - 56/16/24 - 62/16/24 - - - 55/14/15 - 62/29/30 -
 phrase from "one two three": 125/476 122/463 78/409 48/349
 heard from "one two three": p.p.p.p.p.p.p..p
@@ -45,12 +45,14 @@ heard from "chopin": ..p.p.p.p.p...p.
 plays with "chopin": p.p.p.p.p.p.p.pp
 feel with "chopin": -4.1/1.00/871 49.0/0.70/27 -4.3/0.98/438 -10.2/0.89/147 -4.0/1.00/635 -13.1/0.81/49 -12.4/0.99/422 33.0/0.95/156 -0.7/0.99/492 36.1/0.96/225 -2.2/1.00/489 6.2/0.86/122 -1.5/0.81/687 24.2/0.80/169 -6.3/0.99/414 35.4/0.94/281
 figure from "chopin": c...c...c...c...
-line from "the bass of jazz": 44/8/8 - 44/4/4 - - - - - 41/4/4 - 40/4/4 - 34/4/4 - - - 46/4/8 - - - 44/2/2 - - - 41/4/4 - 41/4/4 - - - 47/4/4 - 44/4/4 - - - 44/2/2 - - - - - 41/3/4 - - - - - 46/4/8 - 44/4/4 - 44/4/4 - 44/4/4 - 44/4/4 - 41/2/3 - - - - - 44/8/8 - - - - - - - 45/4/4 - 40/4/4 - - - - - 40/4/4 - - - - - - - 41/4/4 - 41/4/4 - - - 47/4/4 - 44/8/8 - - - - - - - - - 44/4/8 - - - - - 46/4/8 - - - 40/4/4 - - - 44/2/2 - 46/4/8 - - - - -
-phrase from "the bass of jazz": 16/113 43/76 57/86 14/46
-notes from "jazz": 4 0 4 116 38 11 12 39 12 14 68 44
+line from "the bass of jazz": 44/20/20 - 44/10/10 - - - - - 41/10/10 - 40/10/10 - 34/8/8 - - - 46/10/20 - - - 44/4/4 - - - 41/10/10 - 41/10/10 - - - 47/10/10 - 44/10/10 - 44/2/2 - 44/8/8 - - - - - 44/4/4 - - - - - 46/10/20 - 44/10/10 - 44/10/10 - 44/10/10 - 44/10/10 - 41/11/15 - - - - - 44/20/20 - - - - - - - 45/10/10 - 40/10/10 - - - - - 40/8/11 - - - - - - - 41/10/10 - 41/10/10 - - - 47/10/10 - 44/20/20 - - - - - - - - - 44/10/20 - - - - - 46/10/20 - - - 40/10/11 - 44/1/1 - 44/4/4 - 46/10/20 - - - - -
+phrase from "the bass of jazz": 36/285 109/193 146/217 35/122
+notes from "jazz": 12 0 8 293 95 31 31 99 26 22 173 108
 heard from "jazz": ..p...p...p...p.
 plays with "jazz": p.p.p.p.p.p.p.p.
 feel with "jazz": 4.1/1.00/830 30.5/0.84/35 -2.4/0.96/492 -10.1/0.89/171 -2.6/1.00/714 -16.2/0.84/52 0.3/0.96/488 32.7/0.96/177 -4.0/1.00/593 36.3/0.96/256 5.2/1.00/587 -1.8/0.90/132 -2.3/0.96/719 25.9/0.80/175 -0.8/0.92/479 36.1/0.94/322
+plays with "study of jazz": p.p.p.p...p.p.p.
+feel with "study of jazz": 2.5/1.00/856 28.8/0.86/37 -1.2/0.96/494 -10.1/0.89/171 -3.4/1.00/727 -16.2/0.84/52 0.3/0.96/490 34.1/0.96/178 -3.1/1.00/607 27.0/0.96/257 6.6/1.00/595 -2.1/0.91/133 -2.3/0.96/731 25.9/0.80/175 3.6/0.91/481 36.1/0.94/322
 
 session 1: played along with "gleam of the prize" for 24 bars, hits=68, unsteadiness 18.7 ms, listening 0.02, ticks to the pulse 1, pattern p.......n...p..., 34 of its hits landed with a hit in the recording, 11 ms apart
 session 2: played along with "gleam of the prize" for 24 bars, hits=49, unsteadiness 24.5 ms, listening 0.02, ticks to the pulse 1, pattern p...........p..., 16 of its hits landed with a hit in the recording, 13 ms apart
@@ -121,3 +123,9 @@ session 66: played along with "jazz" for 15 bars, hits=75, unsteadiness 8.8 ms, 
 session 67: played along with "jazz" for 15 bars, hits=100, unsteadiness 10.3 ms, listening 0.88, ticks to the pulse 4, pattern p.p.p.p.p.p...pp, 85 of its hits landed with a hit in the recording, 10 ms apart
 session 68: played along with "jazz" for 15 bars, hits=100, unsteadiness 6.3 ms, listening 0.86, ticks to the pulse 4, pattern p.p...p.p.p.p.pp, 85 of its hits landed with a hit in the recording, 10 ms apart
 session 69: played along with "jazz" for 15 bars, hits=100, unsteadiness 9.4 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p.p.p.p.p., 86 of its hits landed with a hit in the recording, 8 ms apart
+session 70: played along with "jazz" for 15 bars, hits=12, unsteadiness 25.2 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 10 of its hits landed with a hit in the recording, 6 ms apart
+session 71: played along with "jazz" for 15 bars, hits=20, unsteadiness 41.4 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 19 of its hits landed with a hit in the recording, 6 ms apart
+session 72: played along with "jazz" for 15 bars, hits=20, unsteadiness 26.7 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 19 of its hits landed with a hit in the recording, 6 ms apart
+session 73: played along with "jazz" for 15 bars, hits=20, unsteadiness 13.3 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 19 of its hits landed with a hit in the recording, 6 ms apart
+session 74: played along with "jazz" for 15 bars, hits=22, unsteadiness 13.4 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 21 of its hits landed with a hit in the recording, 7 ms apart
+session 75: played along with "jazz" for 15 bars, hits=8, unsteadiness 3.3 ms, listening 0.84, ticks to the pulse 4, pattern p.p.p.p...p.p.p., 6 of its hits landed with a hit in the recording, 4 ms apart

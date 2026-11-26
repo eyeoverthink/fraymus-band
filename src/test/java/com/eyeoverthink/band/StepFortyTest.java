@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyNineTest {
+class StepFortyTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -892,6 +892,7 @@ class StepThirtyNineTest {
         for (int e = 0; e < bars * 8; e++) {
             int at = (int) Audio.samples(0.25 + e * eighth);
             for (int i = 0; i < 900; i++) mix[at + i] += (float) (0.05 * (chance.nextDouble() * 2 - 1) * Math.exp(-i / 200.0));
+            if (line[e % line.length] == 0) continue;        // a rest
             double hz = LineEar.hzOf(line[e % line.length]);
             for (int i = 0; i < 13000; i++) {
                 double t = i / (double) Audio.RATE, fade = Math.min(1, i / 300.0) * Math.min(1, (13000 - i) / 600.0);
@@ -1581,5 +1582,42 @@ class StepThirtyNineTest {
         assertEquals("fills", elsewhere.fillFrom(), "with another song it still has the fill, and where it came from");
         assertTrue(elsewhere.fillsPlayed() >= 2, "and plays it there too: " + elsewhere.fillsPlayed());
         assertTrue(elsewhere.fillsHeard() <= 1, "though that song has none written into it (its bass falls by chance, so a bar may come out busy): " + elsewhere.fillsHeard());
+    }
+
+    // ---- step forty: a player studies its own part of a record and plays nothing of its own ----
+
+    @Test
+    void studyingARecordEachPlayerPlaysOnlyWhatItsOwnPartPlaysThere(@TempDir Path dir) throws Exception {
+        String kicksAndSnares = "p...n...p.p.n...";
+        Lesson drums = new Lesson("made up", 92, kicksAndSnares);
+        int[] sparse = {33, 0, 0, 36, 33, 0, 0, 0};          // the bass of the song: the one, the "and" of two, and three
+        String bottom = "p.....p.p.p.....";                  // where anything sounds in the bottom of it: its kicks and its bass
+        float[] song = songWithALine(drums, 40, sparse);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4, "p..pp..np.pp.n.p"), bass = bassPlayer(dir, "b.life", 4, 2);
+        Session.Along before = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5, 24, 2000);
+        String drummerWith = Life.open(drummer, "the drummer").playsWith("made up"), bassWith = Life.open(bass, "the bass player").playsWith("made up");
+        Session.Along take = null;
+        Session.STUDY = true;
+        try {
+            for (int s = 0; s < 5; s++) take = Session.playAlong(dir.resolve("t.wav"), List.of(drummer), bass, "made up", song, heard, bar, 5, 24, 2001 + s);
+        } finally { Session.STUDY = false; }
+        Session.AlongPart d = take.parts().get(0), b = take.parts().get(1);
+        System.out.printf(Locale.ROOT, "STUDY drummer %s (record %s), %d of %d landed; bass %s (bottom of the record %s), %d of %d landed; before, playing along, they had %s and %s%n",
+            d.patternAfter(), kicksAndSnares, d.landedWithIt(), d.hits(), b.patternAfter(), bottom, b.landedWithIt(), b.hits(), before.parts().get(0).patternAfter(), before.parts().get(1).patternAfter());
+        int drumHits = 0, bassHits = 0;
+        for (int p = 0; p < 16; p++) {
+            if (d.patternAfter().charAt(p) != '.') { drumHits++; assertTrue(kicksAndSnares.charAt(p) != '.' || bottom.charAt(p) != '.', "the drummer plays nothing where the record has nothing (it cannot tell a low bass note from a kick, so it may take one of those), place " + (p + 1) + ": " + d.patternAfter()); }
+            if (b.patternAfter().charAt(p) != '.') { bassHits++; assertNotEquals('.', bottom.charAt(p), "the bass plays nothing where the bottom of the record has nothing, place " + (p + 1) + ": " + b.patternAfter()); }
+        }
+        assertTrue(drumHits >= 4, "and the drummer has most of the record's part: " + d.patternAfter());
+        assertTrue(bassHits >= 2, "and the bass has found some of its part: " + b.patternAfter());
+        assertEquals(0, d.ownIdeas(), "studying, it tries nothing of its own");
+        assertEquals(0, b.ownIdeas());
+        assertEquals(0, d.fillsPlayed(), "and plays no fill");
+        assertEquals(d.patternAfter(), Life.open(drummer, "the drummer").playsWith("study of made up"), "what it studied is kept under the study of the song");
+        assertEquals(drummerWith, Life.open(drummer, "the drummer").playsWith("made up"), "apart from what it plays along with the song, which is as it was");
+        assertEquals(bassWith, Life.open(bass, "the bass player").playsWith("made up"));
     }
 }

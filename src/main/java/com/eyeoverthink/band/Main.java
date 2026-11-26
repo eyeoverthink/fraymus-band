@@ -44,13 +44,14 @@ public final class Main {
                 case "--singer" -> singerLife = Path.of(args[i + 1]);
                 case "--write-classics" -> classics = Path.of(args[i + 1]);
                 case "--no-drummer" -> { noDrummer = true; i--; }
+                case "--study" -> { Session.STUDY = true; i--; }
                 case "--along" -> along = Path.of(args[i + 1]);
                 case "--from" -> from = Double.parseDouble(args[i + 1]);
                 case "--hear" -> hear = Path.of(args[i + 1]);
                 case "--bass" -> bass = Path.of(args[i + 1]);
                 case "--teach" -> teach = Path.of(args[i + 1]);
                 case "--lesson" -> lessonFile = Path.of(args[i + 1]);
-                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --singer LIFE --no-drummer --write-classics FOLDER --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
+                default -> { System.err.println("Unknown option " + args[i] + ". Options: --lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --hear WAV --along WAV --hats LIFE --keys LIFE --singer LIFE --no-drummer --study --write-classics FOLDER --ask-bass PLACES --ask-hats PLACES --ask-drummer PLACES --in-words TEXT --name NAME --name-pupil NAME --name-bass NAME --make-up-shuffle FILE --count threes --from SECONDS --click on --tempo BPM --seed N --out FILE --life FILE"); System.exit(2); }
             }
         }
         if (classics != null) {                              // write the three practice recordings for a keys player

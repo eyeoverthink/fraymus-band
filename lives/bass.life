@@ -4,10 +4,10 @@ leans on the others: 0.19
 sounds: a low note (p) and, once it has earned it, the same note an octave up (n)
 listens to itself: 0.78
 ticks to the pulse: 4
-pattern: ppppp.npppppp.np
+pattern: p.p...n...p...np
 notes: 2
-habits: 9999899680909999
-feel: 2.0/0.87/1903 24.0/0.57/99 2.9/0.44/1100 -10.4/0.25/270 6.6/0.28/1699 2.6/0.26/150 17.0/0.25/927 19.4/0.31/253 -9.1/0.40/1249 17.1/0.32/326 -3.4/0.93/1284 10.9/0.41/177 -12.3/0.39/829 10.1/0.28/344 11.2/0.37/1499 -2.9/0.30/408
+habits: 9999999999099999
+feel: 4.0/0.92/1916 22.8/0.61/105 0.3/0.54/1103 -14.1/0.28/271 7.0/0.32/1700 2.2/0.30/151 12.3/0.29/928 22.9/0.39/255 -4.1/0.47/1253 14.0/0.34/327 -0.1/0.93/1295 2.7/0.47/181 -11.2/0.45/832 13.5/0.31/345 8.7/0.46/1502 -1.2/0.37/411
 asked for: ......n.......n.
 line from "gleam of the prize": 39/1/1 - 36/25/25 - 36/36/37 - 36/33/33 - 32/5/8 - 39/17/20 - - - 38/28/36 - 38/27/27 - 38/27/27 - - - 41/13/20 - 39/23/23 - 39/29/30 - - - 39/27/39 - 41/2/3 - 39/25/25 - 38/23/23 - 36/16/23 - 34/9/15 - 36/28/30 - - - 36/40/40 - 36/15/25 - 36/39/39 - 31/23/23 - 34/23/23 - 36/27/27 - 36/2/2 - - - 36/16/23 - 36/26/35 - 36/35/35 - 36/24/24 - 36/26/26 - 34/5/7 - 39/33/37 - - - 38/24/24 - 38/24/24 - 38/24/24 - - - 41/7/7 - 39/37/37 - 39/5/5 - - - 39/37/37 - 39/37/37 - 39/34/36 - 38/37/37 - 36/35/37 - 44/23/40 - 36/2/2 - - - 36/29/29 - 35/25/29 - 36/29/29 - 31/37/37 - 34/37/37 - 36/16/24 - - - - - 36/26/37 -
 phrase from "gleam of the prize": 51/513 40/483 361/495 282/396
@@ -20,11 +20,13 @@ plays with "gleam of the prize": ppp.p.npp.ppp.np
 feel with "gleam of the prize": -20.7/0.91/1878 16.6/0.33/672 19.7/0.40/1575 40.2/0.13/63 -9.2/0.29/2199 12.5/0.32/32 23.6/0.40/862 23.7/0.56/727 -18.7/0.70/1132 -2.4/0.84/320 -21.9/0.79/1099 14.1/0.38/672 -31.2/0.51/337 21.1/0.09/241 13.0/0.46/1637 11.8/0.81/702
 plays with "one two three": pppp..n.p.p.p.np
 feel with "one two three": 1.7/0.86/1838 53.9/0.71/67 22.8/0.64/1060 -0.2/0.65/234 -26.3/0.30/1647 -16.6/0.14/127 3.5/0.11/883 25.0/0.54/212 10.7/0.34/1209 35.7/0.96/282 1.6/0.83/1240 6.9/0.45/134 -0.0/0.29/797 4.1/0.44/307 1.8/0.36/1455 27.6/0.80/377
-line from "jazz": 44/8/8 - 44/4/4 - - - - - 41/4/4 - 40/4/4 - 34/2/2 - - - 46/4/8 - - - - - - - 41/4/4 - 41/4/4 - - - 47/4/4 - 44/4/4 - - - 44/4/4 - - - - - 44/3/4 - - - - - 46/4/8 - 44/4/4 - 44/4/4 - 44/4/4 - 44/4/4 - 41/3/3 - - - - - 44/8/8 - - - - - - - 45/4/4 - 40/4/4 - - - - - 40/3/4 - - - - - - - 41/4/4 - 41/4/4 - - - 47/4/4 - 44/8/8 - - - - - - - - - 44/6/8 - - - - - 46/4/8 - - - 40/4/4 - - - 44/1/1 - 46/4/8 - - - - -
-phrase from "jazz": 9/112 44/76 60/85 16/48
-heard from "jazz": p.p.p.pppppp....
+line from "jazz": 44/20/20 - 44/10/10 - - - - - 41/10/10 - 40/10/10 - 34/7/7 - - - 46/10/20 - - - 44/3/3 - - - 41/10/10 - 41/10/10 - - - 47/10/10 - 44/10/10 - 44/1/1 - 44/9/9 - - - - - 44/9/10 - - - - - 46/10/20 - 44/10/10 - 44/10/10 - 44/10/10 - 44/10/10 - 41/13/15 - - - - - 44/20/20 - - - - - - - 45/10/10 - 40/10/10 - - - - - 40/7/11 - - - - - - - 41/10/10 - 41/10/10 - - - 47/10/10 - 44/20/20 - - - - - - - - - 44/15/20 - - - - - 46/10/20 - - - 40/10/10 - 44/1/1 - 44/4/5 - 46/10/20 - - - - -
+phrase from "jazz": 24/286 112/194 152/216 41/121
+heard from "jazz": p.........p.....
 plays with "jazz": ppppp.npppppp.np
 feel with "jazz": 2.0/0.87/1903 24.0/0.57/99 2.9/0.44/1100 -10.4/0.25/270 6.6/0.28/1699 2.6/0.26/150 17.0/0.25/927 19.4/0.31/253 -9.1/0.40/1249 17.1/0.32/326 -3.4/0.93/1284 10.9/0.41/177 -12.3/0.39/829 10.1/0.28/344 11.2/0.37/1499 -2.9/0.30/408
+plays with "study of jazz": p.p...n...p...np
+feel with "study of jazz": 4.0/0.92/1916 22.8/0.61/105 0.3/0.54/1103 -14.1/0.28/271 7.0/0.32/1700 2.2/0.30/151 12.3/0.29/928 22.9/0.39/255 -4.1/0.47/1253 14.0/0.34/327 -0.1/0.93/1295 2.7/0.47/181 -11.2/0.45/832 13.5/0.31/345 8.7/0.46/1502 -1.2/0.37/411
 
 session 1: played 16 bars with the drummer and the second drummer, no record, hits=34, unsteadiness 22.5 ms, listening 0.21, ticks to the pulse 1, pattern p.......p...p..., 17 ms apart
 session 2: played 16 bars with the drummer and the second drummer, no record, hits=46, unsteadiness 15.2 ms, listening 0.33, ticks to the pulse 2, pattern p.......p......., 20 ms apart
@@ -209,3 +211,9 @@ session 179: played along with "jazz" for 15 bars, hits=147, unsteadiness 6.4 ms
 session 180: played along with "jazz" for 15 bars, hits=180, unsteadiness 7.0 ms, listening 0.77, ticks to the pulse 4, pattern ppppp.npppp.p.np, 108 of its hits landed with a hit in the recording, 9 ms apart
 session 181: played along with "jazz" for 15 bars, hits=194, unsteadiness 6.5 ms, listening 0.77, ticks to the pulse 4, pattern ppppp.npp.ppp.np, 108 of its hits landed with a hit in the recording, 9 ms apart
 session 182: played along with "jazz" for 15 bars, hits=193, unsteadiness 8.4 ms, listening 0.78, ticks to the pulse 4, pattern ppppp.npppppp.np, 106 of its hits landed with a hit in the recording, 7 ms apart
+session 183: played along with "jazz" for 15 bars, hits=29, unsteadiness 11.6 ms, listening 0.79, ticks to the pulse 4, pattern p.p...n...p...np, 24 of its hits landed with a hit in the recording, 6 ms apart
+session 184: played along with "jazz" for 15 bars, hits=30, unsteadiness 13.3 ms, listening 0.79, ticks to the pulse 4, pattern p.p...n...p...np, 25 of its hits landed with a hit in the recording, 6 ms apart
+session 185: played along with "jazz" for 15 bars, hits=33, unsteadiness 8.8 ms, listening 0.80, ticks to the pulse 4, pattern p.p...n...p...np, 25 of its hits landed with a hit in the recording, 7 ms apart
+session 186: played along with "jazz" for 15 bars, hits=38, unsteadiness 11.6 ms, listening 0.80, ticks to the pulse 4, pattern p.p...n...p...np, 32 of its hits landed with a hit in the recording, 7 ms apart
+session 187: played along with "jazz" for 15 bars, hits=36, unsteadiness 11.1 ms, listening 0.79, ticks to the pulse 4, pattern p.p...n...p...np, 28 of its hits landed with a hit in the recording, 9 ms apart
+session 188: played along with "jazz" for 15 bars, hits=31, unsteadiness 20.8 ms, listening 0.78, ticks to the pulse 4, pattern p.p...n...p...np, 26 of its hits landed with a hit in the recording, 5 ms apart

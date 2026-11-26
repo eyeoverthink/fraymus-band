@@ -288,6 +288,22 @@ Measured on a made-up record with a written fill in every eighth bar: it hears a
 plays it there too. It cannot tell a drum fill from any other busy bar in the middle of a song, such as a
 voice. It also counts bars where a record all but stops, and does not yet stop with them.
 
+## Studying a record
+
+`--study` with `--along` has every player take its own part from the record and play nothing else: no ideas
+of its own, nothing borrowed from other records, no fill. Each starts from the one alone. The bass takes
+only the firmer hits in the bottom of the record and plays a note only where it is sure of it; the keys
+player plays the record's own figure, where it is sure of it, on the chord of the measure it is in. What a
+player studied is kept in its life under `study of` the record's name, apart from what it plays along with
+that record.
+
+    java -jar target/fraymus-band-0.40.0.jar --along songs/jazz.wav --from 9 --together 15 --study \
+        --hats lives/second.life --bass lives/bass.life --keys lives/keys.life --singer lives/singer.life --out out/jazz-study.wav
+
+A player's part is a band of frequencies in one mix, not a separate recording of its instrument. Measured
+on a made-up song with a written, sparse bass: the bass ends on exactly the three written places; the
+drummer on the written drums plus one bass note it takes for a kick.
+
 ## The bass line
 
 A bass player that has earned both its notes listens, while it plays along with a song, for which note the
@@ -555,6 +571,7 @@ drummer plays or hears a place its ticks cannot reach.
 
 ## Known limits
 
+- Studying a record, a player hears a band of one mix as its part: a drummer takes a low bass note for a kick, a keys player hears everything in the middle, and a singer with no voice to follow sings off the song.
 - Every session starts again at 92 bpm, the tempo its body likes.
 - It finds the one by weight, so a lesson with nothing on the one will confuse it.
 - A drummer that has drifted far from the record can lose its place for a whole call and hear almost
