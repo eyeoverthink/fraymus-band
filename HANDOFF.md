@@ -65,7 +65,7 @@ muted trumpet, playing jazz, hip hop and salsa. Each one an agent with its own l
 
 ## 3. Where things stand
 
-Version 0.38.0. 63 tests pass (`mvn test`, four to fifteen minutes depending on the machine; a ten-minute limit on the command is not enough, run it in the background). Two drummers and a bass player exist, each
+Version 0.39.0. 64 tests pass (`mvn test`, four to fifteen minutes depending on the machine; a ten-minute limit on the command is not enough, run it in the background). Two drummers and a bass player exist, each
 with a real life file. There is a record that plays lessons and a click track.
 
 ### The steps so far
@@ -110,6 +110,7 @@ with a real life file. There is a record that plays lessons and a click track.
 | 36 | Vaughn: "The piano needs to change chords on a timed sequence that highlights a different section of the beat." The agent's reading: the keys play chords; the chord changes on a set beat, every half bar, following the bass; and the keys play where the kick and snare are not. Built: `Bass.chord` (three notes); the keys player's line ear now listens to the bottom of the song (kept as `line from "the bass of SONG":`), and a second ear counts the notes in the middle (`notes from "SONG":`) to choose each chord's third and fifth; its places are the eighths with no heavy hit in at least half the bars. On his first song its chords are `Cm Cm | Dm(b5) Eb | Eb Cm | Cm Cm`; on his second `Fm Fm`, a one-bar phrase. On a made-up song with bass A, C, D, E, G: `Am(b5) Am(b5) | Cm Cm | Dm Em(b5) | Gm Gm`, as written. |
 | 37 | Vaughn, after hearing step 36: "Now. The piano needs to hold, for 2 measures, then change chords, 2 measures on the counter measure sync. Similar to singing in rounds". The agent's reading: the piano holds each chord two measures, then changes, and its two-measure blocks start a measure behind the song's, the way a second voice enters in a round. Built: the keys strike on the one of every other measure counted from the song's first (the second, the fourth, ...), take the chord for the note the bass is mostly on through that measure (`measureHz`), and let it ring with the pedal down until the next (`Bass.sustain`). On his first song: D diminished for measures 2 and 3, C minor for 4 and 1. On his second: F minor, struck again every two measures. 12 chords in 24 measures. |
 | 38 | Vaughn: "Train the pianist on Chopin. Bach, Amadeus etc. then mix it with hip hop swag. Drummer have it study Travis barker and quest love." **The pianist:** `Classics` writes three practice recordings by hand from works long out of copyright (the first eight chords of Bach's Prelude in C, the opening of Mozart's K. 545, the first eight chords of Chopin's Prelude Op. 28 No. 20), slowed to eighth notes, one chord to a bar (`--write-classics FOLDER`, then `--along FOLDER/bach.wav --no-drummer --keys LIFE`). Playing along, the keys player now also listens on each eighth for which note of the chord the middle of the record is on, or the whole chord (`hearTheFigure`, `LineEar.strong`), and keeps a record's figure once it is sure of every eighth (`figure from "bach":`). It learned all three by ear exactly as written: `r.3.5.R.T.5.R.T.`, `r.5.3.5.r.5.3.5.`, `c...c...c...c...`. With another record it plays its chords out in the figures it knows, one figure per two-measure chord, turn and turn about. **The drummer:** not started; the agent cannot fetch recordings and asked Vaughn to send Travis Barker and Questlove tracks as files. |
+| 39 | Vaughn sent a 58-second jazz recording (`songs/jazz.wav`, not committed): "Here's a section for each musician to study. Drummer can learn fills and timings". The ear: 87.0 to the minute, steady, in fours, straight eighths; three sparse bars at the start, a groove from bar 4, a bar where everything stops (bar 10), groove to bar 18, three sparse bars to end. All five players played along with bars 4 to 18 (`--from 9 --together 15`). **Fills:** a kit drummer now notes the louder hits in the middle of a record bar by bar; a bar with three more than usual is a fill; it keeps the fullest (`fill from "record": places @bar-of-eight`) and plays it in that bar of every eight with any record. It also counts bars where the record all but stops, and does nothing with them yet. On a made-up record with a written fill every eighth bar it hears all four in 32 bars and plays them. **In the jazz recording it heard no fill**, and one stop. |
 
 ### The players that exist (do not reset these)
 
@@ -159,11 +160,11 @@ old lines (there is a test for that: `livesFromEarlierStepsStillRead`).
 Needs Java 21 and Maven 3.9.
 
     mvn package                                   # builds and runs every test (about four minutes)
-    java -jar target/fraymus-band-0.38.0.jar       # the drummer with the record: 4 answers, then 8 bars together
-    java -jar target/fraymus-band-0.38.0.jar --click on
-    java -jar target/fraymus-band-0.38.0.jar --with lives/second.life --click on     # two drummers, 16 bars
-    java -jar target/fraymus-band-0.38.0.jar --teach lives/second.life --click on    # the first teaches the second
-    java -jar target/fraymus-band-0.38.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
+    java -jar target/fraymus-band-0.39.0.jar       # the drummer with the record: 4 answers, then 8 bars together
+    java -jar target/fraymus-band-0.39.0.jar --click on
+    java -jar target/fraymus-band-0.39.0.jar --with lives/second.life --click on     # two drummers, 16 bars
+    java -jar target/fraymus-band-0.39.0.jar --teach lives/second.life --click on    # the first teaches the second
+    java -jar target/fraymus-band-0.39.0.jar --with lives/second.life --bass lives/bass.life --click on   # all three
 
 Options: `--lesson FILE --answers N --together BARS --with LIFE --teach LIFE --bass LIFE --click on --tempo BPM
 --seed N --out FILE --life FILE`. Every run writes `out/session.wav` (not committed) and adds one line to
@@ -207,7 +208,7 @@ All in `src/main/java/com/eyeoverthink/band/`.
 - `WavWriter`: mono 16-bit PCM.
 - `Main`: command line.
 
-Tests are in one class, `StepThirtyEightTest` (renamed each step). The big "study" tests run dozens of drummers
+Tests are in one class, `StepThirtyNineTest` (renamed each step). The big "study" tests run dozens of drummers
 through whole lives and print tables; `README.md` quotes those tables.
 
 ### The player's states
@@ -352,6 +353,9 @@ Given, as fixed rules (be honest about these):
   with nothing but four struck chords to the bar was heard as threes, so every study has a tap on each
   eighth; and a long bass note under struck chords was taken for a note of the figure. Also: telling a whole
   chord from one note must not use the third and fifth the player would choose itself.
+- **Looking for fills in the bottom of a song found nothing (step 39):** to the player's low ear a walking
+  bass is twelve hits a bar, every bar. The middle of the sound is where a kit's snare and toms are, and a
+  written fill stands out there. But so does a busy vocal.
 
 ---
 
@@ -466,6 +470,14 @@ Given, as fixed rules (be honest about these):
   chord is by turns (given). It knows four figures at most. A keys player with two ticks to the pulse heard
   the figures half a bar out in a test (its own idea of the one); the real pianist has four. A made-up
   song with a clean bass also yields a "figure" and it is kept like any other. Nobody has heard it.
+- **Fills (step 39):** the drummer cannot tell a drum fill from any other busy bar in the middle of a song
+  (a vocal, a piano run). In Vaughn's second song it hears three "fills" that may be his voice; in his first
+  song and in the jazz recording, none. A bar counts as a fill at three hits more than usual (given); at two
+  it found fills everywhere. Every hit of a fill is played as a pot: it hears where they fall, not which
+  drum. It keeps one fill, the fullest, and plays it once in every eight bars (given), at the bar of eight
+  where it heard it, counted from wherever the ear started counting. It hears stops (one in the jazz
+  recording, rightly) but unreliably (one of four in a test song at best) and does not stop with them. The
+  other four players took from the jazz recording only what they take from any song.
 - **The drummer has not studied Travis Barker or Questlove.** That needs recordings as files from Vaughn
   (they go in `songs/`, never in the repository); then `--along` and the borrowing of step 24 do the rest.
 - **The singer (steps 34 and 35) holds one note through real songs.** It is sure of 0 or 1 places, so nearly
@@ -487,7 +499,8 @@ Given, as fixed rules (be honest about these):
 two and four what he meant? (Low note instead: `--ask-bass ......p.......p.`. The last sixteenth needs four
 ticks.) Step 21: does the bass now sound in key with his song, and are the notes right? He said "Great
 work. Continue" after step 20 without correcting the reading. Item 2 below is done as far as one song allows (steps 23 and 24). Possible next steps: item 3 (leaning),
-the bass's new sixteenths (does it sound busier, and right?); **Travis Barker and Questlove recordings from Vaughn for the drummer**; whether step 38 is the
+the bass's new sixteenths (does it sound busier, and right?); **Travis Barker and Questlove recordings from Vaughn for the drummer**; stopping with a record when it
+stops ("timings"); telling a drum fill from a busy voice; whether step 38 is the
 "hip hop swag" he meant; **whether step 37 is what Vaughn meant for the piano** (two measures held, a measure behind; and whether
 it is the right measure); the singer (is its one long note bearable); a way for the singer to find a tune in a busy mix (the vocal itself, if Vaughn has a stem);
 a real song in threes from Vaughn; a player raised in fours learning threes so the two bands can meet; a way for the hat and bass players to sit with a record alone;

@@ -3,18 +3,21 @@ age: 0
 listens to itself: 0.81
 sounds: a pot (p) and a pan (n)
 ticks to the pulse: 4
-pattern: p.n.n.n.ppp.n.np
+pattern: p.n.n...npp.n...
 leans on the others: 0.27
-habits: 9994999928999990
-feel: -1.6/1.00/1878 -40.2/0.98/56 -4.9/0.96/1449 -13.9/0.88/293 -20.7/0.97/1474 -24.7/0.95/269 -15.0/0.99/796 26.7/0.95/564 -12.3/0.99/1352 31.3/0.96/1029 -5.7/1.00/1674 -0.2/0.85/149 -16.9/0.97/1422 20.1/0.84/146 -22.6/0.98/1160 32.5/0.93/1509
+habits: 3219999990949999
+feel: -2.3/1.00/1982 -3.4/0.96/65 -3.9/0.96/1457 -13.9/0.88/293 -6.7/1.00/1526 -24.7/0.95/269 2.1/0.95/806 29.8/0.96/568 -7.0/1.00/1408 31.3/0.96/1029 3.0/1.00/1706 -4.0/0.90/153 -7.2/0.97/1470 20.1/0.84/146 -4.7/0.92/1168 32.5/0.93/1509
 heard from "first lesson": p..pn...p.p.n..n
 heard from "gleam of the prize": p.n.n...ppp.n..p
-its own: ........p......p
+its own: ..n.......p.....
 heard from "one two three": p.n.n.n.npp.n.np
 plays with "gleam of the prize": p.npn.n.ppp.n..p
 feel with "gleam of the prize": -20.0/1.00/1969 -47.8/0.98/105 -20.6/0.99/1401 -19.1/0.88/74 -20.5/0.98/1560 -11.2/0.98/400 32.1/0.99/309 12.2/0.90/614 -15.8/0.99/1230 1.2/0.94/1097 -18.7/0.99/1568 5.6/0.85/123 -24.5/1.00/1344 -17.4/0.96/151 -17.1/0.97/646 17.4/0.92/1668
 plays with "one two three": p.n.n.n.ppp.n.np
 feel with "one two three": -1.6/1.00/1878 -40.2/0.98/56 -4.9/0.96/1449 -13.9/0.88/293 -20.7/0.97/1474 -24.7/0.95/269 -15.0/0.99/796 26.7/0.95/564 -12.3/0.99/1352 31.3/0.96/1029 -5.7/1.00/1674 -0.2/0.85/149 -16.9/0.97/1422 20.1/0.84/146 -22.6/0.98/1160 32.5/0.93/1509
+heard from "jazz": p...n...n.p.n...
+plays with "jazz": p.n.n...npp.n...
+feel with "jazz": -2.3/1.00/1982 -3.4/0.96/65 -3.9/0.96/1457 -13.9/0.88/293 -6.7/1.00/1526 -24.7/0.95/269 2.1/0.95/806 29.8/0.96/568 -7.0/1.00/1408 31.3/0.96/1029 3.0/1.00/1706 -4.0/0.90/153 -7.2/0.97/1470 20.1/0.84/146 -4.7/0.92/1168 32.5/0.93/1509
 
 session 1: pulses=64, tempo 92.0 to 108.6 bpm, unsteadiness 15.1 ms at the start, 10.3 ms by the end, listening 0.27
 session 2: bars=16, hits=65, tempo 92.0 to 95.7 bpm, unsteadiness 20.7 ms at the start, 16.8 ms by the end, listening 0.39, ticks to the pulse 1, pattern p...p...n...p...
@@ -238,3 +241,7 @@ session 219: played along with "gleam of the prize" for 24 bars, hits=267, unste
 session 220: played along with "one two three" for 24 bars, hits=255, unsteadiness 6.7 ms, listening 0.80, ticks to the pulse 4, pattern p.p.n.n.ppp.n.np, 187 of its hits landed with a hit in the recording, 10 ms apart
 session 221: played along with "one two three" for 24 bars, hits=229, unsteadiness 9.0 ms, listening 0.79, ticks to the pulse 4, pattern p.n.n.n.ppp.n.nn, 177 of its hits landed with a hit in the recording, 10 ms apart
 session 222: played along with "one two three" for 24 bars, hits=251, unsteadiness 7.5 ms, listening 0.81, ticks to the pulse 4, pattern p.n.n.n.ppp.n.np, 190 of its hits landed with a hit in the recording, 10 ms apart
+session 223: played along with "jazz" for 15 bars, hits=155, unsteadiness 7.8 ms, listening 0.82, ticks to the pulse 4, pattern p.npn.n.p.p.n.nn, 106 of its hits landed with a hit in the recording, 6 ms apart
+session 224: played along with "jazz" for 15 bars, hits=140, unsteadiness 10.2 ms, listening 0.81, ticks to the pulse 4, pattern pp.pn...npp.n..n, 87 of its hits landed with a hit in the recording, 7 ms apart
+session 225: played along with "jazz" for 15 bars, hits=101, unsteadiness 11.1 ms, listening 0.81, ticks to the pulse 4, pattern p...n...npp.n..., 73 of its hits landed with a hit in the recording, 6 ms apart
+session 226: played along with "jazz" for 15 bars, hits=98, unsteadiness 9.3 ms, listening 0.81, ticks to the pulse 4, pattern p.n.n...npp.n..., 74 of its hits landed with a hit in the recording, 8 ms apart

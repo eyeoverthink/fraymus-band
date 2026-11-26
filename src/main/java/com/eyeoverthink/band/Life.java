@@ -28,7 +28,7 @@ public final class Life {
     private final java.util.Map<String, String> lineFrom = new java.util.LinkedHashMap<>(), phraseFrom = new java.util.LinkedHashMap<>();
     private final java.util.Map<String, String> heardFrom = new java.util.LinkedHashMap<>();
     private String own = "................";
-    private final java.util.Map<String, String> notesFrom = new java.util.LinkedHashMap<>(), figureFrom = new java.util.LinkedHashMap<>();
+    private final java.util.Map<String, String> notesFrom = new java.util.LinkedHashMap<>(), figureFrom = new java.util.LinkedHashMap<>(), fillFrom = new java.util.LinkedHashMap<>();
     private final java.util.Map<String, String> patternWith = new java.util.LinkedHashMap<>(), feelWith = new java.util.LinkedHashMap<>();
     private String lineFromSomewhere = "", phraseFromSomewhere = "", lastSong;
     private String asked = "................";
@@ -54,6 +54,7 @@ public final class Life {
                 else if (s.startsWith("heard from \"") && s.indexOf("\":") > 0) life.heardFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("plays with \"") && s.indexOf("\":") > 0) life.patternWith.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("feel with \"") && s.indexOf("\":") > 0) life.feelWith.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
+                else if (s.startsWith("fill from \"") && s.indexOf("\":") > 0) life.fillFrom.put(s.substring(11, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("figure from \"") && s.indexOf("\":") > 0) life.figureFrom.put(s.substring(13, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("notes from \"") && s.indexOf("\":") > 0) life.notesFrom.put(s.substring(12, s.indexOf("\":")), s.substring(s.indexOf("\":") + 2).trim());
                 else if (s.startsWith("its own:")) life.own = s.substring(8).trim();
@@ -144,6 +145,10 @@ public final class Life {
         patternWith.put(song, bar); feelWith.put(song, itsFeel);
         set("plays with \"" + song + "\"", bar); set("feel with \"" + song + "\"", itsFeel);
     }
+
+    /** The fills a drummer has learned, by the record each came from: the places of the bar, then which bar of every eight. */
+    public java.util.Map<String, String> fills() { return java.util.Collections.unmodifiableMap(fillFrom); }
+    public void fill(String record, String placesAndBar) { fillFrom.put(record, placesAndBar); set("fill from \"" + record + "\"", placesAndBar); }
 
     /** The figures a keys player has learned, by the record each came from: how a chord is played out over a bar. */
     public java.util.Map<String, String> figures() { return java.util.Collections.unmodifiableMap(figureFrom); }

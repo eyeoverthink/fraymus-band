@@ -13,7 +13,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Step nineteen: hat and bass players count bars, so a part is told from a passing sound. */
-class StepThirtyEightTest {
+class StepThirtyNineTest {
     static final Lesson LESSON = new Lesson("first lesson", 96, "p..pn...p.p.n..n");
 
     @Test
@@ -1526,5 +1526,60 @@ class StepThirtyEightTest {
         assertTrue(k.hits() > 80, "it plays its chords out, note by note: " + k.hits());
         assertTrue(k.chords().startsWith("measures 2 and 3: "), "the chords, the two measures and the measure behind are as they were: " + k.chords());
         assertTrue(take.peak() < 1.0f);
+    }
+
+    /** A made-up song whose drums play one bar over and over, a fill in every eighth bar, and nothing but the one in every eighth bar after the fourth. */
+    private static float[] songWithFills(String usual, String fillBar, double bpm, int bars) {
+        double tick = 60.0 / bpm / 4;
+        float[] mix = new float[(int) (Audio.RATE * (0.25 + bars * 16 * tick + 2))];
+        Kit kit = new Kit();
+        Hats hats = new Hats();
+        int next = 0;
+        for (int i = 0; i < mix.length; i++) {
+            if (next < bars * 16 && i >= Audio.samples(0.25 + next * tick)) {
+                int bar = next / 16, place = next % 16;
+                String plays = bar % 8 == 7 ? fillBar : bar % 8 == 3 ? "p..............." : usual;
+                char c = plays.charAt(place);
+                if (c != '.') kit.strike(c == 'p' ? Kit.POT : Kit.PAN, place == 0 ? 1.0f : 0.8f);
+                if (place % 2 == 0 && bar % 8 != 3) hats.strike(Kit.PAN, 0.4f);
+                next++;
+            }
+            mix[i] = 0.6f * kit.next() + 0.3f * hats.next();
+        }
+        return mix;
+    }
+
+    @Test
+    void aDrummerHearsAFillInARecordAndPlaysItAtTheSameBarOfEveryEight(@TempDir Path dir) throws Exception {
+        String usual = "p...n...p.p.n...", fill = "p.ppn.ppnnppnnpp";
+        float[] song = songWithFills(usual, fill, 92, 48);
+        Hearing.Heard heard = Hearing.listenLowAndHigh(song);
+        Hearing.Bar bar = Hearing.oneBar(heard);
+        Path drummer = practised(dir, "d.life", 4);
+        Session.AlongPart first = null, last = null;
+        for (int s = 0; s < 3; s++) {
+            last = Session.playAlong(dir.resolve("t.wav"), drummer, "fills", song, heard, bar, 0.1, 32, 1800 + s).parts().get(0);
+            if (s == 0) first = last;
+        }
+        System.out.printf(Locale.ROOT, "FILLS the record's fill is %s; the drummer heard %d fills and %d stops in 32 bars, has %s, and played it %d times; it plays %s the rest of the time%n",
+            fill, last.fillsHeard(), last.stopsHeard(), last.fill(), last.fillsPlayed(), last.patternAfter());
+        assertTrue(first.fillsHeard() >= 2 && first.fillsHeard() <= 5, "there are four fills in 32 bars of the record: " + first.fillsHeard());
+        assertTrue(first.stopsHeard() <= 5, "it does not hear stops everywhere (there are four; it is not yet reliable at catching them): " + first.stopsHeard());
+        assertFalse(last.fill().isEmpty(), "it has a fill");
+        String places = last.fill().split(" @")[0];
+        int there = 0, right = 0;
+        for (int p = 0; p < 16; p++) if (places.charAt(p) != '.') { there++; if (fill.charAt(p) != '.') right++; }
+        assertTrue(there >= 8, "a fill is a busy bar: " + places);
+        assertTrue(right >= there - 1, "and its hits are where the record's fill has hits: " + places + " against " + fill);
+        assertTrue(last.fillsPlayed() >= 3, "it plays it once in every eight bars: " + last.fillsPlayed() + " times in 32 bars");
+        assertEquals("fills", last.fillFrom());
+        assertTrue(Files.readAllLines(drummer).stream().anyMatch(l -> l.startsWith("fill from \"fills\": ")), "the fill is in its life under the record's name");
+
+        float[] plain = madeUpSong(new Lesson("made up", 92, usual), 40);
+        Hearing.Heard heardPlain = Hearing.listenLowAndHigh(plain);
+        Session.AlongPart elsewhere = Session.playAlong(dir.resolve("t.wav"), drummer, "made up", plain, heardPlain, Hearing.oneBar(heardPlain), 5, 24, 1900).parts().get(0);
+        assertEquals("fills", elsewhere.fillFrom(), "with another song it still has the fill, and where it came from");
+        assertTrue(elsewhere.fillsPlayed() >= 2, "and plays it there too: " + elsewhere.fillsPlayed());
+        assertTrue(elsewhere.fillsHeard() <= 1, "though that song has none written into it (its bass falls by chance, so a bar may come out busy): " + elsewhere.fillsHeard());
     }
 }

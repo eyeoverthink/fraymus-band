@@ -162,6 +162,13 @@ import java.util.SplittableRandom;
  * for a place, it falls back on the note it has heard most in that song, and if it has not heard enough to
  * say, it presses nothing. Without a song it has only the note its hand rests on.
  *
+ * Fills. A drummer on a kit, playing along with a record, notes where the louder hits in the middle of the
+ * song fall in each bar: neither the bottom nor the top, where a kit's snare and toms are. A bar with three
+ * more such hits than bars usually have is a fill. It
+ * keeps the fullest fill it has heard, under the record's name, and which bar of every eight it came in;
+ * and in that bar of every eight, with any record, it plays the fill in place of its own bar, as far as
+ * its ticks reach. Every hit of a fill is played as a pot: it hears where they fall, not which drum.
+ *
  * Figures. Playing along with a record, a keys player also listens on each eighth for which note of the
  * chord the middle of the record is on, or whether it is the whole chord at once. If it comes to be sure
  * of every eighth, that is the record's figure, and it keeps it under the record's name. With another
@@ -306,6 +313,64 @@ public final class Musician implements Player, Hits {
         String[] parts = soFar.trim().split("\\s+");
         for (int i = 0; i < 12 && i < parts.length; i++) if (!parts[i].isEmpty()) heardClass[i] = Integer.parseInt(parts[i]);
     }
+
+    // ---- fills: a bar in which the drums of a record let go, learned by ear and played at the end of a phrase ----
+    private final boolean kit;
+    /** A bar is a fill if it has this many more hits in the middle of the song than bars usually have. It plays one every this many bars. */
+    static final int FILL_MORE = 3, FILL_EVERY = 8;
+    /** It counts a hit in the middle of the song toward a fill if it is this much of the loudest lately. */
+    static final double FILL_NOTICE = 0.5;
+    private int stopsHeard;
+    /** How many bars it heard in which the record all but stopped: at least two fewer hits than usual, and no more than half. */
+    public int stopsHeard() { return stopsHeard; }
+    private final byte[] barNow = new byte[SLOTS], fill = new byte[SLOTS];
+    private double barBeganAt = -1, usualLow = -1;
+    private int barsListened, fillHits, fillsHeard, fillsPlayed, fillAt = FILL_EVERY - 1;
+    private String fillFrom = "";
+
+    /** A hit in the middle of the song, where the drums that are neither kick nor cymbal are: note where in this bar it fell. */
+    private void inThisBar(long at, byte sound) {
+        if (barBeganAt < 0 || per != 4) return;
+        long place = Math.round((at - barBeganAt) / (clock.period() / per));
+        if (place >= 0 && place < slots && barNow[(int) place] == REST) barNow[(int) place] = sound;
+    }
+
+    /** A bar of the song has gone by. If its middle was much busier than usual, that was a fill: keep the fullest one, and where in eight bars it came. */
+    private void endOfHeardBar(int whichBar) {
+        int low = 0;
+        for (int s = 0; s < slots; s++) if (barNow[s] != REST) low++;
+        boolean aFill = barsListened >= 4 && low >= usualLow + FILL_MORE;
+        if (barsListened >= 4 && low <= usualLow - 2 && 2 * low <= usualLow) stopsHeard++;
+        if (aFill) {
+            fillsHeard++;
+            if (low > fillHits) {
+                fillHits = low; fillFrom = "this record";
+                System.arraycopy(barNow, 0, fill, 0, SLOTS);
+                fillAt = Math.floorMod(whichBar + phraseFrom, FILL_EVERY);
+            }
+        } else if (whichBar >= 2) usualLow = usualLow < 0 ? low : 0.8 * usualLow + 0.2 * low;   // not the first two bars: its ears are still settling to how loud the song is
+        if (whichBar >= 0) barsListened++;
+        java.util.Arrays.fill(barNow, REST);
+    }
+
+    private boolean isFillBar(int whichBar) { return Math.floorMod(whichBar + phraseFrom, FILL_EVERY) == fillAt; }
+
+    /** The fill it has, for its life: the places, then which bar of every eight it came in. Nothing if it has none. */
+    public String fill() { return fillHits == 0 ? "" : write(fill) + " @" + (fillAt + 1); }
+    /** A fill its life says it has, and the record it came from. It keeps the fullest it is given. */
+    public void fill(String from, String placesAndBar) {
+        String[] parts = placesAndBar.trim().split(" @");
+        if (parts[0].length() != slots) return;
+        int hits = 0;
+        for (int i = 0; i < slots; i++) if (parts[0].charAt(i) != '.') hits++;
+        if (hits <= fillHits) return;
+        fillHits = hits; fillFrom = from;
+        for (int i = 0; i < slots; i++) fill[i] = Kit.read(parts[0].charAt(i));
+        if (parts.length > 1) fillAt = Math.floorMod(Integer.parseInt(parts[1].trim()) - 1, FILL_EVERY);
+    }
+    public String fillFrom() { return fillFrom; }
+    public int fillsHeard() { return fillsHeard; }
+    public int fillsPlayed() { return fillsPlayed; }
 
     // ---- figures: how a chord is played out over a bar, learned by ear from one record and used with another ----
     private static final char[] TONE = {'.', 'r', '3', '5', 'R', 'T', 'F', 'c'};
@@ -587,6 +652,7 @@ public final class Musician implements Player, Hits {
         this.keys = oneNote && (((Bass) hands).isKeys() || voice);   // a singer takes the middle of a song as a keys player does
         this.comps = keys && !voice;
         this.hatsOnly = hands instanceof Hats;
+        this.kit = !(hands instanceof Bass) && !this.hatsOnly;
         this.learnsWhilePlaying = oneNote || hatsOnly;
         this.bass = oneNote ? (Bass) hands : null;
         this.withARecord = withARecord;
@@ -683,7 +749,11 @@ public final class Musician implements Player, Hits {
         // A drummer takes notice only of the heavy hits. In the bottom of a song the kick stands above the bass
         // line; in the top the snare stands above the hats. A bass player wants the whole of the bottom: that
         // is the bass line it has come to learn. A hat player wants the whole of the top and none of the bottom.
-        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver(); if (!hatsOnly && !voice && lowEar.hitLoud() >= (oneNote && !comps ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        if (lowEar.hitsEver() != lowUsed) { lowUsed = lowEar.hitsEver();  if (!hatsOnly && !voice && lowEar.hitLoud() >= (oneNote && !comps ? 0 : HEAVY_LOW)) someoneElse(Math.round(lowEar.hitTime() - earTakes), false, lowEar.hitLoud(), true); }
+        if (kit) {                                           // a drummer listens to the middle for the drums that are neither kick nor cymbal: where fills are
+            midEar.listen(midPart, n, blockStart);
+            if (midEar.hitsEver() != midUsed) { midUsed = midEar.hitsEver(); if (midEar.hitLoud() >= FILL_NOTICE) inThisBar(Math.round(midEar.hitTime() - earTakes), POT); }
+        }
         if (voice) {                                         // a singer wants the middle: neither the bass line nor the hats
             midEar.listen(midPart, n, blockStart);
             if (midEar.hitsEver() != midUsed) { midUsed = midEar.hitsEver(); if (midEar.hitLoud() >= MID_NOTICE) someoneElse(Math.round(midEar.hitTime() - earTakes), false, midEar.hitLoud(), true); }
@@ -1299,8 +1369,13 @@ public final class Musician implements Player, Hits {
             }
             int slot = tickInBar * (per / ticks);
             boolean last = bar >= allBars;                   // the one after its last bar: where it lands
+            if (kit && fullMix && slot == 0) { if (mode == TOGETHER) endOfHeardBar(bar - 1); barBeganAt = clock.nextBeat(); }
             boolean leavingRoom = bar < teachBars && bar % (2 * TURN) >= TURN;   // the two bars it leaves for the answer
             byte sound = last ? POT : leavingRoom ? REST : pattern[slot];
+            if (kit && fullMix && fillHits > 0 && !last && mode == TOGETHER && isFillBar(bar)) {   // the bar where it lets go: the fill it has heard, as far as its ticks reach
+                sound = fill[slot];
+                if (slot == 0) { fillsPlayed++; sound = POT; }
+            }
             boolean figuredHere = comps && fullMix && figuresKnown > 0 && !last;
             if (figuredHere) sound = figureToneAt(bar, slot) != 0 ? POT : REST;  // a keys player with a figure plays where the figure has a note
             if (figureEar != null && fullMix && mode == TOGETHER && !last && per == 4 && slot % 2 == 0 && !figureEar.busy()) {
